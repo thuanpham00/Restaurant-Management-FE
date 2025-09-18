@@ -469,7 +469,7 @@ export default function Sidebar() {
     <div className="sticky top-0 left-0 py-4 bg-white h-screen border-r border-[#dedede] shadow-xl">
       <div>
         <div className="mx-4 flex items-center justify-center gap-2 py-2 px-2 rounded-lg bg-black">
-          <div className="w-14 h-14">
+          <div className="w-14 h-12">
             <img src={assets.icons.vector} alt="Logo" className="w-full h-full" />
           </div>
           <span className="text-white text-xl font-bold text-center">Restaurant Management</span>

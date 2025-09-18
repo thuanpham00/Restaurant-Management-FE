@@ -23,5 +23,5 @@
 }
 
 .menu-sidebar .ant-menu .ant-menu-item:first-child {
-  padding-inline: 26px !important;
+  /* padding-inline: 26px !important; */
 }
