@@ -18,6 +18,17 @@ import rectangle81 from "./figma/rectangles/rectangle81.png"
 import rectangle82 from "./figma/rectangles/rectangle82.png"
 import rectangle83 from "./figma/rectangles/rectangle83.png"
 import rectangle84 from "./figma/rectangles/rectangle84.png"
+import egg from "./figma/rectangles/egg.png"
+import avocado from "./figma/rectangles/avocado.png"
+import Breakfast_Bowl from "./figma/rectangles/Breakfast_Bowl.png"
+import Breakfast_Sandwich from "./figma/rectangles/Breakfast_Sandwich.png"
+import Burger from "./figma/rectangles/Burger.png"
+import crispy from "./figma/rectangles/crispy.png"
+import fries from "./figma/rectangles/fries.png"
+import mushroom from "./figma/rectangles/mushroom.png"
+import Noodles from "./figma/rectangles/Noodles.png"
+import salmon from "./figma/rectangles/salmon.png"
+import steak from "./figma/rectangles/steak.png"
 
 // Images
 import image89 from "./figma/images/image89.png"
@@ -90,7 +101,18 @@ export const assets = {
     rectangle81,
     rectangle82,
     rectangle83,
-    rectangle84
+    rectangle84,
+    egg,
+    avocado,
+    Breakfast_Bowl,
+    Breakfast_Sandwich,
+    Burger,
+    crispy,
+    fries,
+    mushroom,
+    Noodles,
+    salmon,
+    steak
   },
   images: {
     image89,

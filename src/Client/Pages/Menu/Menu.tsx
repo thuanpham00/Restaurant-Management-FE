@@ -1,6 +1,7 @@
 import React from 'react';
 import Header from "src/Client/Components/HeaderClient"
 import Footer from "src/Client/Components/FooterClient"
+import { assets } from 'src/Assets/assets';
 // MenuItem Component
 interface MenuItemProps {
   item: {
@@ -99,21 +100,21 @@ export function App() {
         name: 'Egg Frittata Muffins',
         description: 'Fluffy egg muffins with spinach, cherry tomatoes, and feta cheese',
         price: 12,
-        image: 'https://images.unsplash.com/photo-1482049016688-2d3e1b311543?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80',
+        image: assets.rectangles.egg,
       },
       {
         id: 2,
         name: 'Breakfast Bowl',
         description: 'Steel-cut oats topped with fresh berries, banana, and honey drizzle',
         price: 10,
-        image: 'https://images.unsplash.com/photo-1511690656952-34342bb7c2f2?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80',
+        image: assets.rectangles.Breakfast_Bowl,
       },
       {
         id: 3,
         name: 'Breakfast Sandwiches',
         description: 'Fresh croissant filled with scrambled eggs, avocado, and bacon',
         price: 14,
-        image: 'https://images.unsplash.com/photo-1525351484163-7529414344d8?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80',
+        image: assets.rectangles.Breakfast_Sandwich,
       },
     ],
     lunch: [
@@ -122,22 +123,16 @@ export function App() {
         name: 'Crispy Chicken Burger',
         description: 'Buttermilk fried chicken with special sauce and pickles on a brioche bun',
         price: 16,
-        image: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80',
+        image: assets.rectangles.Burger,
       },
       {
         id: 5,
         name: 'Schezwan Noodles',
         description: 'Hand-pulled noodles with house chili oil sauce and seasonal vegetables',
         price: 14,
-        image: 'https://images.unsplash.com/photo-1552611052-33e04de081de?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80',
+        image: assets.rectangles.Noodles,
       },
-      {
-        id: 6,
-        name: 'New Lobster Marinada',
-        description: 'Fresh lobster tossed in our signature marinade served with citrus slaw',
-        price: 22,
-        image: 'https://images.unsplash.com/photo-1599321644398-b8513656b8f7?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80',
-      },
+
     ],
     dinner: [
       {
@@ -145,21 +140,21 @@ export function App() {
         name: 'Grilled Salmon',
         description: 'Wild-caught salmon with lemon herb butter, served with roasted vegetables',
         price: 24,
-        image: 'https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80',
+        image: assets.rectangles.salmon,
       },
       {
         id: 8,
         name: 'Ribeye Steak',
         description: 'Prime cut ribeye with truffle butter and garlic mashed potatoes',
         price: 32,
-        image: 'https://images.unsplash.com/photo-1600891964092-4316c288032e?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80',
+        image: assets.rectangles.steak,
       },
       {
         id: 9,
         name: 'Mushroom Risotto',
         description: 'Creamy arborio rice with wild mushrooms, parmesan, and fresh herbs',
         price: 18,
-        image: 'https://images.unsplash.com/photo-1476124369491-e7addf5db371?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80',
+        image: assets.rectangles.mushroom,
       },
     ],
     starters: [
@@ -168,21 +163,21 @@ export function App() {
         name: 'Truffle Fries',
         description: 'Hand-cut fries tossed with truffle oil, parmesan, and fresh herbs',
         price: 9,
-        image: 'https://images.unsplash.com/photo-1541592106381-b31e9677c0e5?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80',
+        image: assets.rectangles.fries,
       },
       {
         id: 11,
         name: 'Avocado Tartare',
         description: 'Fresh avocado with citrus, chili flakes, and house-made tortilla chips',
         price: 11,
-        image: 'https://images.unsplash.com/photo-1551248429-40975aa4de74?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80',
+        image: assets.rectangles.avocado,
       },
       {
         id: 12,
         name: 'Crispy Calamari',
         description: 'Lightly fried calamari served with lemon aioli and marinara sauce',
         price: 13,
-        image: 'https://images.unsplash.com/photo-1599487488170-d11ec9c172f0?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80',
+        image: assets.rectangles.crispy,
       },
     ],
   };

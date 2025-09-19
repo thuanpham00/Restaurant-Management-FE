@@ -1,13 +1,9 @@
-// Import asset URLs - Đã cập nhật với đường dẫn public cho Vite
-
 import { Link } from "react-router-dom"
 import { assets } from "src/Assets/assets"
 import Header from "src/Client/Components/HeaderClient"
 import Footer from "src/Client/Components/FooterClient"
 
 
-
-// Statistics Section Component
 const StatisticsSection = () => (
   <section className="relative h-40 md:h-48">
     {/* Background Image */}
