@@ -7,6 +7,7 @@ import { AppContext } from "src/Context/authContext"
 import { rolesForApi } from "src/Helpers/role_permission"
 
 const Home = lazy(() => import("../Pages/Home"))
+const Menu = lazy(() => import("../Pages/Menu"))
 
 const ProjectRouter = () => {
   const { isAuthenticated } = useContext(AppContext)
@@ -50,6 +51,10 @@ export default function useRouterClient() {
                   <Home />
                 </Suspense>
               )
+            },
+            {
+              path: "menu", 
+              element: <Menu />,
             }
           ]
         },

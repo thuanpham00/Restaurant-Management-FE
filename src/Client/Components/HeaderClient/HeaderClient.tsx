@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { NavLink } from "react-router-dom"; 
 import { assets } from "src/Assets/assets";
 
 const Header = () => (
@@ -13,21 +13,60 @@ const Header = () => (
 
         {/* Navigation Links */}
         <div className="hidden lg:flex items-center space-x-8 text-white">
-          <Link to="#" className="text-orange-400 font-medium transition-colors">
+          <NavLink
+            to="/"
+            className={({ isActive }) =>
+              isActive
+                ? "text-orange-400 font-medium transition-colors"
+                : "text-white/80 hover:text-white transition-colors"
+            }
+          >
             Home
-          </Link>
-          <Link to="#" className="text-white/80 hover:text-white transition-colors">
+          </NavLink>
+
+          <NavLink
+            to="/menu"
+            className={({ isActive }) =>
+              isActive
+                ? "text-orange-400 font-medium transition-colors"
+                : "text-white/80 hover:text-white transition-colors"
+            }
+          >
             Menu
-          </Link>
-          <Link to="#" className="text-white/80 hover:text-white transition-colors">
+          </NavLink>
+
+          <NavLink
+            to="/blog"
+            className={({ isActive }) =>
+              isActive
+                ? "text-orange-400 font-medium transition-colors"
+                : "text-white/80 hover:text-white transition-colors"
+            }
+          >
             Blog
-          </Link>
-          <Link to="#" className="text-white/80 hover:text-white transition-colors">
+          </NavLink>
+
+          <NavLink
+            to="/pages"
+            className={({ isActive }) =>
+              isActive
+                ? "text-orange-400 font-medium transition-colors"
+                : "text-white/80 hover:text-white transition-colors"
+            }
+          >
             Pages
-          </Link>
-          <Link to="#" className="text-white/80 hover:text-white transition-colors">
+          </NavLink>
+
+          <NavLink
+            to="/contact"
+            className={({ isActive }) =>
+              isActive
+                ? "text-orange-400 font-medium transition-colors"
+                : "text-white/80 hover:text-white transition-colors"
+            }
+          >
             Contact
-          </Link>
+          </NavLink>
         </div>
 
         {/* Right side info */}
@@ -61,10 +100,13 @@ const Header = () => (
             Theres evidence that cooking, like other creative practices, can boost well-being, self-esteem, and other
             measures of mental health.
           </p>
-          <Link to="#" className="inline-block text-orange-400 font-medium">
+          <NavLink
+            to="/menu"
+            className="inline-block text-orange-400 font-medium"
+          >
             Our menu
             <div className="h-px bg-orange-400 w-full mt-1"></div>
-          </Link>
+          </NavLink>
         </div>
 
         {/* Right Content - Food Images */}
