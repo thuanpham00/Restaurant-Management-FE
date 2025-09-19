@@ -9,7 +9,7 @@ const StatisticsSection = () => (
     {/* Background Image */}
     <div
       className="absolute inset-0 bg-cover bg-center"
-      style={{ backgroundImage: `url('${assets.rectangles.rectangle26}')` }}
+      style={{ backgroundImage: `url('${assets.rectangles.sandwich2}')` }}
     />
     {/* Overlay */}
     <div className="absolute inset-0 bg-gray-900/60 backdrop-blur-sm" />
@@ -51,7 +51,7 @@ const MostPopularFood = () => (
       {/* Food Card 1 */}
       <div className="bg-gray-800 rounded-lg overflow-hidden">
         <img
-          src={assets.rectangles.rectangle12}
+          src={assets.rectangles.salad}
           alt="Schezwan Noodles"
           className="w-full h-[250px] md:h-[300px] object-cover"
         />
@@ -80,7 +80,7 @@ const MostPopularFood = () => (
       {/* Food Card 2 */}
       <div className="bg-gray-800 rounded-lg overflow-hidden">
         <img
-          src={assets.rectangles.rectangle13}
+          src={assets.rectangles.salmon2}
           alt="Schezwan Noodles"
           className="w-full h-[250px] md:h-[300px] object-cover"
         />
@@ -110,7 +110,7 @@ const MostPopularFood = () => (
       {/* Food Card 3 */}
       <div className="bg-gray-800 rounded-lg overflow-hidden sm:col-span-2 lg:col-span-1">
         <img
-          src={assets.rectangles.rectangle14}
+          src={assets.rectangles.French_Toast}
           alt="Schezwan Noodles"
           className="w-full h-[250px] md:h-[300px] object-cover"
         />
@@ -186,7 +186,7 @@ const BookingLocationSection = () => (
       <div className="relative">
         <div
           className="absolute inset-0 bg-cover bg-center rounded-lg"
-          style={{ backgroundImage: `url('${assets.rectangles.rectangle7}')` }}
+          style={{ backgroundImage: `url('${assets.rectangles.coffee}')` }}
         />
         <div className="absolute inset-0 bg-gray-900/60 backdrop-blur-sm rounded-lg" />
         <div className="relative z-10 p-10 text-center text-white border border-white/20 rounded-lg h-full flex flex-col justify-center">
@@ -321,12 +321,12 @@ const GallerySection = () => (
     <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
       <div className="space-y-4">
         <img
-          src={assets.rectangles.rectangle77}
+          src={assets.rectangles.house}
           alt="Restaurant interior"
           className="w-full h-[285px] object-cover border border-white"
         />
         <img
-          src={assets.rectangles.rectangle80}
+          src={assets.rectangles.restaurant2}
           alt="Restaurant interior"
           className="w-full h-[285px] object-cover border border-white"
         />
@@ -334,7 +334,7 @@ const GallerySection = () => (
 
       <div className="col-span-1">
         <img
-          src={assets.rectangles.rectangle78}
+          src={assets.rectangles.restaurant}
           alt="Restaurant interior"
           className="w-full h-[600px] object-cover border border-white"
         />
@@ -342,12 +342,12 @@ const GallerySection = () => (
 
       <div className="space-y-4">
         <img
-          src={assets.rectangles.rectangle79}
+          src={assets.rectangles.Dish}
           alt="Restaurant interior"
           className="w-full h-[285px] object-cover border border-white"
         />
         <img
-          src={assets.rectangles.rectangle81}
+          src={assets.rectangles.chef}
           alt="Restaurant interior"
           className="w-full h-[285px] object-cover border border-white"
         />
@@ -367,7 +367,7 @@ const DailyOffersSection = () => (
       {/* Left - Promotional Card */}
       <div className="relative">
         <img
-          src={assets.rectangles.rectangle27}
+          src={assets.rectangles.soup}
           alt="Special offer"
           className="w-full h-[434px] object-cover rounded-lg"
         />
@@ -390,19 +390,19 @@ const DailyOffersSection = () => (
       <div className="space-y-6">
         {[
           {
-            img: assets.rectangles.rectangle30,
+            img: assets.rectangles.shrimp,
             name: "Spicy Club",
             price: "$42",
             desc: "Pork, chicken and vegetable fried rolls served with lettuce wraps"
           },
           {
-            img: assets.rectangles.rectangle29,
+            img: assets.rectangles.Cheese,
             name: "Almond baked Brie",
             price: "$38",
             desc: "Pork, chicken and vegetable fried rolls served with lettuce wraps"
           },
           {
-            img: assets.rectangles.rectangle28,
+            img: assets.rectangles.Noodles2,
             name: "Tuscan Flatbread",
             price: "$49",
             desc: "Pork, chicken and vegetable fried rolls served with lettuce wraps"
@@ -466,9 +466,9 @@ const ChefsSection = () => (
 
     <div className="grid md:grid-cols-3 gap-8">
       {[
-        { img: assets.rectangles.rectangle82, name: "Jubed Ahmed", role: "Chef" },
-        { img: assets.rectangles.rectangle83, name: "Delwar hussen", role: "Assistant chef" },
-        { img: assets.rectangles.rectangle84, name: "Tajul Islam", role: "Chef" }
+        { img: assets.rectangles.chef2, name: "Jubed Ahmed", role: "Chef" },
+        { img: assets.rectangles.chef3, name: "Delwar hussen", role: "Assistant chef" },
+        { img: assets.rectangles.chef4, name: "Tajul Islam", role: "Chef" }
       ].map((chef, index) => (
         <div key={index} className="text-center">
           <img
@@ -495,7 +495,7 @@ const BlogSection = () => (
     <div className="grid lg:grid-cols-2 gap-8">
       {/* Blog Post 1 */}
       <div className="grid md:grid-cols-2 gap-6">
-        <img src={assets.rectangles.rectangle10} alt="Blog post" className="w-full h-[348px] object-cover rounded-lg" />
+        <img src={assets.rectangles.sandwich} alt="Blog post" className="w-full h-[348px] object-cover rounded-lg" />
         <div>
           <p className="text-white mb-4">August 6, 2022</p>
           <h3 className="text-white text-3xl font-medium mb-4">The Most Expensive Cup of Coffee in the Usa</h3>
@@ -533,7 +533,7 @@ const BlogSection = () => (
           </Link>
         </div>
         <img
-          src={assets.rectangles.rectangle11}
+          src={assets.rectangles.pizza}
           alt="Blog post"
           className="w-full h-[348px] object-cover rounded-lg order-1 md:order-2"
         />
@@ -557,7 +557,7 @@ const NewsletterSection = () => (
     {/* Background Image */}
     <div
       className="absolute inset-0 bg-cover bg-center"
-      style={{ backgroundImage: `url('${assets.rectangles.rectangle26}')` }}
+      style={{ backgroundImage: `url('${assets.rectangles.sandwich2}')` }}
     />
 
     {/* Overlay */}

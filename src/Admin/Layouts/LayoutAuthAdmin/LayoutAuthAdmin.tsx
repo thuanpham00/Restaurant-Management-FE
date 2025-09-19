@@ -1,8 +1,8 @@
 import { memo, useEffect, useState } from "react"
 import { Outlet } from "react-router-dom"
-import banner from "src/Assets/figma/rectangles/rectangle78.png"
-import banner_2 from "src/Assets/figma/rectangles/rectangle79.png"
-import banner_3 from "src/Assets/figma/rectangles/rectangle80.png"
+import banner from "src/Assets/figma/rectangles/restaurant.png"
+import banner_2 from "src/Assets/figma/rectangles/Dish.png"
+import banner_3 from "src/Assets/figma/rectangles/restaurant2.png"
 
 const listBanner = [banner, banner_2, banner_3]
 
