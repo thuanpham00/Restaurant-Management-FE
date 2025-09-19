@@ -9,8 +9,8 @@ const Footer = () => (
           <img src={assets.icons.group55} alt="Logo" className="w-48 h-12 mb-8" />
           <p className="text-white/80 mb-6">Download the WowWraps app today.</p>
           <div className="flex space-y-4 flex-col">
-            <img src={assets.icons.frame} alt="App Store" className="h-10" />
-            <img src={assets.icons.frame1} alt="Google Play" className="h-10" />
+            <img src={assets.icons.frame} alt="App Store" className="h-14" />
+            <img src={assets.icons.frame1} alt="Google Play" className="h-14" />
           </div>
         </div>
   
