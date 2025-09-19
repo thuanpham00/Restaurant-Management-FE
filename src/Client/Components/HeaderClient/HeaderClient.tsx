@@ -1,4 +1,4 @@
-import { NavLink } from "react-router-dom";  // Import NavLink thay vì Link
+import { NavLink } from "react-router-dom"; 
 import { assets } from "src/Assets/assets";
 
 const Header = () => (
