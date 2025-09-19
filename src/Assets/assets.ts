@@ -1,23 +1,23 @@
 // Rectangles
-import rectangle10 from "./figma/rectangles/rectangle10.png"
-import rectangle11 from "./figma/rectangles/rectangle11.png"
-import rectangle7 from "./figma/rectangles/rectangle7.png"
-import rectangle12 from "./figma/rectangles/rectangle12.png"
-import rectangle13 from "./figma/rectangles/rectangle13.png"
-import rectangle14 from "./figma/rectangles/rectangle14.png"
-import rectangle26 from "./figma/rectangles/rectangle26.png"
-import rectangle27 from "./figma/rectangles/rectangle27.png"
-import rectangle28 from "./figma/rectangles/rectangle28.png"
-import rectangle29 from "./figma/rectangles/rectangle29.png"
-import rectangle30 from "./figma/rectangles/rectangle30.png"
-import rectangle77 from "./figma/rectangles/rectangle77.png"
-import rectangle78 from "./figma/rectangles/rectangle78.png"
-import rectangle79 from "./figma/rectangles/rectangle79.png"
-import rectangle80 from "./figma/rectangles/rectangle80.png"
-import rectangle81 from "./figma/rectangles/rectangle81.png"
-import rectangle82 from "./figma/rectangles/rectangle82.png"
-import rectangle83 from "./figma/rectangles/rectangle83.png"
-import rectangle84 from "./figma/rectangles/rectangle84.png"
+import sandwich from "./figma/rectangles/sandwich.png"
+import pizza from "./figma/rectangles/pizza.png"
+import coffee from "./figma/rectangles/coffee.png"
+import salad from "./figma/rectangles/salad.png"
+import salmon2 from "./figma/rectangles/salmon2.png"
+import French_Toast from "./figma/rectangles/French_Toast.png"
+import sandwich2 from "./figma/rectangles/sandwich2.png"
+import soup from "./figma/rectangles/soup.png"
+import Noodles2 from "./figma/rectangles/Noodles2.png"
+import Cheese from "./figma/rectangles/Cheese.png"
+import shrimp from "./figma/rectangles/shrimp.png"
+import house from "./figma/rectangles/house.png"
+import restaurant from "./figma/rectangles/restaurant.png"
+import Dish from "./figma/rectangles/Dish.png"
+import restaurant2 from "./figma/rectangles/restaurant2.png"
+import chef from "./figma/rectangles/chef.png"
+import chef2 from "./figma/rectangles/chef2.png"
+import chef3 from "./figma/rectangles/chef3.png"
+import chef4 from "./figma/rectangles/chef4.png"
 import egg from "./figma/rectangles/egg.png"
 import avocado from "./figma/rectangles/avocado.png"
 import Breakfast_Bowl from "./figma/rectangles/Breakfast_Bowl.png"
@@ -83,25 +83,25 @@ import line11 from "./figma/lines/line11.svg"
 
 export const assets = {
   rectangles: {
-    rectangle10,
-    rectangle11,
-    rectangle7,
-    rectangle12,
-    rectangle13,
-    rectangle14,
-    rectangle26,
-    rectangle27,
-    rectangle28,
-    rectangle29,
-    rectangle30,
-    rectangle77,
-    rectangle78,
-    rectangle79,
-    rectangle80,
-    rectangle81,
-    rectangle82,
-    rectangle83,
-    rectangle84,
+    sandwich,
+    pizza,
+    coffee,
+    salad,
+    salmon2,
+    French_Toast,
+    sandwich2,
+    soup,
+    Noodles2,
+    Cheese,
+    shrimp,
+    house,
+    restaurant,
+    Dish,
+    restaurant2,
+    chef,
+    chef2,
+    chef3,
+    chef4,
     egg,
     avocado,
     Breakfast_Bowl,
