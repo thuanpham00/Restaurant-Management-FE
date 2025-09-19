@@ -22,6 +22,6 @@
   scrollbar-color: #888 #f0f0f0;
 }
 
-.menu-sidebar .ant-menu .ant-menu-item:first-child {
+.menu-sidebar .ant-menu-root > .ant-menu-item:first-child {
   padding-inline: 26px !important;
 }
