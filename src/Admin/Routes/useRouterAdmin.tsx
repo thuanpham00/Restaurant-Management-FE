@@ -1,23 +1,22 @@
 import { Navigate, Outlet, useRoutes } from "react-router-dom"
-import { lazy, Suspense, useContext } from "react"
+import { lazy, Suspense } from "react"
 import MainLayoutAdmin from "../Layouts/MainLayoutAdmin"
 import { path } from "src/Constants/path"
-import { AppContext } from "src/Context/authContext"
 import LayoutAuthAdmin from "../Layouts/LayoutAuthAdmin"
 import { rolesForApi } from "src/Helpers/role_permission"
+import { useAppStore } from "src/StateGlobal/zustand"
 
 const ManageTable = lazy(() => import("../Pages/ManageTable"))
 const AdminLogin = lazy(() => import("../Pages/AdminLogin"))
 const ManageDashboard = lazy(() => import("../Pages/ManageDashboard"))
 
-const isAuthenticated = true
 const ProtectedRoute = () => {
-  // const { isAuthenticated } = useContext(AppContext)
+  const { isAuthenticated } = useAppStore()
   return isAuthenticated ? <Outlet /> : <Navigate to={path.AdminLogin} />
 } // bắt buộc đăng nhập
 
 const RejectRouter = () => {
-  // const { isAuthenticated } = useContext(AppContext)
+  const { isAuthenticated } = useAppStore()
   if (!isAuthenticated) {
     return <Outlet />
   }
@@ -25,7 +24,7 @@ const RejectRouter = () => {
 }
 
 const BlockClientForAdmin = () => {
-  const { role } = useContext(AppContext)
+  const { role } = useAppStore()
   if (role === rolesForApi.CUSTOMER) {
     return <Navigate to={path.NotFound} replace />
   }

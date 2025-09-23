@@ -1,20 +1,21 @@
-export type UserType = {
-  _id: string
+export type Role = {
+  id: string
   name: string
-  email: string
-  role: string
-  numberPhone: string
-  avatar: string
-  date_of_birth: string
-  verify: number
+  description: string
+  is_active: boolean
   created_at: string
   updated_at: string
+}
 
-  employeeInfo?: {
-    department: string
-    hire_date: Date // ngày vào làm
-    contract_type: string // loại hợp đồng
-    salary: number // lương
-    status: string
-  }
+export type User = {
+  id: string
+  name: string
+  email: string
+  email_verified_at: string | null
+  status: number
+  avatar: string | null
+  role_id: string
+  created_at: string
+  updated_at: string
+  role: Role
 }

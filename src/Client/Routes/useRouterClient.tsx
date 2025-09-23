@@ -1,22 +1,23 @@
 import { Navigate, Outlet, useLocation, useRoutes, useSearchParams } from "react-router-dom"
 import MainLayout from "../Layout/MainLayout"
 import { path } from "../../Constants/path"
-import { lazy, Suspense, useContext } from "react"
+import { lazy, Suspense } from "react"
 import MainLayoutAuth from "../Layout/MainLayoutAuth"
-import { AppContext } from "src/Context/authContext"
 import { rolesForApi } from "src/Helpers/role_permission"
+import { useAppStore } from "src/StateGlobal/zustand"
 
 const Home = lazy(() => import("../Pages/Home"))
 const Menu = lazy(() => import("../Pages/Menu"))
 
 const ProjectRouter = () => {
-  const { isAuthenticated } = useContext(AppContext)
+  const { isAuthenticated } = useAppStore()
   const { pathname } = useLocation()
   return isAuthenticated ? <Outlet /> : <Navigate to={`${path.Login}?redirect_url=${encodeURIComponent(pathname)}`} />
 }
 
 const RejectRouter = () => {
-  const { isAuthenticated } = useContext(AppContext)
+  const { isAuthenticated } = useAppStore()
+
   const [searchParams] = useSearchParams()
   if (!isAuthenticated) {
     return <Outlet />
@@ -26,7 +27,7 @@ const RejectRouter = () => {
 }
 
 const BlockAdminForClient = () => {
-  const { role } = useContext(AppContext)
+  const { role } = useAppStore()
   if (role === rolesForApi.ADMIN) {
     return <Navigate to={path.AdminNotFound} replace />
   }
@@ -34,7 +35,7 @@ const BlockAdminForClient = () => {
 }
 
 export default function useRouterClient() {
-  // const { role } = useContext(AppContext)
+  // const { role } = useAppStore()
   const routerElement = useRoutes([
     {
       path: "",
@@ -53,8 +54,8 @@ export default function useRouterClient() {
               )
             },
             {
-              path: "menu", 
-              element: <Menu />,
+              path: "menu",
+              element: <Menu />
             }
           ]
         },

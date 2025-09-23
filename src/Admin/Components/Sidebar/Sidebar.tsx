@@ -466,13 +466,25 @@ export default function Sidebar() {
   ]
 
   return (
-    <div className="sticky top-0 left-0 py-4 bg-white h-screen border-r border-[#dedede] shadow-xl">
+    <div
+      className="sticky top-0 left-0 py-4 bg-white h-screen border-r border-[#dedede] shadow-xl"
+      style={{
+        backgroundImage:
+          "radial-gradient(circle 400px at 6.8% 8.3%, rgba(255,244,169,1) 0%, rgba(255,244,234,1) 100.2%)"
+      }}
+    >
       <div>
-        <div className="mx-4 flex items-center justify-center gap-2 py-2 px-2 rounded-lg bg-black">
+        <div
+          className="mx-4 flex items-center justify-center gap-1 py-2 px-2 rounded-lg"
+          style={{
+            backgroundImage:
+              "radial-gradient(circle farthest-corner at 10% 20%, rgba(214,40,40,1) 0%, rgba(255,195,0,1) 90%)"
+          }}
+        >
           <div className="w-14 h-12">
             <img src={assets.icons.vector} alt="Logo" className="w-full h-full" />
           </div>
-          <span className="text-white text-xl font-bold text-center">Restaurant Management</span>
+          <span className="text-white text-lg font-bold text-center -tracking-tighter">Restaurant Management</span>
         </div>
         <div className="mt-4 menu-sidebar">
           <Menu
@@ -480,7 +492,9 @@ export default function Sidebar() {
             style={{
               maxHeight: "calc(100vh - 190px)",
               overflowY: "auto",
-              overflowX: "hidden"
+              overflowX: "hidden",
+              backgroundImage:
+                "radial-gradient(circle 400px at 6.8% 8.3%, rgba(255,244,169,1) 0%, rgba(255,244,234,1) 100.2%)"
             }}
             defaultOpenKeys={["sub1", "sub2", "sub3"]}
             className="bg-white menu-scroll"
@@ -488,16 +502,16 @@ export default function Sidebar() {
           />
         </div>
 
-        <div className="absolute bottom-0 left-0 w-full bg-white">
+        <div className="absolute bottom-0 left-0 w-full">
           <div className="m-4">
             <Link
               to={path.AdminDashboard}
-              className={`text-[14px] flex items-center gap-1 px-3 py-2 w-full hover:text-primaryBlue bg-white hover:underline duration-100 ${location.pathname.startsWith(path.AdminDashboard) ? "text-primaryBlue font-semibold" : "text-black"}`}
+              className={`text-[14px] flex items-center gap-1 px-3 py-2 w-full hover:text-primaryBlue hover:underline duration-100 ${location.pathname.startsWith(path.AdminDashboard) ? "text-primaryBlue font-semibold" : "text-black"}`}
             >
               Thông tin tài khoản
               <Info size={16} />
             </Link>
-            <button className="text-[14px] flex items-center gap-1 px-3 py-2 w-full hover:text-primaryBlue bg-white hover:underline duration-100">
+            <button className="text-[14px] flex items-center gap-1 px-3 py-2 w-full hover:text-primaryBlue hover:underline duration-100">
               Đăng xuất
               <LogOut size={16} />
             </button>

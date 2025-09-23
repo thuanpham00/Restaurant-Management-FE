@@ -1,4 +1,4 @@
-import axios, { AxiosInstance, InternalAxiosRequestConfig } from "axios"
+import axios, { AxiosInstance } from "axios"
 import {
   clearLS,
   getAccessTokenFromLS,
@@ -47,14 +47,14 @@ class http {
     )
     this.instance.interceptors.response.use(
       (response) => {
-        if (response.config.url === "users/login" || response.config.url === "/admin/login") {
-          const data = response.data as AuthResponse
-          this.accessToken = data.result.accessToken
+        if (response.config.url === "/api/auth/login") {
+          const data = response.data as SuccessResponse<AuthResponse>
+          this.accessToken = data.data.access_token
           setAccessTokenToLS(this.accessToken)
-          setNameUserToLS(data.result.userInfo.name)
-          setRoleToLS(data.result.userInfo.role)
-          setAvatarImageToLS(data.result.userInfo.avatar)
-          setUserIdToLS(data.result.userInfo._id)
+          setNameUserToLS(data.data.user.name)
+          setRoleToLS(data.data.user.role.name)
+          setAvatarImageToLS(data.data.user.avatar as string)
+          setUserIdToLS(data.data.user.id)
           // ở server sẽ tự động lưu RT vào cookie ở trình duyệt
         }
         if (response.config.url === "users/logout") {
@@ -81,30 +81,30 @@ class http {
           //
         }
         if (isError401(error)) {
-          const config = error.response?.config || ({ headers: {} } as InternalAxiosRequestConfig)
-          const { url } = config
+          // const config = error.response?.config || ({ headers: {} } as InternalAxiosRequestConfig)
+          // const { url } = config
           // lỗi Unauthorized (401) có nhiều trường hợp
           // - token không đúng
           // - không truyền token
           // - token hết hạn*
 
           // nếu là lỗi accessToken hết hạn thì tạo mới accessToken
-          if (
-            isAxiosExpiredTokenError<MessageResponse>(error, "AccessToken expired") &&
-            url !== "/users/refresh-token"
-          ) {
-            this.refreshTokenRequest = this.refreshTokenRequest ? this.refreshTokenRequest : this.handleRefreshToken()
+          // if (
+          //   isAxiosExpiredTokenError<MessageResponse>(error, "AccessToken expired") &&
+          //   url !== "/users/refresh-token"
+          // ) {
+          //   this.refreshTokenRequest = this.refreshTokenRequest ? this.refreshTokenRequest : this.handleRefreshToken()
 
-            // nếu không return ở đây nó sẽ chạy xuống bên dưới
-            return this.refreshTokenRequest.then((accessToken) => {
-              if (error.response?.config.headers) {
-                return this.instance({
-                  ...config,
-                  headers: { ...config.headers, Authorization: `Bearer ${accessToken}` } // gửi lại lên server accessToken mới
-                })
-              }
-            })
-          }
+          //   // nếu không return ở đây nó sẽ chạy xuống bên dưới
+          //   return this.refreshTokenRequest.then((accessToken) => {
+          //     if (error.response?.config.headers) {
+          //       return this.instance({
+          //         ...config,
+          //         headers: { ...config.headers, Authorization: `Bearer ${accessToken}` } // gửi lại lên server accessToken mới
+          //       })
+          //     }
+          //   })
+          // }
 
           if (isAxiosExpiredTokenError<MessageResponse>(error, "RefreshToken expired")) {
             // nếu refresh-token hết hạn thì nó clearLS
@@ -118,29 +118,25 @@ class http {
     )
   }
 
-  private handleRefreshToken() {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return this.instance
-      .post<SuccessResponse<{ accessToken: string }>>("/users/refresh-token")
-      .then((res) => {
-        const { accessToken } = res.data.result
-        this.accessToken = accessToken
-        this.refreshTokenRequest = null
-        setAccessTokenToLS(accessToken)
-        return accessToken
-      })
-      .catch((err) => {
-        clearLS()
-        this.accessToken = ""
-        this.refreshTokenRequest = null
-        throw err
-      })
-  }
+  // private handleRefreshToken() {
+  //   // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  //   return this.instance
+  //     .post<SuccessResponse<{ accessToken: string }>>("/users/refresh-token")
+  //     .then((res) => {
+  //       const { accessToken } = res.data.result
+  //       this.accessToken = accessToken
+  //       this.refreshTokenRequest = null
+  //       setAccessTokenToLS(accessToken)
+  //       return accessToken
+  //     })
+  //     .catch((err) => {
+  //       clearLS()
+  //       this.accessToken = ""
+  //       this.refreshTokenRequest = null
+  //       throw err
+  //     })
+  // }
 }
-
-/**
- * nếu ko set lại refreshTokenRequest = null thì khi lần sau token hết hạn thì gọi lại promise cũ và promise cũ có token đã hết hạn dẫn đến nó gọi server check Token đó (hết hạn) và lỗi => dẫn đến liên tục gửi request đến server
- */
 
 export const httpRaw = new http()
 

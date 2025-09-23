@@ -2,15 +2,15 @@ import { HelmetProvider } from "react-helmet-async"
 import useRouterClient from "./Client/Routes/useRouterClient"
 import useRouterAdmin from "./Admin/Routes/useRouterAdmin"
 import { ToastContainer } from "react-toastify"
-import { useContext, useEffect } from "react"
+import { useEffect } from "react"
 import { LocalStorageEventTarget } from "./Helpers/auth"
-import { AppContext } from "./Context/authContext"
 import { useLocation } from "react-router-dom"
+import { useAppStore } from "./StateGlobal/zustand"
 
 function App() {
   const routerClient = useRouterClient()
   const routerAdmin = useRouterAdmin()
-  const { reset } = useContext(AppContext)
+  const { reset } = useAppStore()
   const location = useLocation()
 
   useEffect(() => {

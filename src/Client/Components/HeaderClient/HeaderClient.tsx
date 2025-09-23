@@ -17,8 +17,8 @@ const Header = () => (
             to="/"
             className={({ isActive }) =>
               isActive
-                ? "text-orange-400 font-medium transition-colors"
-                : "text-white/80 hover:text-white transition-colors"
+                ? "text-orange-400 font-medium transition-colors text-base"
+                : "text-white/80 hover:text-white transition-colors text-base"
             }
           >
             Home
@@ -28,8 +28,8 @@ const Header = () => (
             to="/menu"
             className={({ isActive }) =>
               isActive
-                ? "text-orange-400 font-medium transition-colors"
-                : "text-white/80 hover:text-white transition-colors"
+                ? "text-orange-400 font-medium transition-colors text-base"
+                : "text-white/80 hover:text-white transition-colors text-base"
             }
           >
             Menu
@@ -39,8 +39,8 @@ const Header = () => (
             to="/blog"
             className={({ isActive }) =>
               isActive
-                ? "text-orange-400 font-medium transition-colors"
-                : "text-white/80 hover:text-white transition-colors"
+                ? "text-orange-400 font-medium transition-colors text-base"
+                : "text-white/80 hover:text-white transition-colors text-base"
             }
           >
             Blog
@@ -50,8 +50,8 @@ const Header = () => (
             to="/pages"
             className={({ isActive }) =>
               isActive
-                ? "text-orange-400 font-medium transition-colors"
-                : "text-white/80 hover:text-white transition-colors"
+                ? "text-orange-400 font-medium transition-colors text-base"
+                : "text-white/80 hover:text-white transition-colors text-base"
             }
           >
             Pages
@@ -61,8 +61,8 @@ const Header = () => (
             to="/contact"
             className={({ isActive }) =>
               isActive
-                ? "text-orange-400 font-medium transition-colors"
-                : "text-white/80 hover:text-white transition-colors"
+                ? "text-orange-400 font-medium transition-colors text-base"
+                : "text-white/80 hover:text-white transition-colors text-base"
             }
           >
             Contact
