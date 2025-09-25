@@ -24,4 +24,24 @@
 
 .menu-sidebar .ant-menu-root > .ant-menu-item:first-child {
   padding-inline: 26px !important;
+  color: white;
+}
+
+/* Nếu muốn khi hover vẫn giữ màu cam */
+.menu-sidebar .ant-menu-submenu .ant-menu-item:hover {
+  background-color: #fb8500 !important;
+  color: white !important;
+}
+
+/* Nếu muốn khi chọn active */
+.menu-sidebar .ant-menu-submenu .ant-menu-item-selected {
+  background-color: #fb8500 !important;
+  color: white !important;
+}
+
+/* Menu root: item đầu tiên được chọn */
+.menu-sidebar .ant-menu-root > .ant-menu-item:first-child.ant-menu-item-selected {
+  background-color: orange !important;
+  padding-inline: 26px !important;
+  color: white !important;
 }

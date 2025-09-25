@@ -30,7 +30,7 @@ export default function HeaderAdmin({ handleSidebar, isShowSidebar }: Props) {
   }
 
   return (
-    <header className="sticky top-0 left-0 z-10 bg-white dark:bg-darkPrimary flex items-center justify-between p-3 border-b border-gray-200 dark:border-darkBorder" >
+    <header className="sticky top-0 left-0 z-10 bg-gray-900 flex items-center justify-between p-3 border-b border-gray-200 dark:border-darkBorder">
       <Menu color={"orange"} size={28} onClick={handleSideBarFunc} />
       <div className="flex items-center gap-2">
         <div className="flex items-center gap-1 text-black font-semibold duration-200 transition ease-linear cursor-pointer">
@@ -39,7 +39,7 @@ export default function HeaderAdmin({ handleSidebar, isShowSidebar }: Props) {
           <div className="ml-1">
             <span className="text-xs dark:text-white">{renderRoleTag()}</span>
             {/* <span className="block text-[13px] truncate w-32 dark:text-white">{nameUser}</span> */}
-            <span className="block text-[13px] truncate w-32 dark:text-white">Admin</span>
+            <span className="block text-[13px] truncate w-32 text-white">Admin full quyền</span>
           </div>
         </div>
       </div>

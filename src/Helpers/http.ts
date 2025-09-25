@@ -1,4 +1,4 @@
-import axios, { AxiosInstance } from "axios"
+import axios, { AxiosInstance, InternalAxiosRequestConfig } from "axios"
 import {
   clearLS,
   getAccessTokenFromLS,
@@ -81,61 +81,57 @@ class http {
           //
         }
         if (isError401(error)) {
-          // const config = error.response?.config || ({ headers: {} } as InternalAxiosRequestConfig)
-          // const { url } = config
+          const config = error.response?.config || ({ headers: {} } as InternalAxiosRequestConfig)
+          const { url } = config
           // lỗi Unauthorized (401) có nhiều trường hợp
           // - token không đúng
           // - không truyền token
           // - token hết hạn*
 
           // nếu là lỗi accessToken hết hạn thì tạo mới accessToken
-          // if (
-          //   isAxiosExpiredTokenError<MessageResponse>(error, "AccessToken expired") &&
-          //   url !== "/users/refresh-token"
-          // ) {
-          //   this.refreshTokenRequest = this.refreshTokenRequest ? this.refreshTokenRequest : this.handleRefreshToken()
-
-          //   // nếu không return ở đây nó sẽ chạy xuống bên dưới
-          //   return this.refreshTokenRequest.then((accessToken) => {
-          //     if (error.response?.config.headers) {
-          //       return this.instance({
-          //         ...config,
-          //         headers: { ...config.headers, Authorization: `Bearer ${accessToken}` } // gửi lại lên server accessToken mới
-          //       })
-          //     }
-          //   })
-          // }
-
-          if (isAxiosExpiredTokenError<MessageResponse>(error, "RefreshToken expired")) {
-            // nếu refresh-token hết hạn thì nó clearLS
-            this.accessToken = ""
-            clearLS()
-            toast.error("Phiên làm việc hết hạn", { autoClose: 1500 })
+          if (isAxiosExpiredTokenError<MessageResponse>(error, "Unauthenticated.") && url !== "/api/auth/refresh") {
+            this.refreshTokenRequest = this.refreshTokenRequest ? this.refreshTokenRequest : this.handleRefreshToken()
+            // nếu không return ở đây nó sẽ chạy xuống bên dưới
+            return this.refreshTokenRequest.then((accessToken) => {
+              if (error.response?.config.headers) {
+                return this.instance({
+                  ...config,
+                  headers: { ...config.headers, Authorization: `Bearer ${accessToken}` } // gửi lại lên server accessToken mới
+                })
+              }
+            })
           }
+
+          // if (isAxiosExpiredTokenError<MessageResponse>(error, "RefreshToken expired")) {
+          //   // nếu refresh-token hết hạn thì nó clearLS
+          //   this.accessToken = ""
+          //   clearLS()
+          //   toast.error("Phiên làm việc hết hạn", { autoClose: 1500 })
+          // }
         }
         return Promise.reject(error)
       }
     )
   }
 
-  // private handleRefreshToken() {
-  //   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  //   return this.instance
-  //     .post<SuccessResponse<{ accessToken: string }>>("/users/refresh-token")
-  //     .then((res) => {
-  //       const { accessToken } = res.data.result
-  //       this.accessToken = accessToken
-  //       this.refreshTokenRequest = null
-  //       setAccessTokenToLS(accessToken)
-  //       return accessToken
-  //     })
-  //     .catch((err) => {
-  //       clearLS()
-  //       this.accessToken = ""
-  //       this.refreshTokenRequest = null
-  //       throw err
-  //     })
-  // }
+  private handleRefreshToken() {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return this.instance
+      .post<SuccessResponse<{ access_token: string }>>("/api/auth/refresh")
+      .then((res) => {
+        const { access_token } = res.data.data
+        this.accessToken = access_token
+        this.refreshTokenRequest = null
+        setAccessTokenToLS(access_token)
+        return access_token
+      })
+      .catch((err) => {
+        clearLS()
+        this.accessToken = ""
+        this.refreshTokenRequest = null
+        throw err
+      })
+  }
 }
 
 export const httpRaw = new http()

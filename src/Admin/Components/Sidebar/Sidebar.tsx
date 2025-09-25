@@ -64,7 +64,7 @@ export default function Sidebar() {
     {
       key: "sub0",
       label: (
-        <Link to={path.AdminDashboard} className=" font-semibold text-[15px] text-black">
+        <Link to={path.AdminDashboard} className=" font-semibold text-[15px]">
           Thống kê hệ thống
         </Link>
       )
@@ -74,16 +74,16 @@ export default function Sidebar() {
     },
     {
       key: "sub1",
-      label: <div className="font-semibold text-[15px] text-black">Quản lý bàn</div>,
+      label: <div className="font-semibold text-[15px] text-white">Quản lý bàn</div>,
       children: [
         {
           key: "1",
           label: (
             <SidebarItem
-              className={`${location.pathname.startsWith(sideBarList[1].path) ? "text-[14px] text-[#3b82f6] font-semibold" : "text-[14px] text-black font-normal hover:text-[#495057] duration-200 ease-in"}`}
+              className={`${location.pathname.startsWith(sideBarList[1].path) ? "text-[14px] text-white font-semibold" : "text-[14px] text-white font-normal hover:text-[#495057] duration-200 ease-in"}`}
               classNameWrapper={`flex items-center gap-2 cursor-pointer`}
               icon={React.createElement(sideBarList[1].icon, {
-                color: location.pathname.startsWith(sideBarList[1].path) ? "#3b82f6" : "black"
+                color: location.pathname.startsWith(sideBarList[1].path) ? "white" : "white"
               })}
               nameSideBar={sideBarList[1].name}
               path={sideBarList[1].path}
@@ -94,10 +94,10 @@ export default function Sidebar() {
           key: "2",
           label: (
             <SidebarItem
-              className={`${location.pathname.startsWith(sideBarList[2].path) ? "text-[14px] text-[#3b82f6] font-semibold" : "text-[14px] text-black font-normal hover:text-[#495057] duration-200 ease-in"}`}
+              className={`${location.pathname.startsWith(sideBarList[2].path) ? "text-[14px] text-white font-semibold" : "text-[14px] text-white font-normal hover:text-[#495057] duration-200 ease-in"}`}
               classNameWrapper={`flex items-center gap-2 cursor-pointer`}
               icon={React.createElement(sideBarList[2].icon, {
-                color: location.pathname.startsWith(sideBarList[2].path) ? "#3b82f6" : "black"
+                color: location.pathname.startsWith(sideBarList[2].path) ? "white" : "white"
               })}
               nameSideBar={sideBarList[2].name}
               path={sideBarList[2].path}
@@ -111,16 +111,16 @@ export default function Sidebar() {
     },
     {
       key: "sub2",
-      label: <div className="font-semibold text-[15px] text-black">Quản lý Nhân sự</div>,
+      label: <div className="font-semibold text-[15px] text-white">Quản lý Nhân sự</div>,
       children: [
         {
           key: "3",
           label: (
             <SidebarItem
-              className={`${location.pathname.startsWith(sideBarList[3].path) ? "text-[14px] text-[#3b82f6] font-semibold" : "text-[14px] text-black font-normal hover:text-[#495057] duration-200 ease-in"}`}
+              className={`${location.pathname.startsWith(sideBarList[3].path) ? "text-[14px] text-white font-semibold" : "text-[14px] text-white font-normal hover:text-[#495057] duration-200 ease-in"}`}
               classNameWrapper={`flex items-center gap-2 cursor-pointer`}
               icon={React.createElement(sideBarList[3].icon, {
-                color: location.pathname.startsWith(sideBarList[3].path) ? "#3b82f6" : "black"
+                color: location.pathname.startsWith(sideBarList[3].path) ? "white" : "white"
               })}
               nameSideBar={sideBarList[3].name}
               path={sideBarList[3].path}
@@ -131,10 +131,10 @@ export default function Sidebar() {
           key: "4",
           label: (
             <SidebarItem
-              className={`${location.pathname.startsWith(sideBarList[4].path) ? "text-[14px] text-[#3b82f6] font-semibold" : "text-[14px] text-black font-normal hover:text-[#495057] duration-200 ease-in"}`}
+              className={`${location.pathname.startsWith(sideBarList[4].path) ? "text-[14px] text-white font-semibold" : "text-[14px] text-white font-normal hover:text-[#495057] duration-200 ease-in"}`}
               classNameWrapper={`flex items-center gap-2 cursor-pointer`}
               icon={React.createElement(sideBarList[4].icon, {
-                color: location.pathname.startsWith(sideBarList[4].path) ? "#3b82f6" : "black"
+                color: location.pathname.startsWith(sideBarList[4].path) ? "white" : "white"
               })}
               nameSideBar={sideBarList[4].name}
               path={sideBarList[4].path}
@@ -145,10 +145,10 @@ export default function Sidebar() {
           key: "5",
           label: (
             <SidebarItem
-              className={`${location.pathname.startsWith(sideBarList[5].path) ? "text-[14px] text-[#3b82f6] font-semibold" : "text-[14px] text-black font-normal hover:text-[#495057] duration-200 ease-in"}`}
+              className={`${location.pathname.startsWith(sideBarList[5].path) ? "text-[14px] text-white font-semibold" : "text-[14px] text-white font-normal hover:text-[#495057] duration-200 ease-in"}`}
               classNameWrapper={`flex items-center gap-2 cursor-pointer`}
               icon={React.createElement(sideBarList[5].icon, {
-                color: location.pathname.startsWith(sideBarList[5].path) ? "#3b82f6" : "black"
+                color: location.pathname.startsWith(sideBarList[5].path) ? "white" : "white"
               })}
               nameSideBar={sideBarList[5].name}
               path={sideBarList[5].path}
@@ -162,16 +162,16 @@ export default function Sidebar() {
     },
     {
       key: "sub3",
-      label: <div className="font-semibold text-[15px] text-black">Quản lý Menu</div>,
+      label: <div className="font-semibold text-[15px] text-white">Quản lý Menu</div>,
       children: [
         {
           key: "6",
           label: (
             <SidebarItem
-              className={`${location.pathname.startsWith(sideBarList[6].path) ? "text-[14px] text-[#3b82f6] font-semibold" : "text-[14px] text-black font-normal hover:text-[#495057] duration-200 ease-in"}`}
+              className={`${location.pathname.startsWith(sideBarList[6].path) ? "text-[14px] text-white font-semibold" : "text-[14px] text-white font-normal hover:text-[#495057] duration-200 ease-in"}`}
               classNameWrapper={`flex items-center gap-2 cursor-pointer`}
               icon={React.createElement(sideBarList[6].icon, {
-                color: location.pathname.startsWith(sideBarList[6].path) ? "#3b82f6" : "black"
+                color: location.pathname.startsWith(sideBarList[6].path) ? "white" : "white"
               })}
               nameSideBar={sideBarList[6].name}
               path={sideBarList[6].path}
@@ -182,10 +182,10 @@ export default function Sidebar() {
           key: "7",
           label: (
             <SidebarItem
-              className={`${location.pathname.startsWith(sideBarList[7].path) ? "text-[14px] text-[#3b82f6] font-semibold" : "text-[14px] text-black font-normal hover:text-[#495057] duration-200 ease-in"}`}
+              className={`${location.pathname.startsWith(sideBarList[7].path) ? "text-[14px] text-white font-semibold" : "text-[14px] text-white font-normal hover:text-[#495057] duration-200 ease-in"}`}
               classNameWrapper={`flex items-center gap-2 cursor-pointer`}
               icon={React.createElement(sideBarList[7].icon, {
-                color: location.pathname.startsWith(sideBarList[7].path) ? "#3b82f6" : "black"
+                color: location.pathname.startsWith(sideBarList[7].path) ? "white" : "white"
               })}
               nameSideBar={sideBarList[7].name}
               path={sideBarList[7].path}
@@ -199,16 +199,16 @@ export default function Sidebar() {
     },
     {
       key: "sub4",
-      label: <div className="font-semibold text-[15px] text-black">Quản lý Nguyên liệu & kho</div>,
+      label: <div className="font-semibold text-[15px] text-white">Quản lý Nguyên liệu & kho</div>,
       children: [
         {
           key: "8",
           label: (
             <SidebarItem
-              className={`${location.pathname.startsWith(sideBarList[8].path) ? "text-[14px] text-[#3b82f6] font-semibold" : "text-[14px] text-black font-normal hover:text-[#495057] duration-200 ease-in"}`}
+              className={`${location.pathname.startsWith(sideBarList[8].path) ? "text-[14px] text-white font-semibold" : "text-[14px] text-white font-normal hover:text-[#495057] duration-200 ease-in"}`}
               classNameWrapper={`flex items-center gap-2 cursor-pointer`}
               icon={React.createElement(sideBarList[8].icon, {
-                color: location.pathname.startsWith(sideBarList[8].path) ? "#3b82f6" : "black"
+                color: location.pathname.startsWith(sideBarList[8].path) ? "white" : "white"
               })}
               nameSideBar={sideBarList[8].name}
               path={sideBarList[8].path}
@@ -219,10 +219,10 @@ export default function Sidebar() {
           key: "9",
           label: (
             <SidebarItem
-              className={`${location.pathname.startsWith(sideBarList[9].path) ? "text-[14px] text-[#3b82f6] font-semibold" : "text-[14px] text-black font-normal hover:text-[#495057] duration-200 ease-in"}`}
+              className={`${location.pathname.startsWith(sideBarList[9].path) ? "text-[14px] text-white font-semibold" : "text-[14px] text-white font-normal hover:text-[#495057] duration-200 ease-in"}`}
               classNameWrapper={`flex items-center gap-2 cursor-pointer`}
               icon={React.createElement(sideBarList[9].icon, {
-                color: location.pathname.startsWith(sideBarList[9].path) ? "#3b82f6" : "black"
+                color: location.pathname.startsWith(sideBarList[9].path) ? "white" : "white"
               })}
               nameSideBar={sideBarList[9].name}
               path={sideBarList[9].path}
@@ -233,10 +233,10 @@ export default function Sidebar() {
           key: "10",
           label: (
             <SidebarItem
-              className={`${location.pathname.startsWith(sideBarList[10].path) ? "text-[14px] text-[#3b82f6] font-semibold" : "text-[14px] text-black font-normal hover:text-[#495057] duration-200 ease-in"}`}
+              className={`${location.pathname.startsWith(sideBarList[10].path) ? "text-[14px] text-white font-semibold" : "text-[14px] text-white font-normal hover:text-[#495057] duration-200 ease-in"}`}
               classNameWrapper={`flex items-center gap-2 cursor-pointer`}
               icon={React.createElement(sideBarList[10].icon, {
-                color: location.pathname.startsWith(sideBarList[10].path) ? "#3b82f6" : "black"
+                color: location.pathname.startsWith(sideBarList[10].path) ? "white" : "white"
               })}
               nameSideBar={sideBarList[10].name}
               path={sideBarList[10].path}
@@ -247,10 +247,10 @@ export default function Sidebar() {
           key: "11",
           label: (
             <SidebarItem
-              className={`${location.pathname.startsWith(sideBarList[11].path) ? "text-[14px] text-[#3b82f6] font-semibold" : "text-[14px] text-black font-normal hover:text-[#495057] duration-200 ease-in"}`}
+              className={`${location.pathname.startsWith(sideBarList[11].path) ? "text-[14px] text-white font-semibold" : "text-[14px] text-white font-normal hover:text-[#495057] duration-200 ease-in"}`}
               classNameWrapper={`flex items-center gap-2 cursor-pointer`}
               icon={React.createElement(sideBarList[11].icon, {
-                color: location.pathname.startsWith(sideBarList[11].path) ? "#3b82f6" : "black"
+                color: location.pathname.startsWith(sideBarList[11].path) ? "white" : "white"
               })}
               nameSideBar={sideBarList[11].name}
               path={sideBarList[11].path}
@@ -261,10 +261,10 @@ export default function Sidebar() {
           key: "12",
           label: (
             <SidebarItem
-              className={`${location.pathname.startsWith(sideBarList[12].path) ? "text-[14px] text-[#3b82f6] font-semibold" : "text-[14px] text-black font-normal hover:text-[#495057] duration-200 ease-in"}`}
+              className={`${location.pathname.startsWith(sideBarList[12].path) ? "text-[14px] text-white font-semibold" : "text-[14px] text-white font-normal hover:text-[#495057] duration-200 ease-in"}`}
               classNameWrapper={`flex items-center gap-2 cursor-pointer`}
               icon={React.createElement(sideBarList[12].icon, {
-                color: location.pathname.startsWith(sideBarList[12].path) ? "#3b82f6" : "black"
+                color: location.pathname.startsWith(sideBarList[12].path) ? "white" : "white"
               })}
               nameSideBar={sideBarList[12].name}
               path={sideBarList[12].path}
@@ -275,10 +275,10 @@ export default function Sidebar() {
           key: "13",
           label: (
             <SidebarItem
-              className={`${location.pathname.startsWith(sideBarList[13].path) ? "text-[14px] text-[#3b82f6] font-semibold" : "text-[14px] text-black font-normal hover:text-[#495057] duration-200 ease-in"}`}
+              className={`${location.pathname.startsWith(sideBarList[13].path) ? "text-[14px] text-white font-semibold" : "text-[14px] text-white font-normal hover:text-[#495057] duration-200 ease-in"}`}
               classNameWrapper={`flex items-center gap-2 cursor-pointer`}
               icon={React.createElement(sideBarList[13].icon, {
-                color: location.pathname.startsWith(sideBarList[13].path) ? "#3b82f6" : "black"
+                color: location.pathname.startsWith(sideBarList[13].path) ? "white" : "white"
               })}
               nameSideBar={sideBarList[13].name}
               path={sideBarList[13].path}
@@ -292,16 +292,16 @@ export default function Sidebar() {
     },
     {
       key: "sub5",
-      label: <div className="font-semibold text-[15px] text-black">Quản lý Tài chính</div>,
+      label: <div className="font-semibold text-[15px] text-white">Quản lý Tài chính</div>,
       children: [
         {
           key: "14",
           label: (
             <SidebarItem
-              className={`${location.pathname.startsWith(sideBarList[14].path) ? "text-[14px] text-[#3b82f6] font-semibold" : "text-[14px] text-black font-normal hover:text-[#495057] duration-200 ease-in"}`}
+              className={`${location.pathname.startsWith(sideBarList[14].path) ? "text-[14px] text-white font-semibold" : "text-[14px] text-white font-normal hover:text-[#495057] duration-200 ease-in"}`}
               classNameWrapper={`flex items-center gap-2 cursor-pointer`}
               icon={React.createElement(sideBarList[14].icon, {
-                color: location.pathname.startsWith(sideBarList[14].path) ? "#3b82f6" : "black"
+                color: location.pathname.startsWith(sideBarList[14].path) ? "white" : "white"
               })}
               nameSideBar={sideBarList[14].name}
               path={sideBarList[14].path}
@@ -312,10 +312,10 @@ export default function Sidebar() {
           key: "15",
           label: (
             <SidebarItem
-              className={`${location.pathname.startsWith(sideBarList[15].path) ? "text-[14px] text-[#3b82f6] font-semibold" : "text-[14px] text-black font-normal hover:text-[#495057] duration-200 ease-in"}`}
+              className={`${location.pathname.startsWith(sideBarList[15].path) ? "text-[14px] text-white font-semibold" : "text-[14px] text-white font-normal hover:text-[#495057] duration-200 ease-in"}`}
               classNameWrapper={`flex items-center gap-2 cursor-pointer`}
               icon={React.createElement(sideBarList[15].icon, {
-                color: location.pathname.startsWith(sideBarList[15].path) ? "#3b82f6" : "black"
+                color: location.pathname.startsWith(sideBarList[15].path) ? "white" : "white"
               })}
               nameSideBar={sideBarList[15].name}
               path={sideBarList[15].path}
@@ -326,10 +326,10 @@ export default function Sidebar() {
           key: "16",
           label: (
             <SidebarItem
-              className={`${location.pathname.startsWith(sideBarList[16].path) ? "text-[14px] text-[#3b82f6] font-semibold" : "text-[14px] text-black font-normal hover:text-[#495057] duration-200 ease-in"}`}
+              className={`${location.pathname.startsWith(sideBarList[16].path) ? "text-[14px] text-white font-semibold" : "text-[14px] text-white font-normal hover:text-[#495057] duration-200 ease-in"}`}
               classNameWrapper={`flex items-center gap-2 cursor-pointer`}
               icon={React.createElement(sideBarList[16].icon, {
-                color: location.pathname.startsWith(sideBarList[16].path) ? "#3b82f6" : "black"
+                color: location.pathname.startsWith(sideBarList[16].path) ? "white" : "white"
               })}
               nameSideBar={sideBarList[16].name}
               path={sideBarList[16].path}
@@ -340,10 +340,10 @@ export default function Sidebar() {
           key: "17",
           label: (
             <SidebarItem
-              className={`${location.pathname.startsWith(sideBarList[17].path) ? "text-[14px] text-[#3b82f6] font-semibold" : "text-[14px] text-black font-normal hover:text-[#495057] duration-200 ease-in"}`}
+              className={`${location.pathname.startsWith(sideBarList[17].path) ? "text-[14px] text-white font-semibold" : "text-[14px] text-white font-normal hover:text-[#495057] duration-200 ease-in"}`}
               classNameWrapper={`flex items-center gap-2 cursor-pointer`}
               icon={React.createElement(sideBarList[17].icon, {
-                color: location.pathname.startsWith(sideBarList[17].path) ? "#3b82f6" : "black"
+                color: location.pathname.startsWith(sideBarList[17].path) ? "white" : "white"
               })}
               nameSideBar={sideBarList[17].name}
               path={sideBarList[17].path}
@@ -357,16 +357,16 @@ export default function Sidebar() {
     },
     {
       key: "sub6",
-      label: <div className="font-semibold text-[15px] text-black">Quản lý Đánh giá & thông báo</div>,
+      label: <div className="font-semibold text-[15px] text-white">Quản lý Đánh giá & thông báo</div>,
       children: [
         {
-          key: "11",
+          key: "18",
           label: (
             <SidebarItem
-              className={`${location.pathname.startsWith(sideBarList[2].path) ? "text-[14px] text-[#3b82f6] font-semibold" : "text-[14px] text-black font-normal hover:text-[#495057] duration-200 ease-in"}`}
+              className={`${location.pathname.startsWith(sideBarList[2].path) ? "text-[14px] text-white font-semibold" : "text-[14px] text-white font-normal hover:text-[#495057] duration-200 ease-in"}`}
               classNameWrapper={`flex items-center gap-2 cursor-pointer`}
               icon={React.createElement(sideBarList[2].icon, {
-                color: location.pathname.startsWith(sideBarList[2].path) ? "#3b82f6" : "black"
+                color: location.pathname.startsWith(sideBarList[2].path) ? "white" : "white"
               })}
               nameSideBar={sideBarList[2].name}
               path={sideBarList[2].path}
@@ -374,13 +374,13 @@ export default function Sidebar() {
           )
         },
         {
-          key: "12",
+          key: "19",
           label: (
             <SidebarItem
-              className={`${location.pathname.startsWith(sideBarList[9].path) ? "text-[14px] text-[#3b82f6] font-semibold" : "text-[14px] text-black font-normal hover:text-[#495057] duration-200 ease-in"}`}
+              className={`${location.pathname.startsWith(sideBarList[9].path) ? "text-[14px] text-white font-semibold" : "text-[14px] text-white font-normal hover:text-[#495057] duration-200 ease-in"}`}
               classNameWrapper={`flex items-center gap-2 cursor-pointer`}
               icon={React.createElement(sideBarList[9].icon, {
-                color: location.pathname.startsWith(sideBarList[9].path) ? "#3b82f6" : "black"
+                color: location.pathname.startsWith(sideBarList[9].path) ? "white" : "white"
               })}
               nameSideBar={sideBarList[9].name}
               path={sideBarList[9].path}
@@ -394,16 +394,16 @@ export default function Sidebar() {
     },
     {
       key: "sub7",
-      label: <div className="font-semibold text-[15px] text-black">Quản lý Đánh giá</div>,
+      label: <div className="font-semibold text-[15px] text-white">Quản lý Đánh giá</div>,
       children: [
         {
-          key: "18",
+          key: "20",
           label: (
             <SidebarItem
-              className={`${location.pathname.startsWith(sideBarList[18].path) ? "text-[14px] text-[#3b82f6] font-semibold" : "text-[14px] text-black font-normal hover:text-[#495057] duration-200 ease-in"}`}
+              className={`${location.pathname.startsWith(sideBarList[18].path) ? "text-[14px] text-white font-semibold" : "text-[14px] text-white font-normal hover:text-[#495057] duration-200 ease-in"}`}
               classNameWrapper={`flex items-center gap-2 cursor-pointer`}
               icon={React.createElement(sideBarList[18].icon, {
-                color: location.pathname.startsWith(sideBarList[18].path) ? "#3b82f6" : "black"
+                color: location.pathname.startsWith(sideBarList[18].path) ? "white" : "white"
               })}
               nameSideBar={sideBarList[18].name}
               path={sideBarList[18].path}
@@ -417,16 +417,16 @@ export default function Sidebar() {
     },
     {
       key: "sub8",
-      label: <div className="font-semibold text-[15px] text-black">Cấu hình & bảo mật</div>,
+      label: <div className="font-semibold text-[15px] text-white">Cấu hình & bảo mật</div>,
       children: [
         {
-          key: "19",
+          key: "21",
           label: (
             <SidebarItem
-              className={`${location.pathname.startsWith(sideBarList[19].path) ? "text-[14px] text-[#3b82f6] font-semibold" : "text-[14px] text-black font-normal hover:text-[#495057] duration-200 ease-in"}`}
+              className={`${location.pathname.startsWith(sideBarList[19].path) ? "text-[14px] text-white font-semibold" : "text-[14px] text-white font-normal hover:text-[#495057] duration-200 ease-in"}`}
               classNameWrapper={`flex items-center gap-2 cursor-pointer`}
               icon={React.createElement(sideBarList[19].icon, {
-                color: location.pathname.startsWith(sideBarList[19].path) ? "#3b82f6" : "black"
+                color: location.pathname.startsWith(sideBarList[19].path) ? "white" : "white"
               })}
               nameSideBar={sideBarList[19].name}
               path={sideBarList[19].path}
@@ -434,13 +434,13 @@ export default function Sidebar() {
           )
         },
         {
-          key: "20",
+          key: "22",
           label: (
             <SidebarItem
-              className={`${location.pathname.startsWith(sideBarList[20].path) ? "text-[14px] text-[#3b82f6] font-semibold" : "text-[14px] text-black font-normal hover:text-[#495057] duration-200 ease-in"}`}
+              className={`${location.pathname.startsWith(sideBarList[20].path) ? "text-[14px] text-white font-semibold" : "text-[14px] text-white font-normal hover:text-[#495057] duration-200 ease-in"}`}
               classNameWrapper={`flex items-center gap-2 cursor-pointer`}
               icon={React.createElement(sideBarList[20].icon, {
-                color: location.pathname.startsWith(sideBarList[20].path) ? "#3b82f6" : "black"
+                color: location.pathname.startsWith(sideBarList[20].path) ? "white" : "white"
               })}
               nameSideBar={sideBarList[20].name}
               path={sideBarList[20].path}
@@ -448,13 +448,13 @@ export default function Sidebar() {
           )
         },
         {
-          key: "21",
+          key: "23",
           label: (
             <SidebarItem
-              className={`${location.pathname.startsWith(sideBarList[21].path) ? "text-[14px] text-[#3b82f6] font-semibold" : "text-[14px] text-black font-normal hover:text-[#495057] duration-200 ease-in"}`}
+              className={`${location.pathname.startsWith(sideBarList[21].path) ? "text-[14px] text-white font-semibold" : "text-[14px] text-white font-normal hover:text-[#495057] duration-200 ease-in"}`}
               classNameWrapper={`flex items-center gap-2 cursor-pointer`}
               icon={React.createElement(sideBarList[21].icon, {
-                color: location.pathname.startsWith(sideBarList[21].path) ? "#3b82f6" : "black"
+                color: location.pathname.startsWith(sideBarList[21].path) ? "white" : "white"
               })}
               nameSideBar={sideBarList[21].name}
               path={sideBarList[21].path}
@@ -466,21 +466,9 @@ export default function Sidebar() {
   ]
 
   return (
-    <div
-      className="sticky top-0 left-0 py-4 bg-white h-screen border-r border-[#dedede] shadow-xl"
-      style={{
-        backgroundImage:
-          "radial-gradient(circle 400px at 6.8% 8.3%, rgba(255,244,169,1) 0%, rgba(255,244,234,1) 100.2%)"
-      }}
-    >
+    <div className="sticky top-0 left-0 py-4 bg-gray-900 h-screen border-r border-[#dedede] shadow-xl">
       <div>
-        <div
-          className="mx-4 flex items-center justify-center gap-1 py-2 px-2 rounded-lg"
-          style={{
-            backgroundImage:
-              "radial-gradient(circle farthest-corner at 10% 20%, rgba(214,40,40,1) 0%, rgba(255,195,0,1) 90%)"
-          }}
-        >
+        <div className="mx-4 flex items-center justify-center gap-1 py-2 px-2 rounded-lg">
           <div className="w-14 h-12">
             <img src={assets.icons.vector} alt="Logo" className="w-full h-full" />
           </div>
@@ -492,12 +480,10 @@ export default function Sidebar() {
             style={{
               maxHeight: "calc(100vh - 190px)",
               overflowY: "auto",
-              overflowX: "hidden",
-              backgroundImage:
-                "radial-gradient(circle 400px at 6.8% 8.3%, rgba(255,244,169,1) 0%, rgba(255,244,234,1) 100.2%)"
+              overflowX: "hidden"
             }}
             defaultOpenKeys={["sub1", "sub2", "sub3"]}
-            className="bg-white menu-scroll"
+            className="bg-gray-900 menu-scroll"
             items={items}
           />
         </div>
@@ -506,12 +492,12 @@ export default function Sidebar() {
           <div className="m-4">
             <Link
               to={path.AdminDashboard}
-              className={`text-[14px] flex items-center gap-1 px-3 py-2 w-full hover:text-primaryBlue hover:underline duration-100 ${location.pathname.startsWith(path.AdminDashboard) ? "text-primaryBlue font-semibold" : "text-black"}`}
+              className={`text-[14px] flex items-center gap-1 px-3 py-2 w-full hover:text-primaryBlue hover:underline duration-100 ${location.pathname.startsWith(path.AdminDashboard) ? "text-primaryBlue font-semibold" : "text-white"}`}
             >
               Thông tin tài khoản
               <Info size={16} />
             </Link>
-            <button className="text-[14px] flex items-center gap-1 px-3 py-2 w-full hover:text-primaryBlue hover:underline duration-100">
+            <button className="text-[14px] text-white flex items-center gap-1 px-3 py-2 w-full hover:text-primaryBlue hover:underline duration-100">
               Đăng xuất
               <LogOut size={16} />
             </button>

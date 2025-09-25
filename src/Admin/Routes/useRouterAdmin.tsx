@@ -9,6 +9,7 @@ import { useAppStore } from "src/StateGlobal/zustand"
 const ManageTable = lazy(() => import("../Pages/ManageTable"))
 const AdminLogin = lazy(() => import("../Pages/AdminLogin"))
 const ManageDashboard = lazy(() => import("../Pages/ManageDashboard"))
+const ManageReservation = lazy(() => import("../Pages/ManageReservation"))
 
 const ProtectedRoute = () => {
   const { isAuthenticated } = useAppStore()
@@ -59,6 +60,14 @@ export default function useRouterAdmin() {
                   element: (
                     <Suspense>
                       <ManageTable />
+                    </Suspense>
+                  )
+                },
+                {
+                  path: path.AdminReservations,
+                  element: (
+                    <Suspense>
+                      <ManageReservation />
                     </Suspense>
                   )
                 }
