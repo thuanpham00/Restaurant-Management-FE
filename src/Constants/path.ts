@@ -28,5 +28,7 @@ export const path = {
   AdminUsers: "/admin/users",
   AdminRoles: "/admin/roles",
   AdminPermissions: "/admin/permissions",
-  AdminNotFound: "/admin/not-found"
+  AdminNotFound: "/admin/not-found",
+
+  AdminProfile: "/admin/profile"
 }

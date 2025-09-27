@@ -57,10 +57,10 @@ class http {
           setUserIdToLS(data.data.user.id)
           // ở server sẽ tự động lưu RT vào cookie ở trình duyệt
         }
-        if (response.config.url === "users/logout") {
+        if (response.config.url === "/api/auth/logout") {
           clearLS()
+          toast.success(response.data.message, { autoClose: 1500 })
           this.accessToken = ""
-          // ở server sẽ tự động xóa cookie đã lưu trên trình duyệt
         }
         return response
       },
@@ -102,12 +102,12 @@ class http {
             })
           }
 
-          // if (isAxiosExpiredTokenError<MessageResponse>(error, "RefreshToken expired")) {
-          //   // nếu refresh-token hết hạn thì nó clearLS
-          //   this.accessToken = ""
-          //   clearLS()
-          //   toast.error("Phiên làm việc hết hạn", { autoClose: 1500 })
-          // }
+          if (isAxiosExpiredTokenError<MessageResponse>(error, "Invalid or expired refresh token")) {
+            // nếu refresh-token hết hạn thì nó clearLS
+            this.accessToken = ""
+            clearLS()
+            toast.error("Phiên làm việc hết hạn", { autoClose: 1500 })
+          }
         }
         return Promise.reject(error)
       }

@@ -45,3 +45,7 @@
   padding-inline: 26px !important;
   color: white !important;
 }
+
+.menu-sidebar .ant-menu-submenu-arrow {
+  color: white;
+}

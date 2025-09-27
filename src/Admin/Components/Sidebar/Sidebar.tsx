@@ -1,4 +1,4 @@
-import { Link, useLocation } from "react-router-dom"
+import { Link, useLocation, useNavigate } from "react-router-dom"
 import {
   LayoutDashboard,
   UtensilsCrossed,
@@ -31,9 +31,14 @@ import React from "react"
 import { Menu, MenuProps } from "antd"
 import "./Sidebar.css"
 import { assets } from "src/Assets/assets"
+import { useMutation } from "@tanstack/react-query"
+import { adminAPI } from "src/Apis/admin.api"
+import { useAppStore } from "src/StateGlobal/zustand"
 
 export default function Sidebar() {
   const location = useLocation()
+  const navigate = useNavigate()
+  const { setIsAuthenticated, setAvatar, setNameUser, setRole, setUserId } = useAppStore()
 
   const sideBarList = [
     { name: "Thống kê", icon: LayoutDashboard, path: path.AdminDashboard },
@@ -465,6 +470,27 @@ export default function Sidebar() {
     }
   ]
 
+  const logoutMutation = useMutation({
+    mutationFn: () => {
+      return adminAPI.auth.logout()
+    }
+  })
+
+  const handleLogout = () => {
+    logoutMutation.mutate(undefined, {
+      onSuccess: (response) => {
+        console.log(response)
+        setIsAuthenticated(false)
+        setNameUser(null)
+        setRole(null)
+        setAvatar(null)
+        setUserId(null)
+
+        navigate(path.AdminLogin)
+      }
+    })
+  }
+
   return (
     <div className="sticky top-0 left-0 py-4 bg-gray-900 h-screen border-r border-[#dedede] shadow-xl">
       <div>
@@ -491,13 +517,16 @@ export default function Sidebar() {
         <div className="absolute bottom-0 left-0 w-full">
           <div className="m-4">
             <Link
-              to={path.AdminDashboard}
-              className={`text-[14px] flex items-center gap-1 px-3 py-2 w-full hover:text-primaryBlue hover:underline duration-100 ${location.pathname.startsWith(path.AdminDashboard) ? "text-primaryBlue font-semibold" : "text-white"}`}
+              to={path.AdminProfile}
+              className={`text-[14px] flex items-center gap-1 px-3 py-2 w-full hover:text-primaryBlue hover:underline duration-100 ${location.pathname.startsWith(path.AdminProfile) ? "text-primaryBlue font-semibold" : "text-white"}`}
             >
               Thông tin tài khoản
               <Info size={16} />
             </Link>
-            <button className="text-[14px] text-white flex items-center gap-1 px-3 py-2 w-full hover:text-primaryBlue hover:underline duration-100">
+            <button
+              onClick={handleLogout}
+              className="text-[14px] text-white flex items-center gap-1 px-3 py-2 w-full hover:text-primaryBlue hover:underline duration-100"
+            >
               Đăng xuất
               <LogOut size={16} />
             </button>

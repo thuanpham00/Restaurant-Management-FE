@@ -5,6 +5,10 @@ export const adminAPI = {
   auth: {
     loginAdmin: (body: { email: string; password: string }) => {
       return Http.post<SuccessResponse<AuthResponse>>("/api/auth/login", body)
+    },
+
+    logout: () => {
+      return Http.post<SuccessResponse<AuthResponse>>("/api/auth/logout")
     }
   }
 }
