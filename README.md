@@ -6,7 +6,7 @@ Client).
 
 ## 📂 Cấu trúc thư mục
 
-``` bash
+```bash
 RestaurantManagementSystem/
 │── dist/                  # Thư mục build sau khi chạy production
 │── media/                 # Lưu trữ media (ảnh, video...)
@@ -24,7 +24,7 @@ RestaurantManagementSystem/
 │   │   └── client.api.ts  # API cho client
 │   │
 │   ├── Assets/            # Tài nguyên (ảnh, logo, ...)
-│   │   ├── img/           
+│   │   ├── img/
 │   │   └── logo/
 │   │
 │   ├── Client/            # Phần dành cho khách hàng
@@ -57,9 +57,20 @@ RestaurantManagementSystem/
 
 ## 🚀 Cách chạy dự án
 
-``` bash
-# Cài đặt dependencies
+### 1. Clone và Cài Đặt
+
+```bash
+git clone <repository-url>
+cd RestaurantManagement
+
+# cài package thư viện trên dự án
 yarn
+
+# Copy file cấu hình
+cp .env.example .env
+```
+
+```bash
 
 # Chạy môi trường development
 yarn dev
@@ -73,8 +84,7 @@ yarn preview
 
 ## 👥 Roles trong hệ thống
 
--   **Admin**: Quản lý nhà hàng, món ăn, người dùng...
--   **Client**: Xem menu, đặt bàn, đặt món ăn, thanh toán...
+- **Admin**: Quản lý nhà hàng, món ăn, người dùng...
+- **Client**: Xem menu, đặt bàn, đặt món ăn, thanh toán...
 
-------------------------------------------------------------------------
-
+---
