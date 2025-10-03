@@ -1,0 +1,32 @@
+.table-detail .ant-collapse .ant-collapse-content-box {
+  padding: 16px !important;
+  border: 1px solid #dedede;
+  border-top: 0px;
+  border-bottom: 0px;
+}
+
+.table-detail .ant-collapse .ant-collapse-header {
+  border: 1px solid #dedede;
+}
+
+.table-detail .ant-collapse .ant-collapse-item:last-child .ant-collapse-header {
+  border: 1px solid #dedede;
+  border-bottom-left-radius: 8px;
+  border-top: 0px;
+  border-bottom-right-radius: 8px;
+}
+
+.table-detail .ant-collapse .ant-collapse-item:last-child .ant-collapse-content-box {
+  border: 1px solid #dedede;
+}
+
+.table-detail .ant-collapse .ant-collapse-item:last-child.ant-collapse-item-active .ant-collapse-header {
+  border-bottom-left-radius: 0 !important;
+  border-bottom-right-radius: 0 !important;
+  border-bottom: 0 !important;
+}
+
+.table-detail .ant-collapse .ant-collapse-item:last-child.ant-collapse-item-active .ant-collapse-content-box {
+  border-bottom-left-radius: 8px !important;
+  border-bottom-right-radius: 8px !important;
+}

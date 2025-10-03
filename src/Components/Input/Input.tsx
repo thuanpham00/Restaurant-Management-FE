@@ -19,7 +19,7 @@ interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
 
 export default function Input({
   className = "relative",
-  classNameInput = "mt-1 p-2 w-full border border-black/60 rounded-lg focus:border-blue-500 focus:ring-2 outline-none text-black",
+  classNameInput = "mt-1 p-2 w-full border border-gray-200 rounded-lg focus:border-blue-500 focus:ring-2 outline-none text-black",
   classNameError = "text-red-500 text-[13px] font-semibold min-h-[1.25rem] block",
   classNameEye = "absolute right-2 top-1/2 -translate-y-1/2",
   classNameLabel,

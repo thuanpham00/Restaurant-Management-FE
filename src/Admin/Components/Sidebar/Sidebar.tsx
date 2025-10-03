@@ -67,9 +67,9 @@ export default function Sidebar() {
 
   const items: MenuProps["items"] = [
     {
-      key: "sub0",
+      key: path.AdminDashboard, // key trùng pathname
       label: (
-        <Link to={path.AdminDashboard} className=" font-semibold text-[15px]">
+        <Link to={path.AdminDashboard} className="font-semibold text-[15px]">
           Thống kê hệ thống
         </Link>
       )
@@ -82,7 +82,7 @@ export default function Sidebar() {
       label: <div className="font-semibold text-[15px] text-white">Quản lý bàn</div>,
       children: [
         {
-          key: "1",
+          key: path.AdminTables,
           label: (
             <SidebarItem
               className={`${location.pathname.startsWith(sideBarList[1].path) ? "text-[14px] text-white font-semibold" : "text-[14px] text-white font-normal hover:text-[#495057] duration-200 ease-in"}`}
@@ -502,13 +502,13 @@ export default function Sidebar() {
         </div>
         <div className="mt-4 menu-sidebar">
           <Menu
+            selectedKeys={[location.pathname]} // quan trọng
             mode="inline"
             style={{
               maxHeight: "calc(100vh - 190px)",
               overflowY: "auto",
               overflowX: "hidden"
             }}
-            defaultOpenKeys={["sub1", "sub2", "sub3"]}
             className="bg-gray-900 menu-scroll"
             items={items}
           />

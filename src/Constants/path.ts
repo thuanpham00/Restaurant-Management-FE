@@ -8,6 +8,7 @@ export const path = {
   AdminLogin: "/admin/login",
   AdminDashboard: "/admin/dashboard",
   AdminTables: "/admin/tables",
+  AdminTablesDetail: "/admin/tables/:id",
   AdminReservations: "/admin/reservations",
   AdminStaff: "/admin/staff",
   AdminShifts: "/admin/shifts",

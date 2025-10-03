@@ -17,7 +17,7 @@ body {
   font-family: "Roboto", serif;
   font-weight: 400;
   font-size: 14px;
-  background: #ececec;
+  background: #fff;
 }
 
 input,
@@ -130,4 +130,8 @@ a {
 html {
   scrollbar-width: thin; /* auto, thin, none */
   scrollbar-color: #888 #f0f0f0; /* thumb track */
+}
+
+.ant-form-item {
+  margin-inline-end: 4px !important;
 }

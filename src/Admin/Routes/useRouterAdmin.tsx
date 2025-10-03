@@ -5,6 +5,7 @@ import { path } from "src/Constants/path"
 import LayoutAuthAdmin from "../Layouts/LayoutAuthAdmin"
 import { rolesForApi } from "src/Helpers/role_permission"
 import { useAppStore } from "src/StateGlobal/zustand"
+import TableDetail from "../Pages/TableDetail"
 
 const ManageTable = lazy(() => import("../Pages/ManageTable"))
 const AdminLogin = lazy(() => import("../Pages/AdminLogin"))
@@ -60,6 +61,14 @@ export default function useRouterAdmin() {
                   element: (
                     <Suspense>
                       <ManageTable />
+                    </Suspense>
+                  )
+                },
+                {
+                  path: path.AdminTablesDetail,
+                  element: (
+                    <Suspense>
+                      <TableDetail />
                     </Suspense>
                   )
                 },
