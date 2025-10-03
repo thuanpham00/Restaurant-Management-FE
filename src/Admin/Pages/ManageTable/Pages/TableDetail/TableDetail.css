@@ -30,3 +30,8 @@
   border-bottom-left-radius: 8px !important;
   border-bottom-right-radius: 8px !important;
 }
+
+.table-detail {
+  height: calc(100vh - 100px); /* trừ header/nav nếu có */
+  overflow: hidden; /* chặn scroll ngoài */
+}

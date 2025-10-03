@@ -8,3 +8,10 @@ export type queryParamConfigTableSessions = queryParamConfig & {
   session_status?: string
   capacity?: string
 }
+
+export type queryParamConfigCategoryDish = queryParamConfig & {
+  name?: string
+  desc?: string
+}
+
+export type queryParamConfigDish = queryParamConfig & {}

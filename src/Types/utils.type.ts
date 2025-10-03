@@ -33,6 +33,35 @@ export type DiningTable = {
   created_at: string
 }
 
+export type CategoryDishes = {
+  id: string
+  name: string
+  desc: string
+  dishes_count: number
+  updated_at: string
+  created_at: string
+}
+
+export type Dishes = {
+  id: string
+  name: string
+  price: string
+  desc: string
+  category_id: string
+  cooking_time: number
+  image: null
+  is_active: boolean
+  created_at: string
+  updated_at: string
+  category: {
+    id: string
+    name: string
+    desc: string
+    created_at: string
+    updated_at: string
+  }
+}
+
 export type TableSession = {
   dining_table_id: string
   table_number: number
@@ -114,6 +143,52 @@ export type HistoryTableSession = {
     customer_gender: string
     customer_address: string
   }
+}
+
+export type HistoryTableSessionDetail = {
+  session_id: string
+  table_id: string
+  table_number: number
+  table_capacity: number
+  session_type: number
+  session_status: number
+  started_at: string
+  ended_at: string
+  customer_id: string
+  employee_id: string
+  reservation: {
+    reservation_id: string
+    customer_id: string
+    reserved_at: string
+    number_of_people: number
+    status: number
+    notes: string
+    customer_name: string
+    customer_phone: string
+    customer_gender: string
+    customer_address: string
+  }
+  orders: {
+    order_id: string
+    status: number
+    total_amount: string
+    items: {
+      order_item_id: string
+      quantity: number
+      price: string
+      total_price: string
+      status: number
+      notes: string
+      dish: {
+        dish_id: string
+        name: string
+        price: string
+        desc: string
+        cooking_time: number
+        image: string | null
+      }
+    }[]
+  }[]
 }
 
 export type PaginationLink = {

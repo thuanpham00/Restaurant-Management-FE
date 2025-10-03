@@ -31,7 +31,7 @@ export default function HeaderAdmin({ handleSidebar, isShowSidebar }: Props) {
   }
 
   return (
-    <header className="sticky top-0 left-0 z-10 bg-gray-900 flex items-center justify-between p-3 border-b border-gray-200 dark:border-darkBorder">
+    <header className="sticky top-0 left-0 z-20 bg-gray-900 flex items-center justify-between p-3 border-b border-gray-200 dark:border-darkBorder">
       <Menu color={"orange"} size={28} onClick={handleSideBarFunc} />
       <div className="flex items-center gap-2 cursor-pointer">
         <img

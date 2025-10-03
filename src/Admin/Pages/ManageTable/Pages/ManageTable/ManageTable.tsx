@@ -11,7 +11,6 @@ import "antd/dist/reset.css"
 import { createSearchParams, useNavigate, useSearchParams } from "react-router-dom"
 import { Table } from "lucide-react"
 import { Fragment, useState } from "react"
-import TableSessionItem from "./Components/TableSessionItem"
 import { toast } from "react-toastify"
 import { isError422 } from "src/Helpers/utils"
 import { queryParamConfigTableSessions } from "src/Types/queryParams.type"
@@ -19,6 +18,7 @@ import { cleanObject } from "src/Helpers/common"
 import { path } from "src/Constants/path"
 import { omit } from "lodash"
 import NavigateBack from "src/Admin/Components/NavigateBack"
+import TableSessionItem from "../../Components/TableSessionItem"
 
 export default function ManageTable() {
   const navigate = useNavigate()

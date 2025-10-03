@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { keepPreviousData, useQuery } from "@tanstack/react-query"
-import { Col, Collapse, DatePicker, Descriptions, Form, Input, Row, Spin, Table, Tag } from "antd"
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { Button, Col, Collapse, DatePicker, Descriptions, Form, Input, Row, Select, Spin, Table, Tag } from "antd"
 import { useEffect, useState } from "react"
 import { Helmet } from "react-helmet-async"
 import { useLocation } from "react-router-dom"
@@ -10,10 +10,12 @@ import { assets } from "src/Assets/assets"
 import "./TableDetail.css"
 import { TableSessionDetail, TableSessionOrder } from "src/Types/utils.type"
 import dayjs from "dayjs"
-import InfoTable from "../ManageTable/Components/InfoTable"
-import HistoryTableSession from "../ManageTable/Components/HistoryTableSession/HistoryTableSession"
+import InfoTable from "../../Components/InfoTable"
+import HistoryTableSession from "../../Components/HistoryTableSession/HistoryTableSession"
+import { CookingPot } from "lucide-react"
+import { toast } from "react-toastify"
 
-const renderSessionType = (type: number) => {
+export const renderSessionType = (type: number) => {
   switch (type) {
     case 0:
       return <Tag color="blue">Offline</Tag>
@@ -28,7 +30,7 @@ const renderSessionType = (type: number) => {
   }
 }
 
-const renderSessionStatus = (status: number) => {
+export const renderSessionStatus = (status: number) => {
   switch (status) {
     case 0:
       return <Tag color="default">Chờ</Tag>
@@ -62,24 +64,18 @@ const renderOrderStatus = (status: number) => {
   }
 }
 
-const renderOrderItemStatus = (status: number) => {
-  switch (status) {
-    case 0:
-      return <Tag color="default">Đã gọi món</Tag>
-    case 1:
-      return <Tag color="processing">Đang chế biến</Tag>
-    case 2:
-      return <Tag color="warning">Đã phục vụ</Tag>
-    case 3:
-      return <Tag color="error">Đã hủy</Tag>
-    default:
-      return <Tag>Đã gọi món</Tag>
-  }
-}
+const orderItemStatusOptions = [
+  { label: "Đã gọi món", value: 0 },
+  { label: "Đang chế biến", value: 1 },
+  { label: "Đã phục vụ", value: 2 },
+  { label: "Đã Hủy", value: 3 }
+]
 
 const { Panel } = Collapse
 
 export default function TableDetail() {
+  const queryClient = useQueryClient()
+
   const { state } = useLocation()
   const dataTable = state?.dataTable
   const nameTable = state?.tableName
@@ -129,6 +125,32 @@ export default function TableDetail() {
   const [updateTableForm] = Form.useForm()
   const tableNumber = Form.useWatch("table_number", updateTableForm)
 
+  const [orderItemListStatus, setOrderItemListStatus] = useState<Record<string, number>>({})
+
+  const handleChangeItemStatus = (orderItemId: string, newStatus: number) => {
+    setOrderItemListStatus((prev) => ({
+      ...prev,
+      [orderItemId]: newStatus // thêm mới hoặc ghi đè
+    }))
+  }
+
+  const updateListOrderItemMutation = useMutation({
+    mutationFn: (item: Record<string, number>) => {
+      return adminAPI.orderItems.updateStatusListOrderItem(item)
+    },
+    onSuccess: () => {
+      toast.success("Cập nhật trạng thái món ăn thành công!", {
+        autoClose: 1500
+      })
+      queryClient.invalidateQueries({ queryKey: ["detailTableSession", idDiningTable] })
+      queryClient.invalidateQueries({ queryKey: ["detailTableSessionOrder", dataTableSessionDetail?.session_id] })
+    }
+  })
+
+  const handleUpdateStatusOrderItemList = () => {
+    updateListOrderItemMutation.mutate(orderItemListStatus)
+  }
+
   return (
     <div className="table-detail">
       <Helmet>
@@ -142,7 +164,7 @@ export default function TableDetail() {
         <span className="text-red-500"> {dataTableSessionDetail?.dining_table_id}</span>
       </h1>
 
-      <Row gutter={16}>
+      <Row gutter={16} style={{ overflow: "hidden" }}>
         <Col span={6}>
           <InfoTable
             dataTable={dataTable}
@@ -152,7 +174,14 @@ export default function TableDetail() {
           />
           <HistoryTableSession idDiningTable={idDiningTable} />
         </Col>
-        <Col span={18}>
+        <Col
+          span={18}
+          style={{
+            height: 500,
+            overflowY: "auto",
+            overflowX: "hidden"
+          }}
+        >
           {hasSession ? (
             isFetching ? (
               <div className="flex justify-center items-center flex-col h-[200px]">
@@ -355,7 +384,14 @@ export default function TableDetail() {
                             title: "Trạng thái",
                             dataIndex: "item_status",
                             key: "item_status",
-                            render: (val: number) => renderOrderItemStatus(val),
+                            render: (val: number, record: any) => (
+                              <Select
+                                value={orderItemListStatus[record.order_item_id] || val}
+                                style={{ width: 140 }}
+                                onChange={(newStatus) => handleChangeItemStatus(record.order_item_id, newStatus)}
+                                options={orderItemStatusOptions}
+                              />
+                            ),
                             align: "center"
                           },
                           {
@@ -365,7 +401,23 @@ export default function TableDetail() {
                             align: "left"
                           }
                         ]}
+                        rowClassName={(record, index) =>
+                          index % 2 === 0
+                            ? "bg-[#f2f2f2] hover:bg-blue-50 transition-colors"
+                            : "bg-white hover:bg-blue-50 transition-colors"
+                        }
                       />
+
+                      <div className="flex justify-end">
+                        <Button
+                          className="mt-2 py-5"
+                          type="primary"
+                          icon={<CookingPot />}
+                          onClick={handleUpdateStatusOrderItemList}
+                        >
+                          Cập nhật trạng thái món ăn
+                        </Button>
+                      </div>
                     </>
                   )}
                 </Panel>

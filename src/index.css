@@ -135,3 +135,23 @@ html {
 .ant-form-item {
   margin-inline-end: 4px !important;
 }
+
+.ant-table .ant-table-tbody > tr:last-child > td:first-child {
+  border-bottom-left-radius: 10px !important;
+}
+
+/* Bo góc dưới bên phải */
+.ant-table .ant-table-tbody > tr:last-child > td:last-child {
+  border-bottom-right-radius: 10px !important;
+}
+
+.ant-table-wrapper .ant-table-container {
+  border-radius: 10px;
+  overflow: hidden; /* Quan trọng */
+}
+
+/* Xóa pseudo-element mặc định gây lòi */
+.ant-table-wrapper .ant-table-container::before,
+.ant-table-wrapper .ant-table-container::after {
+  display: none !important;
+}

@@ -5,11 +5,15 @@ import { path } from "src/Constants/path"
 import LayoutAuthAdmin from "../Layouts/LayoutAuthAdmin"
 import { rolesForApi } from "src/Helpers/role_permission"
 import { useAppStore } from "src/StateGlobal/zustand"
-import TableDetail from "../Pages/TableDetail"
+import ManageDish from "../Pages/ManageDished/Pages/ManageDish"
 
-const ManageTable = lazy(() => import("../Pages/ManageTable"))
 const AdminLogin = lazy(() => import("../Pages/AdminLogin"))
 const ManageDashboard = lazy(() => import("../Pages/ManageDashboard"))
+const ManageTable = lazy(() => import("../Pages/ManageTable/Pages/ManageTable"))
+const TableDetail = lazy(() => import("../Pages/ManageTable/Pages/TableDetail"))
+const TableSessionHistoryDetail = lazy(() => import("../Pages/ManageTable/Pages/TableSessionHistoryDetail"))
+const ManageDishCategory = lazy(() => import("../Pages/ManageDished/Pages/ManageDishCategory"))
+
 const ManageReservation = lazy(() => import("../Pages/ManageReservation"))
 
 const ProtectedRoute = () => {
@@ -73,10 +77,34 @@ export default function useRouterAdmin() {
                   )
                 },
                 {
+                  path: path.AdminTableSessionDetail,
+                  element: (
+                    <Suspense>
+                      <TableSessionHistoryDetail />
+                    </Suspense>
+                  )
+                },
+                {
                   path: path.AdminReservations,
                   element: (
                     <Suspense>
                       <ManageReservation />
+                    </Suspense>
+                  )
+                },
+                {
+                  path: path.AdminCategoryDish,
+                  element: (
+                    <Suspense>
+                      <ManageDishCategory />
+                    </Suspense>
+                  )
+                },
+                {
+                  path: path.AdminDish,
+                  element: (
+                    <Suspense>
+                      <ManageDish />
                     </Suspense>
                   )
                 }
