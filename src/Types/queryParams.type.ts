@@ -14,4 +14,13 @@ export type queryParamConfigCategoryDish = queryParamConfig & {
   desc?: string
 }
 
-export type queryParamConfigDish = queryParamConfig & {}
+export type queryParamConfigDish = queryParamConfig & {
+  name?: string
+  is_active?: string
+  category?: string
+  cooking_time?: string
+  min_price?: string
+  max_price?: string
+}
+
+export type queryParamConfigMenu = queryParamConfig & {}

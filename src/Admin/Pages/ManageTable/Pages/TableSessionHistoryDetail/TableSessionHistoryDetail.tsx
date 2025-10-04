@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Descriptions, Table, Tag, Spin, Empty, Row, Col, Card } from "antd"
+import { Descriptions, Table, Tag, Spin, Empty, Row, Col, Card, Image } from "antd"
 import { ColumnsType } from "antd/es/table"
 import { useLocation } from "react-router-dom"
 import { useQuery } from "@tanstack/react-query"
@@ -41,12 +41,20 @@ export default function TableSessionHistoryDetail() {
       render: (_: any, item: any) => (
         <div>
           {item.dish.image ? (
-            <img src={item.dish.image} alt={item.dish.dish_name} className="w-12 h-12 rounded-md object-cover" />
+            <Image
+              src={item.dish.image}
+              alt={item.dish.dish_name}
+              className="rounded-md object-cover"
+              width={64}
+              height={64}
+            />
           ) : (
-            <img
+            <Image
               src={assets.rectangles.Burger}
               alt={item.dish.dish_name}
-              className="w-12 h-12 rounded-md object-cover"
+              className="rounded-md object-cover"
+              width={64}
+              height={64}
             />
           )}
         </div>
@@ -174,7 +182,7 @@ export default function TableSessionHistoryDetail() {
                   pagination={false}
                   bordered
                   size="small"
-                  rowClassName={(record, index) =>
+                  rowClassName={(_, index) =>
                     index % 2 === 0
                       ? "bg-[#f2f2f2] hover:bg-blue-50 transition-colors"
                       : "bg-white hover:bg-blue-50 transition-colors"

@@ -2,6 +2,7 @@ import Http from "src/Helpers/http"
 import {
   queryParamConfigCategoryDish,
   queryParamConfigDish,
+  queryParamConfigMenu,
   queryParamConfigTableSessions
 } from "src/Types/queryParams.type"
 import {
@@ -11,6 +12,7 @@ import {
   Dishes,
   HistoryTableSession,
   HistoryTableSessionDetail,
+  Menus,
   PaginatedResponse,
   SuccessResponse,
   TableSession,
@@ -99,6 +101,15 @@ export const adminAPI = {
 
     delete: (id: string) => {
       return Http.delete(`/api/auth/dish-categories/${id}`)
+    },
+
+    getListNameCategory: (signal: AbortSignal) => {
+      return Http.get<SuccessResponse<{ id: string; name: string }[]>>(
+        `/api/auth/dish-categories/get-name-list-dish-category`,
+        {
+          signal
+        }
+      )
     }
   },
 
@@ -120,6 +131,24 @@ export const adminAPI = {
 
     delete: (id: string) => {
       return Http.delete(`/api/auth/dishes/${id}`)
+    }
+  },
+
+  menus: {
+    getList: (params: queryParamConfigMenu, signal: AbortSignal) => {
+      return Http.get<SuccessResponse<PaginatedResponse<Menus>>>(`/api/auth/menus`, { params, signal })
+    },
+
+    create: (data: { name: string; description?: string; version?: number; is_active?: boolean }) => {
+      return Http.post(`/api/auth/menus`, data)
+    },
+
+    update: (id: string, data: { name?: string; description?: string; version?: number; is_active?: boolean }) => {
+      return Http.put(`/api/auth/menus/${id}`, data)
+    },
+
+    delete: (id: string) => {
+      return Http.delete(`/api/auth/menus/${id}`)
     }
   }
 }

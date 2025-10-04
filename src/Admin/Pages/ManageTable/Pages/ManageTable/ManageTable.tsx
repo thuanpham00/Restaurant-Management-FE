@@ -137,9 +137,10 @@ export default function ManageTable() {
           form={filterForm}
           layout="inline"
           onFinish={handleApplyForm}
-          className="flex flex-wrap gap-1"
+          className="flex flex-wrap items-center gap-1"
           initialValues={{ capacity: undefined, status: undefined, is_active: undefined }}
         >
+          <div className="text-[15px] font-semibold">Bộ lọc & tìm kiếm: </div>
           <Form.Item name="capacity">
             <Input type="number" placeholder="Sức chứa..." min={1} className="w-32" />
           </Form.Item>

@@ -12,12 +12,12 @@ export const path = {
   AdminTableSessionDetail: "/admin/tables/:id/session/:sessionId",
   AdminCategoryDish: "/admin/category-dishes",
   AdminDish: "/admin/dishes",
+  AdminMenu: "/admin/menus",
 
   AdminReservations: "/admin/reservations",
   AdminStaff: "/admin/staff",
   AdminShifts: "/admin/shifts",
   AdminPayroll: "/admin/payroll",
-  AdminMenu: "/admin/menu",
   AdminIngredients: "/admin/ingredients",
   AdminSuppliers: "/admin/suppliers",
   AdminPurchaseOrders: "/admin/purchase-orders",

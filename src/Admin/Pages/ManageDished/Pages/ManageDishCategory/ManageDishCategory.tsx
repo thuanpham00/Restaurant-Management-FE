@@ -1,10 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { Button, Form, Input, Modal, Pagination, Table } from "antd"
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { Button, Empty, Form, Input, Modal, Pagination, Spin, Table } from "antd"
 import { ColumnsType } from "antd/es/table"
 import { isUndefined, omit, omitBy } from "lodash"
 import { Beef } from "lucide-react"
-import { useState } from "react"
+import { Fragment, useState } from "react"
 import { Helmet } from "react-helmet-async"
 import { createSearchParams, useNavigate, useSearchParams } from "react-router-dom"
 import { toast } from "react-toastify"
@@ -37,7 +37,9 @@ export default function ManageDishCategory() {
       setTimeout(() => controller.abort(), 10000)
       return adminAPI.dishes_category.getList(queryConfig, controller.signal)
     },
-    retry: 0
+    retry: 0,
+    staleTime: 3 * 60 * 1000,
+    placeholderData: keepPreviousData
   })
 
   const paginated = data?.data.data
@@ -238,9 +240,10 @@ export default function ManageDishCategory() {
           form={filterForm}
           layout="inline"
           onFinish={handleApplyForm}
-          className="flex flex-wrap gap-1"
+          className="flex flex-wrap items-center gap-1"
           initialValues={{ capacity: undefined, status: undefined, is_active: undefined }}
         >
+          <div className="text-[15px] font-semibold">Bộ lọc & tìm kiếm: </div>
           <Form.Item name="name">
             <Input type="text" placeholder="Tên thể loại..." className="w-48" />
           </Form.Item>
@@ -265,30 +268,50 @@ export default function ManageDishCategory() {
         </Button>
       </div>
 
-      <Table
-        rowKey="id"
-        loading={isFetching}
-        columns={columns}
-        dataSource={listCategoryDish as CategoryDishes[]}
-        pagination={false}
-        bordered
-        rowClassName={(record, index) =>
-          index % 2 === 0
-            ? "bg-[#f2f2f2] hover:bg-blue-50 transition-colors"
-            : "bg-white hover:bg-blue-50 transition-colors"
-        }
-      />
+      {isFetching ? (
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            flexDirection: "column", // để tip xuất hiện bên dưới spinner,
+            height: "calc(100vh - 200px)" // chiếm toàn màn hình
+          }}
+        >
+          <Spin tip="Đang tải dữ liệu..." size="large">
+            <div style={{ minHeight: 100, width: 300, marginTop: 10 }} />
+          </Spin>
+        </div>
+      ) : (listCategoryDish as CategoryDishes[]).length === 0 ? (
+        <Empty description="Không có thể loại hợp lệ" className="mt-16" />
+      ) : (
+        <Fragment>
+          <Table
+            rowKey="id"
+            loading={isFetching}
+            columns={columns}
+            dataSource={listCategoryDish as CategoryDishes[]}
+            pagination={false}
+            bordered
+            rowClassName={(_, index) =>
+              index % 2 === 0
+                ? "bg-[#f2f2f2] hover:bg-blue-50 transition-colors"
+                : "bg-white hover:bg-blue-50 transition-colors"
+            }
+          />
 
-      <div style={{ marginTop: 16, textAlign: "center", display: "flex", justifyContent: "flex-end" }}>
-        <Pagination
-          current={parseInt(queryConfig.page as string)}
-          total={paginated?.total}
-          pageSize={parseInt(queryConfig.limit as string)}
-          onChange={handlePaginationChange}
-          showSizeChanger
-          pageSizeOptions={["5", "10", "20", "50"]}
-        />
-      </div>
+          <div style={{ marginTop: 16, textAlign: "center", display: "flex", justifyContent: "flex-end" }}>
+            <Pagination
+              current={parseInt(queryConfig.page as string)}
+              total={paginated?.total}
+              pageSize={parseInt(queryConfig.limit as string)}
+              onChange={handlePaginationChange}
+              showSizeChanger
+              pageSizeOptions={["5", "10", "20", "50"]}
+            />
+          </div>
+        </Fragment>
+      )}
 
       {/* Modal Edit */}
       <Modal

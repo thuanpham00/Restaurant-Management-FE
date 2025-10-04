@@ -1,6 +1,20 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { Button, Col, Collapse, DatePicker, Descriptions, Form, Input, Row, Select, Spin, Table, Tag } from "antd"
+import {
+  Button,
+  Col,
+  Collapse,
+  DatePicker,
+  Descriptions,
+  Form,
+  Image,
+  Input,
+  Row,
+  Select,
+  Spin,
+  Table,
+  Tag
+} from "antd"
 import { useEffect, useState } from "react"
 import { Helmet } from "react-helmet-async"
 import { useLocation } from "react-router-dom"
@@ -341,16 +355,20 @@ export default function TableDetail() {
                             render: (_: any, record: any) => (
                               <div className="flex items-center gap-2">
                                 {record.dish.image ? (
-                                  <img
+                                  <Image
                                     src={record.dish.image}
                                     alt={record.dish.dish_name}
-                                    className="w-12 h-12 rounded-md object-cover"
+                                    className=" rounded-md object-cover"
+                                    width={64}
+                                    height={64}
                                   />
                                 ) : (
-                                  <img
+                                  <Image
                                     src={assets.rectangles.Burger}
                                     alt={record.dish.dish_name}
                                     className="w-12 h-12 rounded-md object-cover"
+                                    width={64}
+                                    height={64}
                                   />
                                 )}
                                 <div>

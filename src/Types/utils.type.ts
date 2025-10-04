@@ -62,6 +62,17 @@ export type Dishes = {
   }
 }
 
+export type Menus = {
+  id: string
+  name: string
+  description: string
+  version: number
+  is_active: boolean
+  created_at: string
+  updated_at: string
+  items_count: number
+}
+
 export type TableSession = {
   dining_table_id: string
   table_number: number

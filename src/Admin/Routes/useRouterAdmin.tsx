@@ -6,6 +6,7 @@ import LayoutAuthAdmin from "../Layouts/LayoutAuthAdmin"
 import { rolesForApi } from "src/Helpers/role_permission"
 import { useAppStore } from "src/StateGlobal/zustand"
 import ManageDish from "../Pages/ManageDished/Pages/ManageDish"
+import ManageMenu from "../Pages/ManageDished/Pages/ManageMenu"
 
 const AdminLogin = lazy(() => import("../Pages/AdminLogin"))
 const ManageDashboard = lazy(() => import("../Pages/ManageDashboard"))
@@ -105,6 +106,14 @@ export default function useRouterAdmin() {
                   element: (
                     <Suspense>
                       <ManageDish />
+                    </Suspense>
+                  )
+                },
+                {
+                  path: path.AdminMenu,
+                  element: (
+                    <Suspense>
+                      <ManageMenu />
                     </Suspense>
                   )
                 }

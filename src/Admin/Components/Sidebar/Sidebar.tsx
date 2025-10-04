@@ -212,7 +212,7 @@ export default function Sidebar() {
           )
         },
         {
-          key: "7",
+          key: path.AdminMenu,
           label: (
             <SidebarItem
               className={`${checkActive(sideBarList[7].path) ? "text-[14px] text-white font-semibold" : "text-[14px] text-white font-normal hover:text-[#495057] duration-200 ease-in"}`}
