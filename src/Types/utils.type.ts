@@ -6,6 +6,16 @@ export type SuccessResponse<Data> = {
   data: Data
 }
 
+export type RegisterResponse = {
+  email: string;
+  expires_at: string;
+};
+
+export type GoogleAuthResponse = {
+  url: string;
+  provider: "google";
+};
+
 export type ErrorResponse<Data> = {
   status: string
   message: string

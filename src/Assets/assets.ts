@@ -29,6 +29,7 @@ import mushroom from "./figma/rectangles/mushroom.png"
 import Noodles from "./figma/rectangles/Noodles.png"
 import salmon from "./figma/rectangles/salmon.png"
 import steak from "./figma/rectangles/steak.png"
+import bg_login from "./figma/rectangles/bg_login.jpg"
 
 // Images
 import image89 from "./figma/images/image89.png"
@@ -112,7 +113,8 @@ export const assets = {
     mushroom,
     Noodles,
     salmon,
-    steak
+    steak,
+    bg_login
   },
   images: {
     image89,
