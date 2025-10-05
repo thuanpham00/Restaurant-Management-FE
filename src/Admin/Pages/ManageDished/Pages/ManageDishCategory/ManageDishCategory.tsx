@@ -163,10 +163,10 @@ export default function ManageDishCategory() {
       )
     },
     {
-      title: <div className="text-left">Số lượng món</div>,
+      title: <div className="text-center">Số lượng món</div>,
       dataIndex: "dishes_count",
       key: "dishes_count",
-      render: (val) => <div className="text-left">{val}</div>
+      render: (val) => <div className="text-center">{val}</div>
     },
     {
       title: <div className="text-left">Ngày tạo</div>,

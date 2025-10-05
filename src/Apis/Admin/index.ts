@@ -1,7 +1,7 @@
 /**
  * Admin API Module
  * Centralized export for all admin-related API endpoints
- * 
+ *
  * This module aggregates all admin APIs for easier imports and better organization.
  * Each API module is responsible for a specific domain within the admin portal.
  */
@@ -14,7 +14,6 @@ export { dishCategoryAPI } from "./dishCategory.api"
 export { dishesAPI } from "./dishes.api"
 export { menusAPI } from "./menus.api"
 
-// Import all APIs for legacy support
 import { authAPI } from "./auth.api"
 import { diningTableAPI } from "./diningTable.api"
 import { tableSessionAPI } from "./tableSession.api"
@@ -23,12 +22,6 @@ import { dishCategoryAPI } from "./dishCategory.api"
 import { dishesAPI } from "./dishes.api"
 import { menusAPI } from "./menus.api"
 
-/**
- * Legacy adminAPI object for backward compatibility
- * @deprecated Use individual imports instead: import { authAPI, dishesAPI } from 'src/Apis/Admin'
- * 
- * This will be maintained for backward compatibility but new code should use direct imports
- */
 export const adminAPI = {
   auth: authAPI,
   diningTable: diningTableAPI,

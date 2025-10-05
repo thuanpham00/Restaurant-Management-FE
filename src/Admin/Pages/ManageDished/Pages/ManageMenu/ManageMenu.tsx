@@ -37,7 +37,10 @@ export default function ManageMenu() {
   const queryConfig: queryParamConfigMenu = omitBy(
     {
       page: queryParams.page || "1",
-      limit: queryParams.limit || "5"
+      limit: queryParams.limit || "5",
+      name: queryParams.name,
+      desc: queryParams.desc,
+      is_active: queryParams.is_active
     },
     isUndefined
   )
@@ -117,7 +120,7 @@ export default function ManageMenu() {
       title: <div className="text-center">Hành động</div>,
       key: "actions",
       render: (_: any, record: any) => (
-        <div className="text-left">
+        <div className="flex items-center justify-center">
           <Button type="link" onClick={() => handleEdit(record)}>
             Sửa
           </Button>
@@ -135,7 +138,9 @@ export default function ManageMenu() {
     const params: queryParamConfigMenu = cleanObject({
       ...queryConfig,
       page: 1,
-      name: values.name
+      name: values.name,
+      desc: values.desc,
+      is_active: values.is_active
     })
     navigate({
       pathname: `${path.AdminMenu}`,
@@ -144,8 +149,8 @@ export default function ManageMenu() {
   }
 
   const resetFilterForm = () => {
-    const filteredSearch = omit(queryConfig, ["name"])
-    navigate({ pathname: `${path.AdminDish}`, search: createSearchParams(filteredSearch).toString() })
+    const filteredSearch = omit(queryConfig, ["name", "desc", "is_active"])
+    navigate({ pathname: `${path.AdminMenu}`, search: createSearchParams(filteredSearch).toString() })
     filterForm.resetFields()
   }
 
@@ -248,7 +253,7 @@ export default function ManageMenu() {
               <Input type="text" placeholder="Tên thực đơn..." className="w-48" />
             </Form.Item>
 
-            <Form.Item name="description">
+            <Form.Item name="desc">
               <Input type="text" placeholder="Mô tả..." className="w-48" />
             </Form.Item>
 
