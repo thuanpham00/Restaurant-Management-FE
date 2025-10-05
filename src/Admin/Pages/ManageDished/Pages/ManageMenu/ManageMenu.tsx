@@ -21,7 +21,7 @@ import { Helmet } from "react-helmet-async"
 import { createSearchParams, useNavigate, useSearchParams } from "react-router-dom"
 import { Fragment } from "react/jsx-runtime"
 import NavigateBack from "src/Admin/Components/NavigateBack"
-import { adminAPI } from "src/Apis/admin.api"
+import { menusAPI } from "src/Apis/Admin"
 import { path } from "src/Constants/path"
 import { cleanObject } from "src/Helpers/common"
 import useQueryParams from "src/Hook/useQueryParams"
@@ -47,7 +47,7 @@ export default function ManageMenu() {
     queryFn: () => {
       const controller = new AbortController()
       setTimeout(() => controller.abort(), 10000)
-      return adminAPI.menus.getList(queryConfig, controller.signal)
+      return menusAPI.getList(queryConfig, controller.signal)
     },
     retry: 0,
     staleTime: 3 * 60 * 1000,
@@ -177,7 +177,7 @@ export default function ManageMenu() {
   // Update API
   const updateMutation = useMutation({
     mutationFn: (values: Partial<Menus>) => {
-      return adminAPI.menus.update(editingId as string, values)
+      return menusAPI.update(editingId as string, values)
     },
     onSuccess: () => {
       toast.success("Cập nhật thực đơn thành công!", {
@@ -195,7 +195,7 @@ export default function ManageMenu() {
 
   const createMutation = useMutation({
     mutationFn: (values: { name: string; desc?: string }) => {
-      return adminAPI.menus.create(values)
+      return menusAPI.create(values)
     },
     onSuccess: () => {
       toast.success("Tạo thực đơn thành công!", {

@@ -9,7 +9,7 @@ import { path } from "src/Constants/path"
 import { schemaAuth, SchemaAuthType } from "src/Helpers/rule"
 import { yupResolver } from "@hookform/resolvers/yup"
 import { useMutation } from "@tanstack/react-query"
-import { adminAPI } from "src/Apis/admin.api"
+import { authAPI } from "src/Apis/Admin"
 import { isError422 } from "src/Helpers/utils"
 import { ErrorResponse } from "src/Types/utils.type"
 import { useAppStore } from "src/StateGlobal/zustand"
@@ -29,7 +29,7 @@ export default function AdminLogin() {
 
   const loginMutation = useMutation({
     mutationFn: (body: FormData) => {
-      return adminAPI.auth.loginAdmin(body)
+      return authAPI.loginAdmin(body)
     }
   })
 

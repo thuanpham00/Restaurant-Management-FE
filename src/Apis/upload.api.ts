@@ -1,25 +1,8 @@
-import Http from "src/Helpers/http"
+/**
+ * @deprecated This file is deprecated. Please use the new modular structure:
+ * import { mediaAPI } from "src/Apis/Upload"
+ * 
+ * This file is kept for backward compatibility only.
+ */
 
-export const MediaAPI = {
-  uploadImageDish: (file: File, dish_id: string) => {
-    const formData = new FormData()
-    formData.append("image", file)
-    formData.append("dish_id", dish_id)
-    return Http.post("/api/auth/uploads/image-dish", formData, {
-      headers: {
-        "Content-Type": "multipart/form-data"
-      }
-    })
-  },
-
-  uploadImageUser: (file: File, user_id: string) => {
-    const formData = new FormData()
-    formData.append("image", file)
-    formData.append("user_id", user_id)
-    return Http.post("/api/auth/uploads/image-user", formData, {
-      headers: {
-        "Content-Type": "multipart/form-data"
-      }
-    })
-  }
-}
+export { MediaAPI } from "./Upload"

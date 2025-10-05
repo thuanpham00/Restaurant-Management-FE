@@ -4,7 +4,7 @@ import omitBy from "lodash/omitBy"
 import isUndefined from "lodash/isUndefined"
 import useQueryParams from "src/Hook/useQueryParams"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { adminAPI } from "src/Apis/admin.api"
+import { diningTableAPI, tableSessionAPI } from "src/Apis/Admin"
 import { ErrorResponse, PaginatedResponse, TableSession } from "src/Types/utils.type"
 import { Helmet } from "react-helmet-async"
 import "antd/dist/reset.css"
@@ -39,7 +39,7 @@ export default function ManageTable() {
     queryFn: () => {
       const controller = new AbortController()
       setTimeout(() => controller.abort(), 10000)
-      return adminAPI.tableSession.getListTableSession(queryConfig, controller.signal)
+      return tableSessionAPI.getListTableSession(queryConfig, controller.signal)
     },
     retry: 0
   })
@@ -66,7 +66,7 @@ export default function ManageTable() {
 
   const createDiningTableMutation = useMutation({
     mutationFn: (body: { table_number: number; capacity: number; is_active: boolean }) => {
-      return adminAPI.diningTable.createDiningTable({
+      return diningTableAPI.createDiningTable({
         table_number: body.table_number,
         capacity: body.capacity,
         is_active: body.is_active

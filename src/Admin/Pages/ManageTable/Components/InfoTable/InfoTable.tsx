@@ -3,7 +3,7 @@ import { useMutation } from "@tanstack/react-query"
 import { Button, Form, FormInstance, InputNumber, Switch } from "antd"
 import { useEffect, useState } from "react"
 import { toast } from "react-toastify"
-import { adminAPI } from "src/Apis/admin.api"
+import { diningTableAPI } from "src/Apis/Admin"
 import { isError422 } from "src/Helpers/utils"
 import { ErrorResponse, TableSession, TableSessionDetail, TableSessionOrder } from "src/Types/utils.type"
 
@@ -29,7 +29,7 @@ export default function InfoTable({
 
   const updateDiningTableMutation = useMutation({
     mutationFn: (body: { table_number: number; capacity: number; is_active: boolean }) => {
-      return adminAPI.diningTable.updateDiningTable(dataTable.dining_table_id, {
+      return diningTableAPI.updateDiningTable(dataTable.dining_table_id, {
         table_number: body.table_number,
         capacity: body.capacity,
         is_active: body.is_active

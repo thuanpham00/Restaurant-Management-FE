@@ -9,7 +9,7 @@ import { Helmet } from "react-helmet-async"
 import { createSearchParams, useNavigate, useSearchParams } from "react-router-dom"
 import { toast } from "react-toastify"
 import NavigateBack from "src/Admin/Components/NavigateBack"
-import { adminAPI } from "src/Apis/admin.api"
+import { dishCategoryAPI } from "src/Apis/Admin"
 import { path } from "src/Constants/path"
 import { cleanObject } from "src/Helpers/common"
 import useQueryParams from "src/Hook/useQueryParams"
@@ -35,7 +35,7 @@ export default function ManageDishCategory() {
     queryFn: () => {
       const controller = new AbortController()
       setTimeout(() => controller.abort(), 10000)
-      return adminAPI.dishes_category.getList(queryConfig, controller.signal)
+      return dishCategoryAPI.getList(queryConfig, controller.signal)
     },
     retry: 0,
     staleTime: 3 * 60 * 1000,
@@ -69,7 +69,7 @@ export default function ManageDishCategory() {
   // Update API
   const updateMutation = useMutation({
     mutationFn: (values: Partial<CategoryDishes>) => {
-      return adminAPI.dishes_category.update(editingId as string, values)
+      return dishCategoryAPI.update(editingId as string, values)
     },
     onSuccess: () => {
       toast.success("Cập nhật thể loại thành công!", {
@@ -87,7 +87,7 @@ export default function ManageDishCategory() {
 
   const createMutation = useMutation({
     mutationFn: (values: { name: string; desc?: string }) => {
-      return adminAPI.dishes_category.create(values)
+      return dishCategoryAPI.create(values)
     },
     onSuccess: () => {
       toast.success("Tạo thể loại thành công!", {
@@ -116,7 +116,7 @@ export default function ManageDishCategory() {
   }
 
   const deleteMutation = useMutation({
-    mutationFn: (id: string) => adminAPI.dishes_category.delete(id),
+    mutationFn: (id: string) => dishCategoryAPI.delete(id),
     onSuccess: () => {
       toast.success("Xóa thể loại thành công!", {
         autoClose: 1500
