@@ -1,5 +1,5 @@
 // src/Components/Login.tsx
-import React from "react";
+import React, { useEffect } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { LucideUtensils, GithubIcon } from "lucide-react";
 import { Helmet } from "react-helmet-async";
@@ -25,6 +25,14 @@ const Login = () => {
     handleSubmit,
   } = useForm<FormData>({ resolver: yupResolver(formSchema) });
 
+  useEffect(() => {
+    const queryParams = new URLSearchParams(location.search);
+    const message = queryParams.get("message");
+    if (message) {
+      toast.success(decodeURIComponent(message), { autoClose: 3000 });
+    }
+  }, [location.search]);
+  
   const loginMutation = useMutation({
     mutationFn: (body: FormData) => {
       return clientAPI.auth.loginClient(body);
