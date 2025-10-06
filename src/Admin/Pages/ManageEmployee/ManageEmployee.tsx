@@ -397,7 +397,7 @@ export default function ManageEmployee() {
       <NavigateBack />
 
       <div className="flex justify-between items-center mb-4">
-        <h1 className="text-2xl font-bold text-gray-800">Danh sách Nhân viên</h1>
+        <h1 className="text-2xl font-bold text-gray-800">Nhân viên</h1>
         <Button 
           type="primary" 
           icon={<Plus size={16} />}

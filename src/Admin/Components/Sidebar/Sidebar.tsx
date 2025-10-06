@@ -47,7 +47,7 @@ export default function Sidebar() {
     { name: "Danh sách bàn", icon: UtensilsCrossed, path: path.AdminTables },
     { name: "Đặt bàn", icon: CalendarPlus, path: path.AdminReservations },
     { name: "Khách hàng", icon: UserCircle, path: path.AdminCustomers },
-    { name: "Danh sách nhân viên", icon: Users, path: path.AdminStaff },
+    { name: "Nhân viên", icon: Users, path: path.AdminStaff },
     { name: "Ca làm việc", icon: Clock, path: path.AdminShifts },
     { name: "Bảng tính lương", icon: Calculator, path: path.AdminPayroll },
     { name: "Thể loại món", icon: ClipboardList, path: path.AdminCategoryDish },
