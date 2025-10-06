@@ -1,12 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { Button, Empty, Form, Input, Modal, Pagination, Spin, Table } from "antd"
+import { Button, Empty, Form, Input, Modal, Pagination, Spin, Table, Tag } from "antd"
 import { ColumnsType } from "antd/es/table"
 import { isUndefined, omit, omitBy } from "lodash"
 import { Beef } from "lucide-react"
 import { Fragment, useState } from "react"
 import { Helmet } from "react-helmet-async"
-import { createSearchParams, useNavigate, useSearchParams } from "react-router-dom"
+import { createSearchParams, Link, useNavigate, useSearchParams } from "react-router-dom"
 import { toast } from "react-toastify"
 import NavigateBack from "src/Admin/Components/NavigateBack"
 import { dishCategoryAPI } from "src/Apis/Admin"
@@ -166,7 +166,14 @@ export default function ManageDishCategory() {
       title: <div className="text-center">Số lượng món</div>,
       dataIndex: "dishes_count",
       key: "dishes_count",
-      render: (val) => <div className="text-center">{val}</div>
+      render: (val, record) => (
+        <div className="flex items-center justify-center gap-2">
+          <Tag color="green">{val}</Tag>
+          <Link className="text-blue-500 hover:underline" to={`${path.AdminDish}?page=1&limit=5&category=${record.id}`}>
+            Xem chi tiết
+          </Link>
+        </div>
+      )
     },
     {
       title: <div className="text-left">Ngày tạo</div>,

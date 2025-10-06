@@ -13,6 +13,7 @@ export const path = {
   AdminCategoryDish: "/admin/category-dishes",
   AdminDish: "/admin/dishes",
   AdminMenu: "/admin/menus",
+  AdminMenuDetail: "/admin/menus/:id",
 
   AdminReservations: "/admin/reservations",
   AdminStaff: "/admin/staff",

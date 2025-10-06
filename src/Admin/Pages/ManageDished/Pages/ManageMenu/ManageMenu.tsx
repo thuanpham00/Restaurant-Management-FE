@@ -18,7 +18,7 @@ import {
 import { isUndefined, omit, omitBy } from "lodash"
 import { Beef } from "lucide-react"
 import { Helmet } from "react-helmet-async"
-import { createSearchParams, useNavigate, useSearchParams } from "react-router-dom"
+import { createSearchParams, Link, useNavigate, useSearchParams } from "react-router-dom"
 import { Fragment } from "react/jsx-runtime"
 import NavigateBack from "src/Admin/Components/NavigateBack"
 import { menusAPI } from "src/Apis/Admin"
@@ -121,12 +121,16 @@ export default function ManageMenu() {
       key: "actions",
       render: (_: any, record: any) => (
         <div className="flex items-center justify-center">
-          <Button type="link" onClick={() => handleEdit(record)}>
-            Sửa
-          </Button>
-          <Button danger type="link" onClick={() => handleDelete(record.id)}>
-            Xóa
-          </Button>
+          <Link
+            to={`${path.AdminMenu}/${record.id}`}
+            state={{
+              dataMenu: record
+            }}
+            className="text-blue-500"
+            onClick={() => handleEdit(record)}
+          >
+            Xem chi tiết
+          </Link>
         </div>
       )
     }

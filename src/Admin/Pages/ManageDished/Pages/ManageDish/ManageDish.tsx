@@ -50,6 +50,8 @@ export default function ManageDish() {
     isUndefined
   )
 
+  console.log(queryConfig)
+
   const { data, isFetching } = useQuery({
     queryKey: ["listDish", queryConfig],
     queryFn: () => {
@@ -362,7 +364,11 @@ export default function ManageDish() {
           layout="inline"
           onFinish={handleApplyForm}
           className="flex flex-wrap items-center justify-between"
-          initialValues={{ name: undefined, category: undefined, is_active: undefined }}
+          initialValues={{
+            name: undefined,
+            is_active: undefined,
+            category: queryConfig.category || undefined
+          }}
         >
           <div className="flex items-center gap-1">
             <div className="text-[15px] font-semibold">Bộ lọc & tìm kiếm: </div>
@@ -371,7 +377,7 @@ export default function ManageDish() {
             </Form.Item>
 
             <Form.Item name="cooking_time">
-              <Input type="number" placeholder="Thời gian nấu..." className="w-48" addonAfter="Phút" />
+              <Input type="number" placeholder="Thời gian nấu..." className="w-40" addonAfter="Phút" />
             </Form.Item>
 
             <Form.Item name="is_active">
