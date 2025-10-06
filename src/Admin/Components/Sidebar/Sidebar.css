@@ -22,27 +22,34 @@
   scrollbar-color: #888 #f0f0f0;
 }
 
-.menu-sidebar .ant-menu-root > .ant-menu-item:first-child {
+/* Tất cả menu items ở root level (không phải submenu) */
+.menu-sidebar .ant-menu-root > .ant-menu-item {
   padding-inline: 26px !important;
   color: white;
 }
 
-/* Nếu muốn khi hover vẫn giữ màu cam */
+/* Hover effect cho tất cả root level items */
+.menu-sidebar .ant-menu-root > .ant-menu-item:hover {
+  background-color: #fb8500 !important;
+  color: white !important;
+}
+
+/* Active/Selected state cho tất cả root level items */
+.menu-sidebar .ant-menu-root > .ant-menu-item.ant-menu-item-selected {
+  background-color: orange !important;
+  padding-inline: 26px !important;
+  color: white !important;
+}
+
+/* Hover effect cho submenu items */
 .menu-sidebar .ant-menu-submenu .ant-menu-item:hover {
   background-color: #fb8500 !important;
   color: white !important;
 }
 
-/* Nếu muốn khi chọn active */
+/* Active state cho submenu items */
 .menu-sidebar .ant-menu-submenu .ant-menu-item-selected {
   background-color: #fb8500 !important;
-  color: white !important;
-}
-
-/* Menu root: item đầu tiên được chọn */
-.menu-sidebar .ant-menu-root > .ant-menu-item:first-child.ant-menu-item-selected {
-  background-color: orange !important;
-  padding-inline: 26px !important;
   color: white !important;
 }
 

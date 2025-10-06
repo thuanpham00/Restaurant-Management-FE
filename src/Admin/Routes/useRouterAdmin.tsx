@@ -16,6 +16,8 @@ const TableSessionHistoryDetail = lazy(() => import("../Pages/ManageTable/Pages/
 const ManageDishCategory = lazy(() => import("../Pages/ManageDished/Pages/ManageDishCategory"))
 
 const ManageReservation = lazy(() => import("../Pages/ManageReservation"))
+const ManageCustomer = lazy(() => import("../Pages/ManageCustomer"))
+const ManageEmployee = lazy(() => import("../Pages/ManageEmployee"))
 
 const ProtectedRoute = () => {
   const { isAuthenticated } = useAppStore()
@@ -114,6 +116,22 @@ export default function useRouterAdmin() {
                   element: (
                     <Suspense>
                       <ManageMenu />
+                    </Suspense>
+                  )
+                },
+                {
+                  path: path.AdminCustomers,
+                  element: (
+                    <Suspense>
+                      <ManageCustomer />
+                    </Suspense>
+                  )
+                },
+                {
+                  path: path.AdminStaff,
+                  element: (
+                    <Suspense>
+                      <ManageEmployee />
                     </Suspense>
                   )
                 }
