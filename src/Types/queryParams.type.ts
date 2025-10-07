@@ -1,6 +1,6 @@
 export type queryParamConfig = {
   page?: string
-  limit?: string
+  per_page?: string
 }
 
 export type queryParamConfigTableSessions = queryParamConfig & {
