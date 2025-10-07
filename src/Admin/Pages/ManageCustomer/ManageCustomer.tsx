@@ -1,7 +1,7 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { Button, Form, Input, Modal, Select, Spin, Table, Tag, Descriptions, Badge } from "antd"
 import { isUndefined, omitBy } from "lodash"
-import { UserCircle, Edit, Trash2 } from "lucide-react"
+import { UserCircle, Edit, Trash2, Filter, RotateCcw } from "lucide-react"
 import { Fragment, useState, useEffect } from "react"
 import { Helmet } from "react-helmet-async"
 import { createSearchParams, useNavigate, useSearchParams } from "react-router-dom"
@@ -354,13 +354,15 @@ export default function ManageCustomer() {
           </Form.Item>
 
           <Form.Item className="mb-0">
-            <Button type="primary" htmlType="submit">
-              Áp dụng
+            <Button type="primary" icon={<Filter size={16} />} htmlType="submit">
+              Lọc
             </Button>
           </Form.Item>
 
           <Form.Item className="mb-0">
-            <Button onClick={resetFilterForm}>Reset</Button>
+            <Button icon={<RotateCcw size={16} />} onClick={resetFilterForm}>
+              Reset
+            </Button>
           </Form.Item>
         </Form>
       </div>
@@ -388,6 +390,10 @@ export default function ManageCustomer() {
                 onChange: handlePaginationChange,
                 showSizeChanger: true,
                 showTotal: (total) => `Tổng ${total} khách hàng`
+              }}
+              scroll={{
+                y: "calc(100vh - 500px)", 
+                x: true 
               }}
             />
           </div>

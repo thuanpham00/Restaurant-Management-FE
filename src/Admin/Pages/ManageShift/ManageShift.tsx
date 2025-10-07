@@ -12,7 +12,7 @@ export default function ManageShift() {
   const [viewMode, setViewMode] = useState<ViewMode>("table")
 
   return (
-    <div className="p-6">
+    <div className="px-6">
       <Helmet>
         <title>Quản lý Ca làm việc</title>
       </Helmet>
@@ -47,7 +47,7 @@ export default function ManageShift() {
         />
 
       </div>
-        <div className="bg-white p-4 rounded-lg shadow">
+        <div className="bg-white px-4 rounded-lg shadow">
           {viewMode === "table" ? <ShiftTableView /> : <ShiftCalendarView />}
         </div>
     </div>

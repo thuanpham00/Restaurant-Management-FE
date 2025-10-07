@@ -1,7 +1,7 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { Button, Form, Input, Modal, Table, DatePicker, TimePicker, Spin } from "antd"
 import { isUndefined, omitBy } from "lodash"
-import { Clock, Edit, Plus, Trash2 } from "lucide-react"
+import { Clock, Edit, Filter, Plus, RotateCcw, Trash2 } from "lucide-react"
 import { Fragment, useState } from "react"
 import { toast } from "react-toastify"
 import dayjs from "dayjs"
@@ -284,11 +284,11 @@ export default function ShiftListTab() {
           </Form.Item>
 
           <Form.Item className="mb-0">
-            <Button type="primary" onClick={handleFilter}>Áp dụng</Button>
+            <Button type="primary" icon={<Filter size={16} />} onClick={handleFilter}>Lọc</Button>
           </Form.Item>
 
           <Form.Item className="mb-0">
-            <Button onClick={handleResetFilter}>Reset</Button>
+            <Button icon={<RotateCcw size={16} />} onClick={handleResetFilter}>Reset</Button>
           </Form.Item>
         </Form>
       </div>
@@ -310,6 +310,10 @@ export default function ShiftListTab() {
               pageSize: parseInt(queryConfig.per_page as string) || 15,
               showSizeChanger: true,
               showTotal: (total) => `Tổng ${total} ca`
+            }}
+            scroll={{
+              y: "calc(100vh - 500px)",
+              x: true
             }}
             bordered
           />

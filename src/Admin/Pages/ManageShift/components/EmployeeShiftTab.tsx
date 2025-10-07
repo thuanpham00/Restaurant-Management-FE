@@ -1,20 +1,7 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import {
-  Button,
-  Form,
-  Input,
-  Modal,
-  Table,
-  DatePicker,
-  Select,
-  Badge,
-  Spin,
-  InputNumber,
-  TimePicker,
-  Tag
-} from "antd"
+import { Button, Form, Input, Modal, Table, DatePicker, Select, Badge, Spin, InputNumber, TimePicker, Tag } from "antd"
 import { isUndefined, omitBy } from "lodash"
-import { UserPlus, Edit, Trash2, CheckCircle, XCircle } from "lucide-react"
+import { UserPlus, Edit, Trash2, CheckCircle, XCircle, Filter, RotateCcw } from "lucide-react"
 import { Fragment, useState } from "react"
 import { toast } from "react-toastify"
 import dayjs from "dayjs"
@@ -125,21 +112,21 @@ export default function EmployeeShiftTab() {
     })) || []
 
   const shiftOptions =
-  (shiftsData?.data?.data as any)?.data
-    ?.filter((item: any) => item.employee === null) // chỉ lấy ca chưa có nhân viên
-    ?.map((item: any) => {
-      const shift = item.shift
-      if (!shift) return null // tránh lỗi nếu dữ liệu thiếu shift
+    (shiftsData?.data?.data as any)?.data
+      ?.filter((item: any) => item.employee === null) // chỉ lấy ca chưa có nhân viên
+      ?.map((item: any) => {
+        const shift = item.shift
+        if (!shift) return null // tránh lỗi nếu dữ liệu thiếu shift
 
-      const startTime = shift.start_time ? shift.start_time.slice(0, 5) : "00:00"
-      const endTime = shift.end_time ? shift.end_time.slice(0, 5) : "23:59"
+        const startTime = shift.start_time ? shift.start_time.slice(0, 5) : "00:00"
+        const endTime = shift.end_time ? shift.end_time.slice(0, 5) : "23:59"
 
-      return {
-        label: `${shift.name} (${startTime} - ${endTime})`,
-        value: shift.id
-      }
-    })
-    ?.filter(Boolean) || []
+        return {
+          label: `${shift.name} (${startTime} - ${endTime})`,
+          value: shift.id
+        }
+      })
+      ?.filter(Boolean) || []
 
   // ========== MUTATIONS ==========
   const assignMutation = useMutation({
@@ -319,41 +306,41 @@ export default function EmployeeShiftTab() {
   const handleFilter = () => {
     const values = filterForm.getFieldsValue()
     const params = new URLSearchParams(window.location.search)
-    
+
     // Update URL params theo đúng API spec
     if (values.employee_id) {
-      params.set('employee_id', values.employee_id)
+      params.set("employee_id", values.employee_id)
     } else {
-      params.delete('employee_id')
+      params.delete("employee_id")
     }
-    
+
     if (values.status) {
-      params.set('status', values.status)
+      params.set("status", values.status)
     } else {
-      params.delete('status')
+      params.delete("status")
     }
-    
+
     if (values.date_from) {
-      params.set('date_from', dayjs(values.date_from).format('YYYY-MM-DD'))
+      params.set("date_from", dayjs(values.date_from).format("YYYY-MM-DD"))
     } else {
-      params.delete('date_from')
+      params.delete("date_from")
     }
-    
+
     if (values.date_to) {
-      params.set('date_to', dayjs(values.date_to).format('YYYY-MM-DD'))
+      params.set("date_to", dayjs(values.date_to).format("YYYY-MM-DD"))
     } else {
-      params.delete('date_to')
+      params.delete("date_to")
     }
-    
+
     // Navigate to update URL
-    window.history.pushState({}, '', `${window.location.pathname}?${params.toString()}`)
-    window.dispatchEvent(new PopStateEvent('popstate'))
+    window.history.pushState({}, "", `${window.location.pathname}?${params.toString()}`)
+    window.dispatchEvent(new PopStateEvent("popstate"))
   }
 
   const handleResetFilter = () => {
     filterForm.resetFields()
-    window.history.pushState({}, '', window.location.pathname)
-    window.dispatchEvent(new PopStateEvent('popstate'))
+    window.history.pushState({}, "", window.location.pathname)
+    window.dispatchEvent(new PopStateEvent("popstate"))
   }
 
   // ========== TABLE COLUMNS ==========
@@ -432,7 +419,7 @@ export default function EmployeeShiftTab() {
     {
       title: "Hành động",
       key: "action",
-      width: 280,
+      width: 150,
       render: (_: any, record: EmployeeShift) => (
         <div className="flex gap-2 flex-wrap">
           {!record.check_in && (
@@ -448,12 +435,7 @@ export default function EmployeeShiftTab() {
           )}
 
           {record.check_in && !record.check_out && (
-            <Button
-              size="small"
-              danger
-              icon={<XCircle size={14} />}
-              onClick={() => handleOpenCheckOutModal(record)}
-            >
+            <Button size="small" danger icon={<XCircle size={14} />} onClick={() => handleOpenCheckOutModal(record)}>
               Check-out
             </Button>
           )}
@@ -495,9 +477,7 @@ export default function EmployeeShiftTab() {
               placeholder="Chọn nhân viên"
               className="w-56"
               showSearch
-              filterOption={(input, option: any) =>
-                (option?.label ?? "").toLowerCase().includes(input.toLowerCase())
-              }
+              filterOption={(input, option: any) => (option?.label ?? "").toLowerCase().includes(input.toLowerCase())}
               options={employeeOptions}
               allowClear
             />
@@ -522,11 +502,15 @@ export default function EmployeeShiftTab() {
           </Form.Item>
 
           <Form.Item className="mb-0">
-            <Button type="primary" onClick={handleFilter}>Áp dụng</Button>
+            <Button type="primary" icon={<Filter size={16} />} onClick={handleFilter}>
+              Lọc
+            </Button>
           </Form.Item>
 
           <Form.Item className="mb-0">
-            <Button onClick={handleResetFilter}>Reset</Button>
+            <Button icon={<RotateCcw size={16} />} onClick={handleResetFilter}>
+              Reset
+            </Button>
           </Form.Item>
         </Form>
       </div>
@@ -550,7 +534,10 @@ export default function EmployeeShiftTab() {
               showTotal: (total) => `Tổng ${total} phân công`
             }}
             bordered
-            scroll={{ x: 1200 }}
+            scroll={{
+              y: "calc(100vh - 555px)",
+              x: true
+            }}
           />
         </Fragment>
       )}
@@ -579,9 +566,7 @@ export default function EmployeeShiftTab() {
             <Select
               placeholder="Chọn nhân viên"
               showSearch
-              filterOption={(input, option: any) =>
-                (option?.label ?? "").toLowerCase().includes(input.toLowerCase())
-              }
+              filterOption={(input, option: any) => (option?.label ?? "").toLowerCase().includes(input.toLowerCase())}
               options={employeeOptions}
             />
           </Form.Item>
@@ -628,17 +613,16 @@ export default function EmployeeShiftTab() {
               <strong>Ca:</strong> {selectedEmployeeShift.shift?.name}
             </div>
             <div>
-              <strong>Ngày:</strong> {selectedEmployeeShift.shift?.shift_date ? dayjs(selectedEmployeeShift.shift.shift_date).format("DD/MM/YYYY") : "N/A"}
+              <strong>Ngày:</strong>{" "}
+              {selectedEmployeeShift.shift?.shift_date
+                ? dayjs(selectedEmployeeShift.shift.shift_date).format("DD/MM/YYYY")
+                : "N/A"}
             </div>
           </div>
         )}
 
         <Form form={checkInForm} layout="vertical">
-          <Form.Item
-            name="time"
-            label="Giờ check-in"
-            rules={[{ required: true, message: "Vui lòng chọn giờ!" }]}
-          >
+          <Form.Item name="time" label="Giờ check-in" rules={[{ required: true, message: "Vui lòng chọn giờ!" }]}>
             <TimePicker className="w-full" format="HH:mm" placeholder="Chọn giờ" />
           </Form.Item>
 
@@ -673,19 +657,13 @@ export default function EmployeeShiftTab() {
             </div>
             <div>
               <strong>Check-in:</strong>{" "}
-              {selectedEmployeeShift.check_in
-                ? dayjs(selectedEmployeeShift.check_in).format("HH:mm")
-                : "N/A"}
+              {selectedEmployeeShift.check_in ? dayjs(selectedEmployeeShift.check_in).format("HH:mm") : "N/A"}
             </div>
           </div>
         )}
 
         <Form form={checkOutForm} layout="vertical">
-          <Form.Item
-            name="time"
-            label="Giờ check-out"
-            rules={[{ required: true, message: "Vui lòng chọn giờ!" }]}
-          >
+          <Form.Item name="time" label="Giờ check-out" rules={[{ required: true, message: "Vui lòng chọn giờ!" }]}>
             <TimePicker className="w-full" format="HH:mm" placeholder="Chọn giờ" />
           </Form.Item>
 
@@ -707,11 +685,7 @@ export default function EmployeeShiftTab() {
         footer={
           <div className="flex justify-end gap-2">
             <Button onClick={handleCloseUpdateStatusModal}>Hủy</Button>
-            <Button
-              type="primary"
-              onClick={handleSubmitUpdateStatus}
-              loading={updateStatusMutation.isPending}
-            >
+            <Button type="primary" onClick={handleSubmitUpdateStatus} loading={updateStatusMutation.isPending}>
               Cập nhật
             </Button>
           </div>
@@ -725,7 +699,10 @@ export default function EmployeeShiftTab() {
             </div>
             <div>
               <strong>Ca:</strong> {selectedEmployeeShift.shift?.name} (
-              {selectedEmployeeShift.shift?.shift_date ? dayjs(selectedEmployeeShift.shift.shift_date).format("DD/MM/YYYY") : "N/A"})
+              {selectedEmployeeShift.shift?.shift_date
+                ? dayjs(selectedEmployeeShift.shift.shift_date).format("DD/MM/YYYY")
+                : "N/A"}
+              )
             </div>
           </div>
         )}

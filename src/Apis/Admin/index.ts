@@ -16,6 +16,8 @@ export { menusAPI } from "./menus.api"
 export { customersAPI } from "./customers.api"
 export { employeesAPI } from "./employees.api"
 export { shiftsAPI, employeeShiftsAPI } from "./shifts.api"
+export { payrollAPI } from "./payroll.api"
+export { payrollItemsAPI } from "./payrollItems.api"
 
 import { authAPI } from "./auth.api"
 import { diningTableAPI } from "./diningTable.api"
@@ -27,6 +29,8 @@ import { menusAPI } from "./menus.api"
 import { customersAPI } from "./customers.api"
 import { employeesAPI } from "./employees.api"
 import { shiftsAPI, employeeShiftsAPI } from "./shifts.api"
+import { payrollAPI } from "./payroll.api"
+import { payrollItemsAPI } from "./payrollItems.api"
 
 export const adminAPI = {
   auth: authAPI,
@@ -39,5 +43,7 @@ export const adminAPI = {
   customers: customersAPI,
   employees: employeesAPI,
   shifts: shiftsAPI,
-  employeeShifts: employeeShiftsAPI
+  employeeShifts: employeeShiftsAPI,
+  payroll: payrollAPI,
+  payrollItems: payrollItemsAPI
 }

@@ -18,6 +18,7 @@ export type Employee = {
     email: string
     email_verified_at: string | null
     status: number
+    name : string
     avatar: string | null
     role_id: string
     created_at: string
