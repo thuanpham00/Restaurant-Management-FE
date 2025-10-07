@@ -1,7 +1,7 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { Button, Form, Input, Modal, Select, Spin, Table, Tag, Descriptions, Badge, DatePicker, InputNumber, Switch } from "antd"
 import { isUndefined, omitBy } from "lodash"
-import { Users, Edit, Trash2, Plus, Power } from "lucide-react"
+import { Users, Edit, Trash2, Plus } from "lucide-react"
 import { Fragment, useState, useEffect } from "react"
 import { Helmet } from "react-helmet-async"
 import { createSearchParams, useNavigate, useSearchParams } from "react-router-dom"
@@ -22,8 +22,6 @@ const { Option } = Select
 const CONTRACT_TYPES = {
   0: { label: "Full-time", color: "green" },
   1: { label: "Part-time", color: "blue" },
-  2: { label: "Contract", color: "orange" },
-  3: { label: "Intern", color: "purple" },
 }
 
 const GENDER_OPTIONS = [
@@ -253,16 +251,6 @@ export default function ManageEmployee() {
       okType: "danger",
       cancelText: "Hủy",
       onOk: () => deleteMutation.mutate(id)
-    })
-  }
-
-  const handleToggleActive = (id: string, currentStatus: boolean, fullName: string) => {
-    Modal.confirm({
-      title: "Xác nhận thay đổi trạng thái",
-      content: `Bạn có chắc muốn ${currentStatus ? "vô hiệu hóa" : "kích hoạt"} nhân viên "${fullName}"?`,
-      okText: "Xác nhận",
-      cancelText: "Hủy",
-      onOk: () => toggleActiveMutation.mutate({ id, is_active: !currentStatus })
     })
   }
 

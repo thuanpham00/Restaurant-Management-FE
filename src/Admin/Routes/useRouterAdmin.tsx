@@ -18,6 +18,7 @@ const ManageDishCategory = lazy(() => import("../Pages/ManageDished/Pages/Manage
 const ManageReservation = lazy(() => import("../Pages/ManageReservation"))
 const ManageCustomer = lazy(() => import("../Pages/ManageCustomer"))
 const ManageEmployee = lazy(() => import("../Pages/ManageEmployee"))
+const ManageShift = lazy(() => import("../Pages/ManageShift"))
 
 const ProtectedRoute = () => {
   const { isAuthenticated } = useAppStore()
@@ -132,6 +133,14 @@ export default function useRouterAdmin() {
                   element: (
                     <Suspense>
                       <ManageEmployee />
+                    </Suspense>
+                  )
+                },
+                {
+                  path: path.AdminShifts,
+                  element: (
+                    <Suspense>
+                      <ManageShift />
                     </Suspense>
                   )
                 }

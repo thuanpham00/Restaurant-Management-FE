@@ -15,6 +15,7 @@ export { dishesAPI } from "./dishes.api"
 export { menusAPI } from "./menus.api"
 export { customersAPI } from "./customers.api"
 export { employeesAPI } from "./employees.api"
+export { shiftsAPI, employeeShiftsAPI } from "./shifts.api"
 
 import { authAPI } from "./auth.api"
 import { diningTableAPI } from "./diningTable.api"
@@ -25,6 +26,7 @@ import { dishesAPI } from "./dishes.api"
 import { menusAPI } from "./menus.api"
 import { customersAPI } from "./customers.api"
 import { employeesAPI } from "./employees.api"
+import { shiftsAPI, employeeShiftsAPI } from "./shifts.api"
 
 export const adminAPI = {
   auth: authAPI,
@@ -35,5 +37,7 @@ export const adminAPI = {
   dishes: dishesAPI,
   menus: menusAPI,
   customers: customersAPI,
-  employees: employeesAPI
+  employees: employeesAPI,
+  shifts: shiftsAPI,
+  employeeShifts: employeeShiftsAPI
 }
