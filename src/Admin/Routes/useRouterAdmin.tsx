@@ -7,6 +7,7 @@ import { rolesForApi } from "src/Helpers/role_permission"
 import { useAppStore } from "src/StateGlobal/zustand"
 import ManageDish from "../Pages/ManageDished/Pages/ManageDish"
 import ManageMenu from "../Pages/ManageDished/Pages/ManageMenu"
+import MenuDetail from "../Pages/ManageDished/Pages/MenuDetail"
 
 const AdminLogin = lazy(() => import("../Pages/AdminLogin"))
 const ManageDashboard = lazy(() => import("../Pages/ManageDashboard"))
@@ -114,6 +115,14 @@ export default function useRouterAdmin() {
                   element: (
                     <Suspense>
                       <ManageMenu />
+                    </Suspense>
+                  )
+                },
+                {
+                  path: path.AdminMenuDetail,
+                  element: (
+                    <Suspense>
+                      <MenuDetail />
                     </Suspense>
                   )
                 }

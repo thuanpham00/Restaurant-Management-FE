@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import Header from "src/Client/Components/HeaderClient";
 import Footer from "src/Client/Components/FooterClient";
 import { assets } from 'src/Assets/assets';
-import { clientAPI} from 'src/Apis/client.api';
+import { clientAPI} from 'src/Apis/Client/menu.api';
 import {Dish, Category, SpecialMenu} from "src/Types/utils.type";
 
 // MenuItem Component
@@ -97,7 +97,7 @@ const Menu: React.FC = () => {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const response = await clientAPI.menu.getCategories();
+        const response = await clientAPI.getCategories();
         if (response.data.status === 'success') {
           setCategories(response.data.data);
           setActiveTab(response.data.data.length > 0 ? response.data.data[0].id : 'special');
@@ -112,7 +112,7 @@ const Menu: React.FC = () => {
 
     const fetchSpecialMenu = async () => {
       try {
-        const response = await clientAPI.menu.getSpecialMenu();
+        const response = await clientAPI.getSpecialMenu();
         if (response.data.status === 'success') {
           setSpecialMenu(response.data.data);
           if (response.data.data) {
@@ -135,7 +135,7 @@ const Menu: React.FC = () => {
   useEffect(() => {
     const fetchFilteredDishes = async () => {
       try {
-        const response = await clientAPI.menu.searchFilter({
+        const response = await clientAPI.searchFilter({
           search: search || undefined,
           category_id: selectedCategory || undefined,
           price_sort: priceSort || undefined,

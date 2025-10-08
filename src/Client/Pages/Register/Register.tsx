@@ -7,11 +7,11 @@ import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { useMutation } from "@tanstack/react-query";
 import { toast } from "react-toastify";
-import { clientAPI } from "src/Apis/client.api";
 import { schemaRegister, SchemaRegisterType } from "src/Helpers/rule";
 import { isError422 } from "src/Helpers/utils";
 import { ErrorResponse, RegisterResponse } from "src/Types/utils.type";
 import { path } from "src/Constants/path";
+import {clientAPI} from "src/Apis/Client/auth.api";
 
 type FormData = SchemaRegisterType;
 
@@ -29,7 +29,7 @@ const Register = () => {
 
   const registerMutation = useMutation({
     mutationFn: (body: FormData) => {
-      return clientAPI.auth.register(body);
+      return clientAPI.register(body);
     },
   });
 

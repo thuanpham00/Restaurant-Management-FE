@@ -33,7 +33,7 @@ import { Menu, MenuProps } from "antd"
 import "./Sidebar.css"
 import { assets } from "src/Assets/assets"
 import { useMutation } from "@tanstack/react-query"
-import { adminAPI } from "src/Apis/admin.api"
+import { authAPI } from "src/Apis/Admin"
 import { useAppStore } from "src/StateGlobal/zustand"
 
 export default function Sidebar() {
@@ -500,7 +500,7 @@ export default function Sidebar() {
 
   const logoutMutation = useMutation({
     mutationFn: () => {
-      return adminAPI.auth.logout()
+      return authAPI.logout()
     }
   })
 

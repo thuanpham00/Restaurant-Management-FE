@@ -18,10 +18,10 @@ import {
 import { isUndefined, omit, omitBy } from "lodash"
 import { Beef } from "lucide-react"
 import { Helmet } from "react-helmet-async"
-import { createSearchParams, useNavigate, useSearchParams } from "react-router-dom"
+import { createSearchParams, Link, useNavigate, useSearchParams } from "react-router-dom"
 import { Fragment } from "react/jsx-runtime"
 import NavigateBack from "src/Admin/Components/NavigateBack"
-import { adminAPI } from "src/Apis/admin.api"
+import { menusAPI } from "src/Apis/Admin"
 import { path } from "src/Constants/path"
 import { cleanObject } from "src/Helpers/common"
 import useQueryParams from "src/Hook/useQueryParams"
@@ -37,7 +37,10 @@ export default function ManageMenu() {
   const queryConfig: queryParamConfigMenu = omitBy(
     {
       page: queryParams.page || "1",
-      limit: queryParams.limit || "5"
+      limit: queryParams.limit || "5",
+      name: queryParams.name,
+      desc: queryParams.desc,
+      is_active: queryParams.is_active
     },
     isUndefined
   )
@@ -47,7 +50,7 @@ export default function ManageMenu() {
     queryFn: () => {
       const controller = new AbortController()
       setTimeout(() => controller.abort(), 10000)
-      return adminAPI.menus.getList(queryConfig, controller.signal)
+      return menusAPI.getList(queryConfig, controller.signal)
     },
     retry: 0,
     staleTime: 3 * 60 * 1000,
@@ -117,13 +120,17 @@ export default function ManageMenu() {
       title: <div className="text-center">Hành động</div>,
       key: "actions",
       render: (_: any, record: any) => (
-        <div className="text-left">
-          <Button type="link" onClick={() => handleEdit(record)}>
-            Sửa
-          </Button>
-          <Button danger type="link" onClick={() => handleDelete(record.id)}>
-            Xóa
-          </Button>
+        <div className="flex items-center justify-center">
+          <Link
+            to={`${path.AdminMenu}/${record.id}`}
+            state={{
+              dataMenu: record
+            }}
+            className="text-blue-500"
+            onClick={() => handleEdit(record)}
+          >
+            Xem chi tiết
+          </Link>
         </div>
       )
     }
@@ -135,7 +142,9 @@ export default function ManageMenu() {
     const params: queryParamConfigMenu = cleanObject({
       ...queryConfig,
       page: 1,
-      name: values.name
+      name: values.name,
+      desc: values.desc,
+      is_active: values.is_active
     })
     navigate({
       pathname: `${path.AdminMenu}`,
@@ -144,8 +153,8 @@ export default function ManageMenu() {
   }
 
   const resetFilterForm = () => {
-    const filteredSearch = omit(queryConfig, ["name"])
-    navigate({ pathname: `${path.AdminDish}`, search: createSearchParams(filteredSearch).toString() })
+    const filteredSearch = omit(queryConfig, ["name", "desc", "is_active"])
+    navigate({ pathname: `${path.AdminMenu}`, search: createSearchParams(filteredSearch).toString() })
     filterForm.resetFields()
   }
 
@@ -177,7 +186,7 @@ export default function ManageMenu() {
   // Update API
   const updateMutation = useMutation({
     mutationFn: (values: Partial<Menus>) => {
-      return adminAPI.menus.update(editingId as string, values)
+      return menusAPI.update(editingId as string, values)
     },
     onSuccess: () => {
       toast.success("Cập nhật thực đơn thành công!", {
@@ -195,7 +204,7 @@ export default function ManageMenu() {
 
   const createMutation = useMutation({
     mutationFn: (values: { name: string; desc?: string }) => {
-      return adminAPI.menus.create(values)
+      return menusAPI.create(values)
     },
     onSuccess: () => {
       toast.success("Tạo thực đơn thành công!", {
@@ -248,7 +257,7 @@ export default function ManageMenu() {
               <Input type="text" placeholder="Tên thực đơn..." className="w-48" />
             </Form.Item>
 
-            <Form.Item name="description">
+            <Form.Item name="desc">
               <Input type="text" placeholder="Mô tả..." className="w-48" />
             </Form.Item>
 

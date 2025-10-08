@@ -15,11 +15,11 @@ import {
   Table,
   Tag
 } from "antd"
-import { useEffect, useState } from "react"
+import { Fragment, useEffect, useState } from "react"
 import { Helmet } from "react-helmet-async"
 import { useLocation } from "react-router-dom"
 import NavigateBack from "src/Admin/Components/NavigateBack"
-import { adminAPI } from "src/Apis/admin.api"
+import { tableSessionAPI, orderItemsAPI } from "src/Apis/Admin"
 import { assets } from "src/Assets/assets"
 import "./TableDetail.css"
 import { TableSessionDetail, TableSessionOrder } from "src/Types/utils.type"
@@ -100,7 +100,7 @@ export default function TableDetail() {
     queryFn: () => {
       const controller = new AbortController()
       setTimeout(() => controller.abort(), 10000)
-      return adminAPI.tableSession.getDetailTableSessionByIdTable(idDiningTable)
+      return tableSessionAPI.getDetailTableSessionByIdTable(idDiningTable)
     },
     retry: 0,
     staleTime: 3 * 60 * 1000,
@@ -115,7 +115,7 @@ export default function TableDetail() {
     queryFn: () => {
       const controller = new AbortController()
       setTimeout(() => controller.abort(), 10000)
-      return adminAPI.tableSession.getDetailTableSessionOrderByIdTable(dataTableSessionDetail?.session_id)
+      return tableSessionAPI.getDetailTableSessionOrderByIdTable(dataTableSessionDetail?.session_id)
     },
     retry: 0,
     staleTime: 3 * 60 * 1000,
@@ -150,7 +150,7 @@ export default function TableDetail() {
 
   const updateListOrderItemMutation = useMutation({
     mutationFn: (item: Record<string, number>) => {
-      return adminAPI.orderItems.updateStatusListOrderItem(item)
+      return orderItemsAPI.updateStatusListOrderItem(item)
     },
     onSuccess: () => {
       toast.success("Cập nhật trạng thái món ăn thành công!", {
@@ -174,8 +174,14 @@ export default function TableDetail() {
       <NavigateBack />
       <h1 className="text-2xl font-bold text-gray-800 bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600 my-2">
         Chi tiết bàn {tableNumber || nameTable}
-        <span className="text-black">-</span>
-        <span className="text-red-500"> {dataTableSessionDetail?.dining_table_id}</span>
+        {dataTableSessionDetail?.dining_table_id ? (
+          <Fragment>
+            <span className="text-black">-</span>
+            <span className="text-red-500"> {dataTableSessionDetail?.dining_table_id}</span>
+          </Fragment>
+        ) : (
+          ""
+        )}
       </h1>
 
       <Row gutter={16} style={{ overflow: "hidden" }}>

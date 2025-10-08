@@ -6,7 +6,7 @@ import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { useMutation } from "@tanstack/react-query";
 import { toast } from "react-toastify";
-import { clientAPI } from "src/Apis/client.api";
+import { clientAPI } from "src/Apis/Client/auth.api";
 import { schemaAuth, SchemaAuthType } from "src/Helpers/rule";
 import { isError422 } from "src/Helpers/utils";
 import { ErrorResponse } from "src/Types/utils.type";
@@ -29,7 +29,7 @@ const Login = () => {
 
   // Mutation để lấy URL Google OAuth
   const googleLoginMutation = useMutation({
-    mutationFn: () => clientAPI.auth.getGoogleAuthUrl(),
+    mutationFn: () => clientAPI.getGoogleAuthUrl(),
     onSuccess: (response) => {
       window.location.href = response.data.data.url;
     },
@@ -40,7 +40,7 @@ const Login = () => {
 
   // Mutation để xử lý callback Google
   const googleCallbackMutation = useMutation({
-    mutationFn: () => clientAPI.auth.googleCallback(location.search),
+    mutationFn: () => clientAPI.googleCallback(location.search),
     onSuccess: (response) => {
       const { data, message } = response.data;
       // Lưu token và thông tin người dùng
@@ -76,7 +76,7 @@ const Login = () => {
   }, [location.search]);
 
   const loginMutation = useMutation({
-    mutationFn: (body: FormData) => clientAPI.auth.loginClient(body),
+    mutationFn: (body: FormData) => clientAPI.loginClient(body),
     onSuccess: (response) => {
       toast.success(response.data.message, { autoClose: 1000 });
       setIsAuthenticated(true);

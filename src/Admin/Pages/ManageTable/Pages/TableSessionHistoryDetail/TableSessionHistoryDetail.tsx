@@ -4,7 +4,7 @@ import { ColumnsType } from "antd/es/table"
 import { useLocation } from "react-router-dom"
 import { useQuery } from "@tanstack/react-query"
 import { HistoryTableSessionDetail } from "src/Types/utils.type"
-import { adminAPI } from "src/Apis/admin.api"
+import { tableSessionAPI } from "src/Apis/Admin"
 import { Helmet } from "react-helmet-async"
 import NavigateBack from "src/Admin/Components/NavigateBack"
 import { assets } from "src/Assets/assets"
@@ -20,7 +20,7 @@ export default function TableSessionHistoryDetail() {
     queryFn: () => {
       const controller = new AbortController()
       setTimeout(() => controller.abort(), 10000)
-      return adminAPI.tableSession.getHistoryTableSessionDetailByIdTableAndIdTableSession(idDiningTable, idTableSession)
+      return tableSessionAPI.getHistoryTableSessionDetailByIdTableAndIdTableSession(idDiningTable, idTableSession)
     },
     retry: 0,
     staleTime: 3 * 60 * 1000,

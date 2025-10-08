@@ -23,4 +23,8 @@ export type queryParamConfigDish = queryParamConfig & {
   max_price?: string
 }
 
-export type queryParamConfigMenu = queryParamConfig & {}
+export type queryParamConfigMenu = queryParamConfig & {
+  name?: string
+  desc?: string
+  is_active?: string
+}

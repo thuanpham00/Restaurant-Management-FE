@@ -1,15 +1,15 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { Button, Empty, Form, Input, Modal, Pagination, Spin, Table } from "antd"
+import { Button, Empty, Form, Input, Modal, Pagination, Spin, Table, Tag } from "antd"
 import { ColumnsType } from "antd/es/table"
 import { isUndefined, omit, omitBy } from "lodash"
 import { Beef } from "lucide-react"
 import { Fragment, useState } from "react"
 import { Helmet } from "react-helmet-async"
-import { createSearchParams, useNavigate, useSearchParams } from "react-router-dom"
+import { createSearchParams, Link, useNavigate, useSearchParams } from "react-router-dom"
 import { toast } from "react-toastify"
 import NavigateBack from "src/Admin/Components/NavigateBack"
-import { adminAPI } from "src/Apis/admin.api"
+import { dishCategoryAPI } from "src/Apis/Admin"
 import { path } from "src/Constants/path"
 import { cleanObject } from "src/Helpers/common"
 import useQueryParams from "src/Hook/useQueryParams"
@@ -35,7 +35,7 @@ export default function ManageDishCategory() {
     queryFn: () => {
       const controller = new AbortController()
       setTimeout(() => controller.abort(), 10000)
-      return adminAPI.dishes_category.getList(queryConfig, controller.signal)
+      return dishCategoryAPI.getList(queryConfig, controller.signal)
     },
     retry: 0,
     staleTime: 3 * 60 * 1000,
@@ -69,7 +69,7 @@ export default function ManageDishCategory() {
   // Update API
   const updateMutation = useMutation({
     mutationFn: (values: Partial<CategoryDishes>) => {
-      return adminAPI.dishes_category.update(editingId as string, values)
+      return dishCategoryAPI.update(editingId as string, values)
     },
     onSuccess: () => {
       toast.success("Cập nhật thể loại thành công!", {
@@ -87,7 +87,7 @@ export default function ManageDishCategory() {
 
   const createMutation = useMutation({
     mutationFn: (values: { name: string; desc?: string }) => {
-      return adminAPI.dishes_category.create(values)
+      return dishCategoryAPI.create(values)
     },
     onSuccess: () => {
       toast.success("Tạo thể loại thành công!", {
@@ -116,7 +116,7 @@ export default function ManageDishCategory() {
   }
 
   const deleteMutation = useMutation({
-    mutationFn: (id: string) => adminAPI.dishes_category.delete(id),
+    mutationFn: (id: string) => dishCategoryAPI.delete(id),
     onSuccess: () => {
       toast.success("Xóa thể loại thành công!", {
         autoClose: 1500
@@ -163,10 +163,17 @@ export default function ManageDishCategory() {
       )
     },
     {
-      title: <div className="text-left">Số lượng món</div>,
+      title: <div className="text-center">Số lượng món</div>,
       dataIndex: "dishes_count",
       key: "dishes_count",
-      render: (val) => <div className="text-left">{val}</div>
+      render: (val, record) => (
+        <div className="flex items-center justify-center gap-2">
+          <Tag color="green">{val}</Tag>
+          <Link className="text-blue-500 hover:underline" to={`${path.AdminDish}?page=1&limit=5&category=${record.id}`}>
+            Xem chi tiết
+          </Link>
+        </div>
+      )
     },
     {
       title: <div className="text-left">Ngày tạo</div>,

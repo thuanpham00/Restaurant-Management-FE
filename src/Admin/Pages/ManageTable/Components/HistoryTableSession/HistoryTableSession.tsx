@@ -4,7 +4,7 @@ import { Button, Modal, Spin, Table } from "antd"
 import { History } from "lucide-react"
 import { useState } from "react"
 import { Link } from "react-router-dom"
-import { adminAPI } from "src/Apis/admin.api"
+import { tableSessionAPI } from "src/Apis/Admin"
 import { HistoryTableSession as HistoryTableSessionType } from "src/Types/utils.type"
 import { renderSessionStatus, renderSessionType } from "../../Pages/TableDetail/TableDetail"
 
@@ -21,7 +21,7 @@ export default function HistoryTableSession({ idDiningTable }: { idDiningTable: 
     queryFn: () => {
       const controller = new AbortController()
       setTimeout(() => controller.abort(), 10000)
-      return adminAPI.tableSession.getListHistoryTableSessionByIdTable(idDiningTable)
+      return tableSessionAPI.getListHistoryTableSessionByIdTable(idDiningTable)
     },
     retry: 0,
     enabled: Boolean(isModalOpen),

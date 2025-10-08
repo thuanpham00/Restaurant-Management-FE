@@ -49,6 +49,14 @@ export default function useRouterClient() {
           element: <MainLayout />,
           children: [
             {
+              index: true,
+              element: (
+                <Suspense>
+                  <Home />
+                </Suspense>
+              ),
+            },
+            {
               path: "home", // Thêm route "/home"
               element: (
                 <Suspense>

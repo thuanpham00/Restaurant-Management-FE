@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { assets } from "src/Assets/assets";
-import { clientAPI } from "src/Apis/client.api";
+import { clientAPI } from "src/Apis/Client/home.api";
 import Header from "src/Client/Components/HeaderClient";
 import Footer from "src/Client/Components/FooterClient";
 import { Statistics, Dishes, CategoryDishes, Promotion, Chef, DiningTable } from "src/Types/utils.type";
@@ -54,7 +54,7 @@ const Home = () => {
 
   useEffect(() => {
     // Fetch statistics
-    clientAPI.home.getStatistics()
+    clientAPI.getStatistics()
       .then((response) => {
         setStats(response.data.data);
         setLoading((prev) => ({ ...prev, stats: false }));
@@ -65,7 +65,7 @@ const Home = () => {
       });
 
     // Fetch popular dishes
-    clientAPI.home.getPopularDishes()
+    clientAPI.getPopularDishes()
       .then((response) => {
         setPopularDishes(response.data.data);
         setLoading((prev) => ({ ...prev, dishes: false }));
@@ -76,7 +76,7 @@ const Home = () => {
       });
 
     // Fetch menu categories
-    clientAPI.home.getMenuCategories()
+    clientAPI.getMenuCategories()
       .then((response) => {
         setCategories(response.data.data);
         setLoading((prev) => ({ ...prev, categories: false }));
@@ -87,7 +87,7 @@ const Home = () => {
       });
 
     // Fetch promotions
-    clientAPI.home.getPromotions()
+    clientAPI.getPromotions()
       .then((response) => {
         setPromotions(response.data.data);
         setLoading((prev) => ({ ...prev, promotions: false }));
@@ -98,7 +98,7 @@ const Home = () => {
       });
 
     // Fetch chefs
-    clientAPI.home.getChefs()
+    clientAPI.getChefs()
       .then((response) => {
         setChefs(response.data.data);
         setLoading((prev) => ({ ...prev, chefs: false }));
@@ -118,7 +118,7 @@ const Home = () => {
         navigate("/login");
         return;
       }
-      const response = await clientAPI.home.getAvailableTables(formData);
+      const response = await clientAPI.getAvailableTables(formData);
       setTables(response.data.data);
       setLoading((prev) => ({ ...prev, tables: false }));
     } catch (err) {

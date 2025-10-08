@@ -23,7 +23,7 @@ import { Helmet } from "react-helmet-async"
 import { createSearchParams, useNavigate, useSearchParams } from "react-router-dom"
 import { toast } from "react-toastify"
 import NavigateBack from "src/Admin/Components/NavigateBack"
-import { adminAPI } from "src/Apis/admin.api"
+import { dishesAPI, dishCategoryAPI } from "src/Apis/Admin"
 import { assets } from "src/Assets/assets"
 import InputFileImage from "src/Components/InputFileImage"
 import { path } from "src/Constants/path"
@@ -50,12 +50,14 @@ export default function ManageDish() {
     isUndefined
   )
 
+  console.log(queryConfig)
+
   const { data, isFetching } = useQuery({
     queryKey: ["listDish", queryConfig],
     queryFn: () => {
       const controller = new AbortController()
       setTimeout(() => controller.abort(), 10000)
-      return adminAPI.dishes.getList(queryConfig, controller.signal)
+      return dishesAPI.getList(queryConfig, controller.signal)
     },
     retry: 0,
     staleTime: 3 * 60 * 1000,
@@ -67,7 +69,7 @@ export default function ManageDish() {
     queryFn: () => {
       const controller = new AbortController()
       setTimeout(() => controller.abort(), 10000)
-      return adminAPI.dishes_category.getListNameCategory(controller.signal)
+      return dishCategoryAPI.getListNameCategory(controller.signal)
     },
     retry: 0,
     staleTime: 3 * 60 * 1000,
@@ -103,7 +105,7 @@ export default function ManageDish() {
   // Update API
   const updateMutation = useMutation({
     mutationFn: (values: Partial<Dishes>) => {
-      return adminAPI.dishes.update(editingId as string, values)
+      return dishesAPI.update(editingId as string, values)
     },
     onSuccess: () => {
       toast.success("Cập nhật món ăn thành công!", {
@@ -121,7 +123,7 @@ export default function ManageDish() {
 
   const createMutation = useMutation({
     mutationFn: (values: { name: string; desc?: string }) => {
-      return adminAPI.dishes.create(values)
+      return dishesAPI.create(values)
     },
     onSuccess: () => {
       toast.success("Tạo món ăn thành công!", {
@@ -199,7 +201,7 @@ export default function ManageDish() {
   }
 
   const deleteMutation = useMutation({
-    mutationFn: (id: string) => adminAPI.dishes.delete(id),
+    mutationFn: (id: string) => dishesAPI.delete(id),
     onSuccess: () => {
       toast.success("Xóa món ăn thành công!", {
         autoClose: 1500
@@ -362,7 +364,11 @@ export default function ManageDish() {
           layout="inline"
           onFinish={handleApplyForm}
           className="flex flex-wrap items-center justify-between"
-          initialValues={{ name: undefined, category: undefined, is_active: undefined }}
+          initialValues={{
+            name: undefined,
+            is_active: undefined,
+            category: queryConfig.category || undefined
+          }}
         >
           <div className="flex items-center gap-1">
             <div className="text-[15px] font-semibold">Bộ lọc & tìm kiếm: </div>
@@ -371,7 +377,7 @@ export default function ManageDish() {
             </Form.Item>
 
             <Form.Item name="cooking_time">
-              <Input type="number" placeholder="Thời gian nấu..." className="w-48" addonAfter="Phút" />
+              <Input type="number" placeholder="Thời gian nấu..." className="w-40" addonAfter="Phút" />
             </Form.Item>
 
             <Form.Item name="is_active">

@@ -4,7 +4,7 @@ import { useMutation } from "@tanstack/react-query";
 import { toast } from "react-toastify";
 import { assets } from "src/Assets/assets";
 import { path } from "src/Constants/path";
-import { clientAPI } from "src/Apis/client.api";
+import { clientAPI } from "src/Apis/Client/auth.api";
 import { useAppStore } from "src/StateGlobal/zustand";
 import { clearLS } from "src/Helpers/auth";
 
@@ -14,7 +14,7 @@ const Header = () => {
 
   const logoutMutation = useMutation({
     mutationFn: () => {
-      return clientAPI.auth.logout();
+      return clientAPI.logout();
     },
   });
 
