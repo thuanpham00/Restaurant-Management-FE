@@ -58,7 +58,7 @@ export default function ManageMenu() {
   })
 
   const paginated = data?.data.data as PaginatedResponse<Menus>
-  const listMenu = (paginated?.items || []) as Menus[]
+  const listMenu = (paginated?.data || []) as Menus[]
 
   const [searchParams, setSearchParams] = useSearchParams()
   const handlePaginationChange = (page: number, pageSize: number) => {
@@ -309,7 +309,7 @@ export default function ManageMenu() {
           <div style={{ marginTop: 16, textAlign: "center", display: "flex", justifyContent: "flex-end" }}>
             <Pagination
               current={parseInt(queryConfig.page as string)}
-              total={paginated?.meta.total}
+              total={paginated?.total}
               pageSize={parseInt(queryConfig.per_page as string)}
               onChange={handlePaginationChange}
               showSizeChanger

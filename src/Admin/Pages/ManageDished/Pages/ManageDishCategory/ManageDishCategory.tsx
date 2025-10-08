@@ -44,7 +44,7 @@ export default function ManageDishCategory() {
   })
 
   const paginated = data?.data.data
-  const listCategoryDish = paginated?.items
+  const listCategoryDish = paginated?.data
 
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingId, setEditingId] = useState<string | null | boolean>(null)
@@ -318,7 +318,7 @@ export default function ManageDishCategory() {
           <div style={{ marginTop: 16, textAlign: "center", display: "flex", justifyContent: "flex-end" }}>
             <Pagination
               current={parseInt(queryConfig.page as string)}
-              total={paginated?.meta.total}
+              total={paginated?.total}
               pageSize={parseInt(queryConfig.per_page as string)}
               onChange={handlePaginationChange}
               showSizeChanger

@@ -1,10 +1,10 @@
-import { keepPreviousData, useQuery, useQueryClient } from "@tanstack/react-query"
+import { keepPreviousData, useQuery } from "@tanstack/react-query"
 import { Empty, Pagination, Spin, Table, Tabs } from "antd"
 import { ColumnsType } from "antd/es/table"
 import { isUndefined, omitBy } from "lodash"
 import { useState } from "react"
 import { Helmet } from "react-helmet-async"
-import { useNavigate, useSearchParams } from "react-router-dom"
+import { useSearchParams } from "react-router-dom"
 import { Fragment } from "react/jsx-runtime"
 import NavigateBack from "src/Admin/Components/NavigateBack"
 import { reservationsAPI } from "src/Apis/Admin/reservation.api"
@@ -13,8 +13,6 @@ import { queryParamConfigReservation } from "src/Types/queryParams.type"
 import { Reservation } from "src/Types/utils.type"
 
 export default function ManageReservation() {
-  const navigate = useNavigate()
-  const queryClient = useQueryClient()
   const queryParams: queryParamConfigReservation = useQueryParams()
   const queryConfig: queryParamConfigReservation = omitBy(
     {
@@ -39,7 +37,7 @@ export default function ManageReservation() {
   })
 
   const paginated = data?.data.data
-  const listReservation = paginated?.items
+  const listReservation = paginated?.data
 
   const [searchParams, setSearchParams] = useSearchParams()
   const handlePaginationChange = (page: number, pageSize: number) => {
@@ -191,7 +189,7 @@ export default function ManageReservation() {
           <div style={{ marginTop: 16, textAlign: "center", display: "flex", justifyContent: "flex-end" }}>
             <Pagination
               current={parseInt(queryConfig.page as string)}
-              total={paginated?.meta.total}
+              total={paginated?.total}
               pageSize={parseInt(queryConfig.per_page as string)}
               onChange={handlePaginationChange}
               showSizeChanger

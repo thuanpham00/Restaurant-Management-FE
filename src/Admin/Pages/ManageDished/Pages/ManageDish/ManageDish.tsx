@@ -76,7 +76,7 @@ export default function ManageDish() {
   })
 
   const paginated = data?.data.data
-  const listDish = paginated?.items
+  const listDish = paginated?.data
 
   const listNameDishCategory = getListDishCategory.data?.data?.data || ([] as { id: string; name: string }[])
 
@@ -484,7 +484,7 @@ export default function ManageDish() {
           <div style={{ marginTop: 16, textAlign: "center", display: "flex", justifyContent: "flex-end" }}>
             <Pagination
               current={parseInt(queryConfig.page as string)}
-              total={paginated?.meta.total}
+              total={paginated?.total}
               pageSize={parseInt(queryConfig.per_page as string)}
               onChange={handlePaginationChange}
               showSizeChanger

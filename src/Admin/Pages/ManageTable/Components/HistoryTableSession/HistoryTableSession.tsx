@@ -11,11 +11,9 @@ import { renderSessionStatus, renderSessionType } from "../../Pages/TableDetail/
 export default function HistoryTableSession({ idDiningTable }: { idDiningTable: string }) {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [pagination, setPagination] = useState({ current: 1, pageSize: 5 })
-  const [typeSession, setTypeSession] = useState()
+  const [typeSession, setTypeSession] = useState("")
   const showModal = (type_session: string) => {
-    if (type_session === "history") {
-      //
-    }
+    setTypeSession(type_session)
     setIsModalOpen(true)
   }
 
@@ -46,6 +44,7 @@ export default function HistoryTableSession({ idDiningTable }: { idDiningTable: 
   })
 
   const listHistoryTableSession = (data?.data?.data || []) as HistoryTableSessionType[]
+  const listPendingTableSession = (dataListPendingTableSession?.data?.data || []) as HistoryTableSessionType[]
 
   const columns = [
     {
@@ -132,7 +131,7 @@ export default function HistoryTableSession({ idDiningTable }: { idDiningTable: 
           e.currentTarget.style.backgroundColor = "#ef4444"
           e.currentTarget.style.borderColor = "#ef4444"
         }}
-        onClick={showModal}
+        onClick={() => showModal("history")}
       >
         Lịch sử phiên bàn
       </Button>
@@ -143,7 +142,7 @@ export default function HistoryTableSession({ idDiningTable }: { idDiningTable: 
         style={{
           width: "140px"
         }}
-        onClick={showModal}
+        onClick={() => showModal("pending")}
       >
         Phiên bàn chờ
       </Button>
@@ -156,7 +155,7 @@ export default function HistoryTableSession({ idDiningTable }: { idDiningTable: 
         footer={false}
         width={1300}
       >
-        {isFetching ? (
+        {isFetching || isFetchingListPendingTableSession ? (
           <div className="flex justify-center items-center py-10">
             <Spin size="large" tip="Đang tải dữ liệu...">
               <div style={{ minHeight: 100, width: 300, marginTop: 10 }} />
@@ -165,12 +164,12 @@ export default function HistoryTableSession({ idDiningTable }: { idDiningTable: 
         ) : (
           <Table
             columns={columns}
-            dataSource={listHistoryTableSession}
+            dataSource={typeSession === "history" ? listHistoryTableSession : listPendingTableSession}
             rowKey="session_id"
             pagination={{
               current: pagination.current,
               pageSize: pagination.pageSize,
-              total: listHistoryTableSession.length,
+              total: typeSession === "history" ? listHistoryTableSession.length : listPendingTableSession.length,
               onChange: (page, pageSize) => setPagination({ current: page, pageSize })
             }}
           />

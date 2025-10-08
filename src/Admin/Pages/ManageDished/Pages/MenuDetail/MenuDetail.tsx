@@ -152,11 +152,11 @@ export default function MenuDetail() {
 
   const columns: ColumnsType<any> = [
     {
-      title: "STT",
+      title: <div className="text-center">STT</div>,
       dataIndex: "index",
       key: "index",
       width: 70,
-      render: (_, __, index) => index + 1
+      render: (_, __, index) => <div className="text-center">{index + 1}</div>
     },
     {
       title: "Tên món ăn",
