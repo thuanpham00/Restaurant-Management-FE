@@ -309,7 +309,14 @@ export default function ShiftListTab() {
               total: paginated?.total,
               pageSize: parseInt(queryConfig.per_page as string) || 15,
               showSizeChanger: true,
-              showTotal: (total) => `Tổng ${total} ca`
+              showTotal: (total) => `Tổng ${total} ca`,
+              onChange: (page, pageSize) => {
+                const params = new URLSearchParams(window.location.search)
+                params.set("page", page.toString())
+                params.set("per_page", pageSize.toString())
+                window.history.pushState({}, "", `${window.location.pathname}?${params.toString()}`)
+                window.dispatchEvent(new PopStateEvent("popstate"))
+              }
             }}
             scroll={{
               y: "calc(100vh - 500px)",
