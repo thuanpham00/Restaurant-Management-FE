@@ -403,7 +403,7 @@ export default function ManageEmployee() {
           </Form.Item>
 
           <Form.Item name="is_active" className="mb-0">
-            <Select placeholder="Trạng thái" allowClear className="w-40">
+            <Select placeholder="Trạng thái" allowClear style={{ width: 160 }}>
               <Option value={1}>Hoạt động</Option>
               <Option value={0}>Ngừng hoạt động</Option>
             </Select>

@@ -310,7 +310,7 @@ export default function PayrollListTab() {
   return (
     <div>
       {/* Header & Actions */}
-      <div className="flex justify-between items-center mb-4 px-4 pt-4">
+      <div className="flex justify-between items-center mb-4 px-4 pt-0">
         <div>
           <h3 className="text-lg font-semibold">Danh sách Bảng lương</h3>
           <p className="text-gray-500 text-sm">Quản lý bảng lương nhân viên theo tháng</p>
