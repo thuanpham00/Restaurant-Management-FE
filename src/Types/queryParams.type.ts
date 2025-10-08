@@ -28,3 +28,7 @@ export type queryParamConfigMenu = queryParamConfig & {
   desc?: string
   is_active?: string
 }
+
+export type queryParamConfigReservation = queryParamConfig & {
+  is_active?: string
+}

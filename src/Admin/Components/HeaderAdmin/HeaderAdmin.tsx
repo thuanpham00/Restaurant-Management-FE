@@ -10,19 +10,20 @@ interface Props {
 }
 
 export default function HeaderAdmin({ handleSidebar, isShowSidebar }: Props) {
-  const { avatar, nameUser } = useAppStore()
+  const { avatar, nameUser, role } = useAppStore()
 
   const handleSideBarFunc = () => {
     handleSidebar(!isShowSidebar)
   }
 
-  const role: string = "ADMIN"
   const renderRoleTag = () => {
     switch (role) {
-      case "ADMIN":
-        return <Tag color="red">ADMIN</Tag>
-      case "SALES_STAFF":
-        return <Tag color="blue">SALES STAFF</Tag>
+      case "Super Administrator":
+        return <Tag color="orange">Super Administrator</Tag>
+      case "Administrator":
+        return <Tag color="red">Administrator</Tag>
+      case "Staff":
+        return <Tag color="blue">Staff</Tag>
       case "INVENTORY_STAFF":
         return <Tag color="green">INVENTORY STAFF</Tag>
       default:

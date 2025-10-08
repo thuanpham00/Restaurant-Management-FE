@@ -9,7 +9,7 @@ import { ErrorResponse, PaginatedResponse, TableSession } from "src/Types/utils.
 import { Helmet } from "react-helmet-async"
 import "antd/dist/reset.css"
 import { createSearchParams, useNavigate, useSearchParams } from "react-router-dom"
-import { Table } from "lucide-react"
+import { Filter, RotateCcw, Table } from "lucide-react"
 import { Fragment, useState } from "react"
 import { toast } from "react-toastify"
 import { isError422 } from "src/Helpers/utils"
@@ -150,7 +150,6 @@ export default function ManageTable() {
               <Select.Option value="empty">Trống</Select.Option>
               <Select.Option value="pending">Đặt trước</Select.Option>
               <Select.Option value="active">Đang phục vụ</Select.Option>
-              <Select.Option value="paying">Thanh toán</Select.Option>
               <Select.Option value="completed">Hoàn tất</Select.Option>
               <Select.Option value="cancelled">Hủy</Select.Option>
             </Select>
@@ -164,12 +163,14 @@ export default function ManageTable() {
           </Form.Item>
 
           <Form.Item>
-            <Button onClick={resetFilterForm}>Reset</Button>
+            <Button type="primary" htmlType="submit" icon={<Filter size={16} />}>
+              Lọc
+            </Button>
           </Form.Item>
 
           <Form.Item>
-            <Button type="primary" htmlType="submit">
-              Áp dụng
+            <Button onClick={resetFilterForm} icon={<RotateCcw size={16} />}>
+              Reset
             </Button>
           </Form.Item>
         </Form>

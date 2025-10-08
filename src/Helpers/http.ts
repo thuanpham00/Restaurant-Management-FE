@@ -83,6 +83,7 @@ class http {
         if (isError401(error)) {
           const config = error.response?.config || ({ headers: {} } as InternalAxiosRequestConfig)
           const { url } = config
+          console.log(error)
           // lỗi Unauthorized (401) có nhiều trường hợp
           // - token không đúng
           // - không truyền token

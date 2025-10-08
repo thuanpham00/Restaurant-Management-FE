@@ -35,3 +35,7 @@
   height: calc(100vh - 100px); /* trừ header/nav nếu có */
   overflow: hidden; /* chặn scroll ngoài */
 }
+
+.text-right .ant-input-number-input {
+  text-align: center !important;
+}

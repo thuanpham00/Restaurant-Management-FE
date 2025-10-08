@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { keepPreviousData, useQuery } from "@tanstack/react-query"
 import { Button, Modal, Spin, Table } from "antd"
-import { History } from "lucide-react"
+import { History, NotebookTabs } from "lucide-react"
 import { useState } from "react"
 import { Link } from "react-router-dom"
 import { tableSessionAPI } from "src/Apis/Admin"
@@ -11,8 +11,11 @@ import { renderSessionStatus, renderSessionType } from "../../Pages/TableDetail/
 export default function HistoryTableSession({ idDiningTable }: { idDiningTable: string }) {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [pagination, setPagination] = useState({ current: 1, pageSize: 5 })
-
-  const showModal = () => {
+  const [typeSession, setTypeSession] = useState()
+  const showModal = (type_session: string) => {
+    if (type_session === "history") {
+      //
+    }
     setIsModalOpen(true)
   }
 
@@ -22,6 +25,19 @@ export default function HistoryTableSession({ idDiningTable }: { idDiningTable: 
       const controller = new AbortController()
       setTimeout(() => controller.abort(), 10000)
       return tableSessionAPI.getListHistoryTableSessionByIdTable(idDiningTable)
+    },
+    retry: 0,
+    enabled: Boolean(isModalOpen),
+    staleTime: 3 * 60 * 1000,
+    placeholderData: keepPreviousData
+  })
+
+  const { data: dataListPendingTableSession, isFetching: isFetchingListPendingTableSession } = useQuery({
+    queryKey: ["listPendingTableSession", idDiningTable],
+    queryFn: () => {
+      const controller = new AbortController()
+      setTimeout(() => controller.abort(), 10000)
+      return tableSessionAPI.getListPendingTableSessionByIdTable(idDiningTable)
     },
     retry: 0,
     enabled: Boolean(isModalOpen),
@@ -99,7 +115,7 @@ export default function HistoryTableSession({ idDiningTable }: { idDiningTable: 
   ]
 
   return (
-    <div className="mt-4 flex justify-start">
+    <div className="flex gap-2">
       <Button
         type="primary"
         icon={<History size={16} />}
@@ -119,6 +135,17 @@ export default function HistoryTableSession({ idDiningTable }: { idDiningTable: 
         onClick={showModal}
       >
         Lịch sử phiên bàn
+      </Button>
+
+      <Button
+        type="primary"
+        icon={<NotebookTabs size={16} />}
+        style={{
+          width: "140px"
+        }}
+        onClick={showModal}
+      >
+        Phiên bàn chờ
       </Button>
 
       <Modal

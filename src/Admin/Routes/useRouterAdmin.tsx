@@ -5,9 +5,6 @@ import { path } from "src/Constants/path"
 import LayoutAuthAdmin from "../Layouts/LayoutAuthAdmin"
 import { rolesForApi } from "src/Helpers/role_permission"
 import { useAppStore } from "src/StateGlobal/zustand"
-import ManageDish from "../Pages/ManageDished/Pages/ManageDish"
-import ManageMenu from "../Pages/ManageDished/Pages/ManageMenu"
-import MenuDetail from "../Pages/ManageDished/Pages/MenuDetail"
 
 const AdminLogin = lazy(() => import("../Pages/AdminLogin"))
 const ManageDashboard = lazy(() => import("../Pages/ManageDashboard"))
@@ -15,8 +12,10 @@ const ManageTable = lazy(() => import("../Pages/ManageTable/Pages/ManageTable"))
 const TableDetail = lazy(() => import("../Pages/ManageTable/Pages/TableDetail"))
 const TableSessionHistoryDetail = lazy(() => import("../Pages/ManageTable/Pages/TableSessionHistoryDetail"))
 const ManageDishCategory = lazy(() => import("../Pages/ManageDished/Pages/ManageDishCategory"))
-
-const ManageReservation = lazy(() => import("../Pages/ManageReservation"))
+const ManageReservation = lazy(() => import("../Pages/ManageTable/Pages/ManageReservation"))
+const ManageMenu = lazy(() => import("../Pages/ManageDished/Pages/ManageMenu"))
+const ManageDish = lazy(() => import("../Pages/ManageDished/Pages/ManageDish"))
+const MenuDetail = lazy(() => import("../Pages/ManageDished/Pages/MenuDetail"))
 
 const ProtectedRoute = () => {
   const { isAuthenticated } = useAppStore()
