@@ -67,6 +67,7 @@ export default function ShiftCalendarView() {
   const [isUpdateStatusModalOpen, setIsUpdateStatusModalOpen] = useState(false)
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null)
   const [selectedDate, setSelectedDate] = useState<Date | null>(null)
+  const [isCreatingNewShift, setIsCreatingNewShift] = useState(false) // Chế độ tạo ca mới
 
   const [assignForm] = Form.useForm()
   const [checkInForm] = Form.useForm()
@@ -127,17 +128,28 @@ export default function ShiftCalendarView() {
     })) || []
 
   const shiftOptions =
-    (shiftsData?.data?.data as any)?.data?.map((shift: any) => {
-      // Backend trả về start_time và end_time dạng "HH:mm:ss"
+    (shiftsData?.data?.data as any)?.data
+    ?.filter((shift: any) => {
+      return !shift.employee_assignments || shift.employee_assignments.length === 0
+    })
+    ?.map((shift: any) => {
       const startTime = shift.start_time ? shift.start_time.slice(0, 5) : '00:00'
       const endTime = shift.end_time ? shift.end_time.slice(0, 5) : '23:59'
+      const shiftDate = shift.shift_date ? dayjs(shift.shift_date).format('DD/MM/YYYY') : ''
       return {
-        label: `${shift.name} (${startTime} - ${endTime})`,
+        label: `${shift.name} (${startTime} - ${endTime}) - ${shiftDate}`,
         value: shift.id
       }
     }) || []
 
   // ========== MUTATIONS ==========
+  const createShiftMutation = useMutation({
+    mutationFn: (data: any) => shiftsAPI.create(data),
+    onError: (error: any) => {
+      toast.error(error?.response?.data?.message || "Tạo ca thất bại", { autoClose: 1500 })
+    }
+  })
+
   const assignMutation = useMutation({
     mutationFn: (values: any) => employeeShiftsAPI.assign(values),
     onSuccess: () => {
@@ -213,8 +225,10 @@ export default function ShiftCalendarView() {
 
   const handleSelectSlot = (slotInfo: SlotInfo) => {
     setSelectedDate(slotInfo.start)
+    setIsCreatingNewShift(false) 
     assignForm.setFieldsValue({
-      shift_date: dayjs(slotInfo.start)
+      shift_date: dayjs(slotInfo.start),
+      mode: 'existing'
     })
     setIsAssignModalOpen(true)
   }
@@ -223,17 +237,46 @@ export default function ShiftCalendarView() {
   const handleCloseAssignModal = () => {
     setIsAssignModalOpen(false)
     setSelectedDate(null)
+    setIsCreatingNewShift(false)
     assignForm.resetFields()
   }
 
+  const handleModeChange = (mode: string) => {
+    setIsCreatingNewShift(mode === 'new')
+    if (mode === 'new') {
+      assignForm.setFieldsValue({ shift_id: undefined })
+    }
+  }
+
   const handleSubmitAssign = () => {
-    assignForm.validateFields().then((values) => {
-      assignMutation.mutate({
-        employee_id: values.employee_id,
-        shift_id: values.shift_id,
-        shift_date: dayjs(values.shift_date).format("YYYY-MM-DD"),
-        notes: values.notes
-      })
+    assignForm.validateFields().then(async (values) => {
+      try {
+        let shiftId = values.shift_id
+
+        // Nếu chế độ tạo ca mới
+        if (values.mode === 'new') {
+          // Bước 1: Tạo ca mới
+          const shiftData = {
+            name: values.shift_name,
+            shift_date: dayjs(values.shift_date).format("YYYY-MM-DD"),
+            start_time: dayjs(values.start_time).format("HH:mm:ss"),
+            end_time: dayjs(values.end_time).format("HH:mm:ss")
+          }
+          
+          const shiftResult = await createShiftMutation.mutateAsync(shiftData)
+          shiftId = shiftResult.data.data.id
+          
+          toast.success("Tạo ca mới thành công!", { autoClose: 1000 })
+        }
+
+        assignMutation.mutate({
+          employee_id: values.employee_id,
+          shift_id: shiftId,
+          notes: values.notes
+        })
+      } catch (error: any) {
+        toast.error(error?.response?.data?.message || "Có lỗi xảy ra", { autoClose: 1500 })
+      }
     })
   }
 
@@ -506,14 +549,31 @@ export default function ShiftCalendarView() {
         footer={
           <div className="flex justify-end gap-2">
             <Button onClick={handleCloseAssignModal}>Hủy</Button>
-            <Button type="primary" onClick={handleSubmitAssign} loading={assignMutation.isPending}>
-              Phân công
+            <Button 
+              type="primary" 
+              onClick={handleSubmitAssign} 
+              loading={assignMutation.isPending || createShiftMutation.isPending}
+            >
+              {isCreatingNewShift ? "Tạo ca & Phân công" : "Phân công"}
             </Button>
           </div>
         }
-        width={600}
+        width={700}
       >
         <Form form={assignForm} layout="vertical" className="mt-4">
+          {/* Mode Selection */}
+          <Form.Item
+            name="mode"
+            label="Chế độ"
+            initialValue="existing"
+            rules={[{ required: true, message: "Vui lòng chọn chế độ!" }]}
+          >
+            <Select onChange={handleModeChange}>
+              <Select.Option value="existing">Chọn ca có sẵn</Select.Option>
+              <Select.Option value="new">Tạo ca mới</Select.Option>
+            </Select>
+          </Form.Item>
+
           <Form.Item
             name="employee_id"
             label="Nhân viên"
@@ -522,17 +582,62 @@ export default function ShiftCalendarView() {
             <Select placeholder="Chọn nhân viên" showSearch options={employeeOptions} />
           </Form.Item>
 
-          <Form.Item name="shift_id" label="Ca" rules={[{ required: true, message: "Vui lòng chọn ca!" }]}>
-            <Select placeholder="Chọn ca" options={shiftOptions} />
-          </Form.Item>
+          {/* Existing Shift Mode */}
+          {!isCreatingNewShift && (
+            <Form.Item 
+              name="shift_id" 
+              label="Ca làm việc" 
+              rules={[{ required: !isCreatingNewShift, message: "Vui lòng chọn ca!" }]}
+            >
+              <Select placeholder="Chọn ca có sẵn" options={shiftOptions} />
+            </Form.Item>
+          )}
 
-          <Form.Item name="shift_date" label="Ngày" initialValue={selectedDate ? dayjs(selectedDate) : null}>
-            <Input disabled value={selectedDate ? dayjs(selectedDate).format("DD/MM/YYYY") : ""} />
-          </Form.Item>
+          {/* New Shift Mode */}
+          {isCreatingNewShift && (
+            <>
+              <Form.Item
+                name="shift_name"
+                label="Tên ca mới"
+                rules={[
+                  { required: isCreatingNewShift, message: "Vui lòng nhập tên ca!" },
+                  { max: 100, message: "Tên ca không quá 100 ký tự" }
+                ]}
+              >
+                <Input placeholder="VD: Ca sáng, Ca chiều..." />
+              </Form.Item>
 
+              <div className="grid grid-cols-2 gap-4">
+                <Form.Item
+                  name="start_time"
+                  label="Giờ bắt đầu"
+                  rules={[{ required: isCreatingNewShift, message: "Vui lòng chọn giờ!" }]}
+                >
+                  <TimePicker className="w-full" format="HH:mm" placeholder="Chọn giờ bắt đầu" />
+                </Form.Item>
+
+                <Form.Item
+                  name="end_time"
+                  label="Giờ kết thúc"
+                  rules={[{ required: isCreatingNewShift, message: "Vui lòng chọn giờ!" }]}
+                >
+                  <TimePicker className="w-full" format="HH:mm" placeholder="Chọn giờ kết thúc" />
+                </Form.Item>
+              </div>
+            </>
+          )}
+          
           <Form.Item name="notes" label="Ghi chú">
-            <Input.TextArea rows={2} placeholder="Ghi chú..." />
+            <Input.TextArea rows={2} placeholder="Ghi chú thêm..." />
           </Form.Item>
+
+          {isCreatingNewShift && (
+            <div className="bg-blue-50 p-3 rounded-lg">
+              <p className="text-sm text-gray-600">
+                <strong>Lưu ý:</strong> Ca mới sẽ được tạo cho ngày đã chọn và tự động phân công cho nhân viên.
+              </p>
+            </div>
+          )}
         </Form>
       </Modal>
 

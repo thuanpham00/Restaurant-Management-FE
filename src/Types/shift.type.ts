@@ -7,6 +7,7 @@ export type Shift = {
   end_time: string
   created_at: string
   updated_at: string
+  employee_assignments?: any[] 
 }
 
 export type ShiftFormInput = {
@@ -72,7 +73,7 @@ export type EmployeeShift = {
 export type EmployeeShiftFormInput = {
   employee_id: string
   shift_id: string
-  shift_date: string
+  status?: number 
   notes?: string
 }
 

@@ -160,6 +160,7 @@ export default function PayrollDetail() {
             type="text"
             icon={<Edit size={14} />}
             onClick={() => handleEditItem(record)}
+            disabled={isPaid}
           />
           <Button
             size="small"
@@ -167,6 +168,7 @@ export default function PayrollDetail() {
             danger
             icon={<Trash2 size={14} />}
             onClick={() => handleDeleteItem(record)}
+            disabled={isPaid}
           />
         </div>
       )
@@ -455,6 +457,7 @@ export default function PayrollDetail() {
           queryClient.invalidateQueries({ queryKey: ["payrolls"] })
           handleCloseItemModal()
         }}
+        disabled={isPaid}
       />
 
       {/* Payment Modal */}

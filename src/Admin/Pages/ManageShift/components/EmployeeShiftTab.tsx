@@ -21,7 +21,6 @@ import useQueryParams from "src/Hook/useQueryParams"
 interface AssignFormInput {
   employee_id: string
   shift_id: string
-  shift_date: dayjs.Dayjs
   notes?: string
 }
 
@@ -113,20 +112,19 @@ export default function EmployeeShiftTab() {
 
   const shiftOptions =
     (shiftsData?.data?.data as any)?.data
-      ?.filter((item: any) => item.employee === null) // chỉ lấy ca chưa có nhân viên
-      ?.map((item: any) => {
-        const shift = item.shift
-        if (!shift) return null // tránh lỗi nếu dữ liệu thiếu shift
-
+      ?.filter((shift: any) => {
+        return !shift.employee_assignments || shift.employee_assignments.length === 0
+      })
+      ?.map((shift: any) => {
         const startTime = shift.start_time ? shift.start_time.slice(0, 5) : "00:00"
         const endTime = shift.end_time ? shift.end_time.slice(0, 5) : "23:59"
+        const shiftDate = shift.shift_date ? dayjs(shift.shift_date).format("DD/MM/YYYY") : ""
 
         return {
-          label: `${shift.name} (${startTime} - ${endTime})`,
+          label: `${shift.name} (${startTime} - ${endTime}) - ${shiftDate}`,
           value: shift.id
         }
-      })
-      ?.filter(Boolean) || []
+      }) || []
 
   // ========== MUTATIONS ==========
   const assignMutation = useMutation({
@@ -134,7 +132,6 @@ export default function EmployeeShiftTab() {
       employeeShiftsAPI.assign({
         employee_id: values.employee_id,
         shift_id: values.shift_id,
-        shift_date: dayjs(values.shift_date).format("YYYY-MM-DD"),
         notes: values.notes
       }),
     onSuccess: () => {
@@ -575,13 +572,6 @@ export default function EmployeeShiftTab() {
             <Select placeholder="Chọn ca" options={shiftOptions} />
           </Form.Item>
 
-          <Form.Item
-            name="shift_date"
-            label="Ngày làm việc"
-            rules={[{ required: true, message: "Vui lòng chọn ngày!" }]}
-          >
-            <DatePicker className="w-full" format="DD/MM/YYYY" placeholder="Chọn ngày" />
-          </Form.Item>
 
           <Form.Item name="notes" label="Ghi chú">
             <Input.TextArea rows={3} placeholder="Ghi chú thêm..." />
