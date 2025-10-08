@@ -37,7 +37,7 @@ export default function ManageMenu() {
   const queryConfig: queryParamConfigMenu = omitBy(
     {
       page: queryParams.page || "1",
-      limit: queryParams.limit || "5",
+      per_page: queryParams.per_page || "5",
       name: queryParams.name,
       desc: queryParams.desc,
       is_active: queryParams.is_active
@@ -58,12 +58,12 @@ export default function ManageMenu() {
   })
 
   const paginated = data?.data.data as PaginatedResponse<Menus>
-  const listMenu = (paginated?.data || []) as Menus[]
+  const listMenu = (paginated?.items || []) as Menus[]
 
   const [searchParams, setSearchParams] = useSearchParams()
   const handlePaginationChange = (page: number, pageSize: number) => {
     searchParams.set("page", page.toString())
-    searchParams.set("limit", pageSize.toString())
+    searchParams.set("per_page", pageSize.toString())
     setSearchParams(searchParams) // trigger re-render → useQuery tự refetch
   }
 
@@ -127,7 +127,6 @@ export default function ManageMenu() {
               dataMenu: record
             }}
             className="text-blue-500"
-            onClick={() => handleEdit(record)}
           >
             Xem chi tiết
           </Link>
@@ -171,36 +170,9 @@ export default function ManageMenu() {
         is_active: false
       })
       setEditingId(true)
-    } else {
-      form.setFieldsValue({
-        name: record.name,
-        description: record.description,
-        version: record.version,
-        is_active: record.is_active
-      })
-      setEditingId(record.id)
     }
     setIsModalOpen(true)
   }
-
-  // Update API
-  const updateMutation = useMutation({
-    mutationFn: (values: Partial<Menus>) => {
-      return menusAPI.update(editingId as string, values)
-    },
-    onSuccess: () => {
-      toast.success("Cập nhật thực đơn thành công!", {
-        autoClose: 1500
-      })
-      queryClient.invalidateQueries({ queryKey: ["listMenu"] })
-      setIsModalOpen(false)
-    },
-    onError: () => {
-      toast.error("Hiện đã có một menu đang được áp dụng. Chỉ được kích hoạt một menu tại một thời điểm.", {
-        autoClose: 1500
-      })
-    }
-  })
 
   const createMutation = useMutation({
     mutationFn: (values: { name: string; desc?: string }) => {
@@ -224,10 +196,6 @@ export default function ManageMenu() {
     if (editingId === true) {
       form.validateFields().then((values) => {
         createMutation.mutate(values)
-      })
-    } else {
-      form.validateFields().then((values) => {
-        updateMutation.mutate(values)
       })
     }
   }
@@ -262,7 +230,7 @@ export default function ManageMenu() {
             </Form.Item>
 
             <Form.Item name="is_active">
-              <Select placeholder="Trạng thái" allowClear className="w-32">
+              <Select placeholder="Trạng thái" allowClear className="w-32" dropdownStyle={{ width: 100 }}>
                 <Select.Option value="1">Hoạt động</Select.Option>
                 <Select.Option value="0">Ngừng</Select.Option>
               </Select>
@@ -339,8 +307,8 @@ export default function ManageMenu() {
           <div style={{ marginTop: 16, textAlign: "center", display: "flex", justifyContent: "flex-end" }}>
             <Pagination
               current={parseInt(queryConfig.page as string)}
-              total={paginated?.total}
-              pageSize={parseInt(queryConfig.limit as string)}
+              total={paginated?.meta.total}
+              pageSize={parseInt(queryConfig.per_page as string)}
               onChange={handlePaginationChange}
               showSizeChanger
               pageSizeOptions={["5", "10", "20", "50"]}
@@ -355,7 +323,7 @@ export default function ManageMenu() {
         width={700}
         onCancel={() => setIsModalOpen(false)}
         onOk={handleUpdate}
-        // confirmLoading={updateMutation.isPending || createMutation.isPending}
+        confirmLoading={createMutation.isPending}
       >
         <Form form={form} layout="vertical">
           {/* Tên Menu */}

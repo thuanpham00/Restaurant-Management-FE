@@ -26,7 +26,7 @@ export default function ManageTable() {
   const queryConfig: queryParamConfigTableSessions = omitBy(
     {
       page: queryParams.page || "1",
-      limit: queryParams.limit || "8",
+      per_page: queryParams.per_page || "8",
       is_active: queryParams.is_active,
       session_status: queryParams.session_status,
       capacity: queryParams.capacity
@@ -45,7 +45,7 @@ export default function ManageTable() {
   })
 
   const paginated: PaginatedResponse<TableSession> | undefined = data?.data.data
-  const listTableSession = paginated?.data || []
+  const listTableSession = paginated?.items || []
 
   const [searchParams, setSearchParams] = useSearchParams()
   const handlePaginationChange = (page: number, pageSize: number) => {
@@ -241,8 +241,8 @@ export default function ManageTable() {
           <div style={{ marginTop: 16, textAlign: "center", display: "flex", justifyContent: "flex-end" }}>
             <Pagination
               current={parseInt(queryConfig.page as string)}
-              total={paginated?.total}
-              pageSize={parseInt(queryConfig.limit as string)}
+              total={paginated?.meta.total}
+              pageSize={parseInt(queryConfig.per_page as string)}
               onChange={handlePaginationChange}
               showSizeChanger
               pageSizeOptions={["8", "10", "20", "50"]}

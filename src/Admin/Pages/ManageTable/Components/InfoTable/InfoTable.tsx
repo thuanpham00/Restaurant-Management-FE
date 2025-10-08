@@ -93,13 +93,13 @@ export default function InfoTable({
                 Hủy
               </Button>
               <Button type="primary" disabled={loading} htmlType="submit">
-                Cập nhật
+                Lưu
               </Button>
             </div>
           ) : (
             <div className="flex justify-end">
               <Button onClick={handleCheckUpdate} type="primary">
-                Thay đổi
+                Cập nhật
               </Button>
             </div>
           )}

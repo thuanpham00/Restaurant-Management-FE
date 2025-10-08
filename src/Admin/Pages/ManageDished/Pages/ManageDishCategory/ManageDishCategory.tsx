@@ -12,6 +12,7 @@ import NavigateBack from "src/Admin/Components/NavigateBack"
 import { dishCategoryAPI } from "src/Apis/Admin"
 import { path } from "src/Constants/path"
 import { cleanObject } from "src/Helpers/common"
+import { isError400 } from "src/Helpers/utils"
 import useQueryParams from "src/Hook/useQueryParams"
 import { queryParamConfigCategoryDish } from "src/Types/queryParams.type"
 import { CategoryDishes } from "src/Types/utils.type"
@@ -23,7 +24,7 @@ export default function ManageDishCategory() {
   const queryConfig: queryParamConfigCategoryDish = omitBy(
     {
       page: queryParams.page || "1",
-      limit: queryParams.limit || "5",
+      per_page: queryParams.per_page || "5",
       desc: queryParams.desc,
       name: queryParams.name
     },
@@ -43,7 +44,7 @@ export default function ManageDishCategory() {
   })
 
   const paginated = data?.data.data
-  const listCategoryDish = paginated?.data
+  const listCategoryDish = paginated?.items
 
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingId, setEditingId] = useState<string | null | boolean>(null)
@@ -123,10 +124,12 @@ export default function ManageDishCategory() {
       })
       queryClient.invalidateQueries({ queryKey: ["listDishCategory"] })
     },
-    onError: () => {
-      toast.error("Thể loại đang sử dụng nên không thể xóa!", {
-        autoClose: 1500
-      })
+    onError: (error) => {
+      if (isError400<any>(error)) {
+        toast.error(error.response?.data?.message, {
+          autoClose: 1500
+        })
+      }
     }
   })
 
@@ -169,7 +172,10 @@ export default function ManageDishCategory() {
       render: (val, record) => (
         <div className="flex items-center justify-center gap-2">
           <Tag color="green">{val}</Tag>
-          <Link className="text-blue-500 hover:underline" to={`${path.AdminDish}?page=1&limit=5&category=${record.id}`}>
+          <Link
+            className="text-blue-500 hover:underline"
+            to={`${path.AdminDish}?page=1&per_page=5&category=${record.id}`}
+          >
             Xem chi tiết
           </Link>
         </div>
@@ -206,7 +212,7 @@ export default function ManageDishCategory() {
   const [searchParams, setSearchParams] = useSearchParams()
   const handlePaginationChange = (page: number, pageSize: number) => {
     searchParams.set("page", page.toString())
-    searchParams.set("limit", pageSize.toString())
+    searchParams.set("per_page", pageSize.toString())
     setSearchParams(searchParams) // trigger re-render → useQuery tự refetch
   }
 
@@ -310,8 +316,8 @@ export default function ManageDishCategory() {
           <div style={{ marginTop: 16, textAlign: "center", display: "flex", justifyContent: "flex-end" }}>
             <Pagination
               current={parseInt(queryConfig.page as string)}
-              total={paginated?.total}
-              pageSize={parseInt(queryConfig.limit as string)}
+              total={paginated?.meta.total}
+              pageSize={parseInt(queryConfig.per_page as string)}
               onChange={handlePaginationChange}
               showSizeChanger
               pageSizeOptions={["5", "10", "20", "50"]}

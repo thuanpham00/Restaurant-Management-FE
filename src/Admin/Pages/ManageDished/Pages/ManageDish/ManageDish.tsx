@@ -28,6 +28,7 @@ import { assets } from "src/Assets/assets"
 import InputFileImage from "src/Components/InputFileImage"
 import { path } from "src/Constants/path"
 import { cleanObject } from "src/Helpers/common"
+import { isError400 } from "src/Helpers/utils"
 import useQueryParams from "src/Hook/useQueryParams"
 import { queryParamConfigCategoryDish, queryParamConfigDish } from "src/Types/queryParams.type"
 import { Dishes } from "src/Types/utils.type"
@@ -39,7 +40,7 @@ export default function ManageDish() {
   const queryConfig: queryParamConfigDish = omitBy(
     {
       page: queryParams.page || "1",
-      limit: queryParams.limit || "5",
+      per_page: queryParams.per_page || "5",
       name: queryParams.name,
       is_active: queryParams.is_active,
       category: queryParams.category,
@@ -77,7 +78,7 @@ export default function ManageDish() {
   })
 
   const paginated = data?.data.data
-  const listDish = paginated?.data
+  const listDish = paginated?.items
 
   const listNameDishCategory = getListDishCategory.data?.data?.data || ([] as { id: string; name: string }[])
 
@@ -208,10 +209,12 @@ export default function ManageDish() {
       })
       queryClient.invalidateQueries({ queryKey: ["listDish"] })
     },
-    onError: () => {
-      toast.error("Món ăn đang sử dụng nên không thể xóa!", {
-        autoClose: 1500
-      })
+    onError: (error) => {
+      if (isError400<any>(error)) {
+        toast.error(error.response?.data?.message, {
+          autoClose: 1500
+        })
+      }
     }
   })
 
@@ -257,7 +260,7 @@ export default function ManageDish() {
       )
     },
     {
-      title: "Giá",
+      title: "Giá gốc",
       dataIndex: "price",
       key: "price",
       width: 100,
@@ -311,7 +314,7 @@ export default function ManageDish() {
   const [searchParams, setSearchParams] = useSearchParams()
   const handlePaginationChange = (page: number, pageSize: number) => {
     searchParams.set("page", page.toString())
-    searchParams.set("limit", pageSize.toString())
+    searchParams.set("per_page", pageSize.toString())
     setSearchParams(searchParams) // trigger re-render → useQuery tự refetch
   }
 
@@ -481,8 +484,8 @@ export default function ManageDish() {
           <div style={{ marginTop: 16, textAlign: "center", display: "flex", justifyContent: "flex-end" }}>
             <Pagination
               current={parseInt(queryConfig.page as string)}
-              total={paginated?.total}
-              pageSize={parseInt(queryConfig.limit as string)}
+              total={paginated?.meta.total}
+              pageSize={parseInt(queryConfig.per_page as string)}
               onChange={handlePaginationChange}
               showSizeChanger
               pageSizeOptions={["5", "10", "20", "50"]}
@@ -511,7 +514,7 @@ export default function ManageDish() {
               <Input.TextArea rows={3} placeholder="Mô tả món ăn..." />
             </Form.Item>
             <div className="flex items-center justify-between">
-              <Form.Item label="Giá" className="flex-1" name="price">
+              <Form.Item label="Giá gốc" className="flex-1" name="price">
                 <Input placeholder="Nhập tên món" />
               </Form.Item>
 
