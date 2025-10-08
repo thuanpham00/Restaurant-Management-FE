@@ -108,7 +108,7 @@ const Header = () => {
                 onClick={handleLogout}
                 className="text-white/80 hover:text-white transition-colors text-base"
               >
-                Đăng xuất
+                Sign out
                 <div className="h-px bg-white w-full mt-1"></div>
               </button>
             ) : (

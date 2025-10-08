@@ -78,7 +78,7 @@ const Register = () => {
         <div
           className="absolute inset-0 opacity-40 bg-cover bg-center"
           style={{
-            backgroundImage: `url('https://uploadthingy.s3.us-west-1.amazonaws.com/uyu2acjPcYECkW5skKw9Pc/preview-image.png')`,
+            backgroundImage: 'url("https://images.unsplash.com/photo-1504674900247-0877df9cc836?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80")',
             backgroundBlendMode: "overlay",
           }}
         />
@@ -167,24 +167,11 @@ const Register = () => {
             </div>
             <button
               type="submit"
-              className="w-full bg-orange-500 hover:bg-orange-600 text-white font-medium py-3 px-4 rounded-lg transition duration-300"
+              className="w-full bg-orange-500 hover:bg-orange-600 text-white font-medium py-3 px-4 rounded-lg transition"
             >
               Đăng ký
             </button>
           </form>
-
-          <div className="mt-8">
-            <div className="flex items-center mb-6">
-              <div className="flex-grow h-px bg-gray-600"></div>
-              <span className="px-4 text-sm text-gray-400">hoặc tiếp tục với</span>
-              <div className="flex-grow h-px bg-gray-600"></div>
-            </div>
-            <div className="flex justify-center space-x-4">
-              <button className="bg-white hover:bg-gray-100 text-black w-12 h-12 rounded-full flex items-center justify-center transition duration-300">
-                <span className="font-bold">Google</span>
-              </button>
-            </div>
-          </div>
 
           <div className="mt-6 text-center">
             <p className="text-white text-sm">

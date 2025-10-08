@@ -1,7 +1,6 @@
-// src/Components/Login.tsx
 import React, { useEffect } from "react";
-import { NavLink, useNavigate } from "react-router-dom";
-import { LucideUtensils, GithubIcon } from "lucide-react";
+import { NavLink, useNavigate, useLocation } from "react-router-dom";
+import { LucideUtensils } from "lucide-react";
 import { Helmet } from "react-helmet-async";
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
@@ -18,6 +17,9 @@ const formSchema = schemaAuth.pick(["email", "password"]);
 
 const Login = () => {
   const { setIsAuthenticated, setAvatar, setNameUser, setRole, setUserId } = useAppStore();
+  const location = useLocation();
+  const navigate = useNavigate();
+
   const {
     formState: { errors },
     setError,
@@ -25,49 +27,89 @@ const Login = () => {
     handleSubmit,
   } = useForm<FormData>({ resolver: yupResolver(formSchema) });
 
+  // Mutation để lấy URL Google OAuth
+  const googleLoginMutation = useMutation({
+    mutationFn: () => clientAPI.auth.getGoogleAuthUrl(),
+    onSuccess: (response) => {
+      window.location.href = response.data.data.url;
+    },
+    onError: (error) => {
+      toast.error(error.message || "Không thể kết nối với Google", { autoClose: 2000 });
+    },
+  });
+
+  // Mutation để xử lý callback Google
+  const googleCallbackMutation = useMutation({
+    mutationFn: () => clientAPI.auth.googleCallback(location.search),
+    onSuccess: (response) => {
+      const { data, message } = response.data;
+      // Lưu token và thông tin người dùng
+      localStorage.setItem("access_token", data.access_token);
+      localStorage.setItem("refresh_token", data.refresh_token);
+      setIsAuthenticated(true);
+      setAvatar(data.user?.avatar || "");
+      setNameUser(data.user?.name || "");
+      setRole(data.user?.role?.name || "");
+      setUserId(data.user?.id || "");
+      toast.success(message || "Đăng nhập bằng Google thành công", { autoClose: 3000 });
+      navigate("/");
+    },
+    onError: (error: any) => {
+      if (error.response?.status === 401) {
+        toast.error("Tài khoản chưa được kích hoạt", { autoClose: 3000 });
+      } else {
+        toast.error(error.response?.data?.message || "Đăng nhập bằng Google thất bại", {
+          autoClose: 3000,
+        });
+      }
+    },
+  });
+
+  // Xử lý callback từ Google
   useEffect(() => {
     const queryParams = new URLSearchParams(location.search);
-    const message = queryParams.get("message");
-    if (message) {
-      toast.success(decodeURIComponent(message), { autoClose: 3000 });
+    const code = queryParams.get("code");
+    if (code) {
+      // Gọi API google/callback khi nhận được code từ Google
+      googleCallbackMutation.mutate();
     }
   }, [location.search]);
-  
+
   const loginMutation = useMutation({
-    mutationFn: (body: FormData) => {
-      return clientAPI.auth.loginClient(body);
+    mutationFn: (body: FormData) => clientAPI.auth.loginClient(body),
+    onSuccess: (response) => {
+      toast.success(response.data.message, { autoClose: 1000 });
+      setIsAuthenticated(true);
+      setAvatar(response.data.data.user.avatar);
+      setNameUser(response.data.data.user.name);
+      setRole(response.data.data.user.role.name);
+      setUserId(response.data.data.user.id);
+      navigate("/");
+    },
+    onError: (error) => {
+      if (isError422<ErrorResponse<FormData>>(error)) {
+        const formError = error.response?.data.errors;
+        if (formError && !Array.isArray(formError)) {
+          if (formError.email && formError.email.length > 0) {
+            setError("email", { message: formError.email[0] });
+          }
+          if (formError.password && formError.password.length > 0) {
+            setError("password", { message: formError.password[0] });
+          }
+        } else if (Array.isArray(formError)) {
+          toast.error(formError[0] || "Đăng nhập thất bại", { autoClose: 2000 });
+        }
+      }
     },
   });
 
   const handleSubmitForm = handleSubmit((data) => {
-    loginMutation.mutate(data, {
-      onSuccess: (response) => {
-        toast.success(response.data.message, { autoClose: 1000 });
-        setIsAuthenticated(true);
-        setAvatar(response.data.data.user.avatar);
-        setNameUser(response.data.data.user.name);
-        setRole(response.data.data.user.role.name);
-        setUserId(response.data.data.user.id);
-      },
-      onError: (error) => {
-        if (isError422<ErrorResponse<FormData>>(error)) {
-          const formError = error.response?.data.errors;
-          if (formError && !Array.isArray(formError)) {
-            // Lỗi 422: errors là object
-            if (formError.email && formError.email.length > 0) {
-              setError("email", { message: formError.email[0] });
-            }
-            if (formError.password && formError.password.length > 0) {
-              setError("password", { message: formError.password[0] });
-            }
-          } else if (Array.isArray(formError)) {
-            // Lỗi 401: errors là mảng
-            toast.error(formError[0] || "Đăng nhập thất bại", { autoClose: 2000 });
-          }
-        }
-      },
-    });
+    loginMutation.mutate(data);
   });
+
+  const handleGoogleLogin = () => {
+    googleLoginMutation.mutate();
+  };
 
   return (
     <div className="min-h-screen w-full flex items-center justify-center bg-black relative">
@@ -83,7 +125,7 @@ const Login = () => {
         <div
           className="absolute inset-0 opacity-40 bg-cover bg-center"
           style={{
-            backgroundImage: `url('https://uploadthingy.s3.us-west-1.amazonaws.com/uyu2acjPcYECkW5skKw9Pc/preview-image.png')`,
+            backgroundImage: "url('https://images.unsplash.com/photo-1504674900247-0877df9cc836?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80')",
             backgroundBlendMode: "overlay",
           }}
         />
@@ -152,7 +194,10 @@ const Login = () => {
               <div className="flex-grow h-px bg-gray-600"></div>
             </div>
             <div className="flex justify-center space-x-4">
-              <button className="bg-white hover:bg-gray-100 text-black w-12 h-12 rounded-full flex items-center justify-center transition duration-300">
+              <button
+                onClick={handleGoogleLogin}
+                className="bg-white hover:bg-gray-100 text-black w-12 h-12 rounded-full flex items-center justify-center transition duration-300"
+              >
                 <span className="font-bold">Google</span>
               </button>
             </div>
