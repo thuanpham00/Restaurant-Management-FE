@@ -9,7 +9,7 @@ export default function NavigateBack() {
   }
 
   return (
-    <button onClick={handleGoBack} className="mt-2 flex items-center gap-[2px] cursor-pointer">
+    <button onClick={handleGoBack} className="mt-2 mb-4 flex items-center gap-[2px] cursor-pointer">
       <ChevronLeft size={16} />
       <span className="text-[14px] font-medium">Trở lại</span>
     </button>

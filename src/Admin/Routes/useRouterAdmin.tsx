@@ -17,6 +17,11 @@ const TableSessionHistoryDetail = lazy(() => import("../Pages/ManageTable/Pages/
 const ManageDishCategory = lazy(() => import("../Pages/ManageDished/Pages/ManageDishCategory"))
 
 const ManageReservation = lazy(() => import("../Pages/ManageReservation"))
+const ManageCustomer = lazy(() => import("../Pages/ManageCustomer"))
+const ManageEmployee = lazy(() => import("../Pages/ManageEmployee"))
+const ManageShift = lazy(() => import("../Pages/ManageShift"))
+const ManagePayroll = lazy(() => import("../Pages/ManagePayroll"))
+const PayrollDetail = lazy(() => import("../Pages/ManagePayroll/PayrollDetail"))
 
 const ProtectedRoute = () => {
   const { isAuthenticated } = useAppStore()
@@ -123,6 +128,46 @@ export default function useRouterAdmin() {
                   element: (
                     <Suspense>
                       <MenuDetail />
+                    </Suspense>
+                  )
+                },
+                {
+                  path: path.AdminCustomers,
+                  element: (
+                    <Suspense>
+                      <ManageCustomer />
+                    </Suspense>
+                  )
+                },
+                {
+                  path: path.AdminStaff,
+                  element: (
+                    <Suspense>
+                      <ManageEmployee />
+                    </Suspense>
+                  )
+                },
+                {
+                  path: path.AdminShifts,
+                  element: (
+                    <Suspense>
+                      <ManageShift />
+                    </Suspense>
+                  )
+                },
+                {
+                  path: path.AdminPayroll,
+                  element: (
+                    <Suspense>
+                      <ManagePayroll />
+                    </Suspense>
+                  )
+                },
+                {
+                  path: path.AdminPayrollDetail,
+                  element: (
+                    <Suspense>
+                      <PayrollDetail />
                     </Suspense>
                   )
                 }

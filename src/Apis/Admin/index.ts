@@ -13,6 +13,11 @@ export { orderItemsAPI } from "./orderItems.api"
 export { dishCategoryAPI } from "./dishCategory.api"
 export { dishesAPI } from "./dishes.api"
 export { menusAPI } from "./menus.api"
+export { customersAPI } from "./customers.api"
+export { employeesAPI } from "./employees.api"
+export { shiftsAPI, employeeShiftsAPI } from "./shifts.api"
+export { payrollAPI } from "./payroll.api"
+export { payrollItemsAPI } from "./payrollItems.api"
 
 import { authAPI } from "./auth.api"
 import { diningTableAPI } from "./diningTable.api"
@@ -21,13 +26,24 @@ import { orderItemsAPI } from "./orderItems.api"
 import { dishCategoryAPI } from "./dishCategory.api"
 import { dishesAPI } from "./dishes.api"
 import { menusAPI } from "./menus.api"
+import { customersAPI } from "./customers.api"
+import { employeesAPI } from "./employees.api"
+import { shiftsAPI, employeeShiftsAPI } from "./shifts.api"
+import { payrollAPI } from "./payroll.api"
+import { payrollItemsAPI } from "./payrollItems.api"
 
 export const adminAPI = {
   auth: authAPI,
   diningTable: diningTableAPI,
   tableSession: tableSessionAPI,
   orderItems: orderItemsAPI,
-  dishes_category: dishCategoryAPI, // Note: keeping legacy naming for backward compatibility
+  dishes_category: dishCategoryAPI, 
   dishes: dishesAPI,
-  menus: menusAPI
+  menus: menusAPI,
+  customers: customersAPI,
+  employees: employeesAPI,
+  shifts: shiftsAPI,
+  employeeShifts: employeeShiftsAPI,
+  payroll: payrollAPI,
+  payrollItems: payrollItemsAPI
 }

@@ -126,7 +126,7 @@ export const schemaProduct = schemaAuth
     status: yup.string()
   })
 
-export const schemaCustomer = schemaAuth
+export const schemaCustomerSearch = schemaAuth
   .pick(["created_at_start", "created_at_end", "updated_at_start", "updated_at_end"])
   .shape({
     name: yup.string(),
@@ -134,6 +134,36 @@ export const schemaCustomer = schemaAuth
     numberPhone: yup.string(),
     verify: yup.number()
   })
+
+export const schemaCustomer = yup.object({
+  full_name: yup
+    .string()
+    .required("Tên khách hàng là bắt buộc!")
+    .min(2, "Tên phải có ít nhất 2 ký tự")
+    .max(100, "Tên không quá 100 ký tự"),
+  
+  phone: yup
+    .string()
+    .matches(/^[0-9]{10,11}$/, "Số điện thoại phải có 10-11 chữ số")
+    .nullable(),
+  
+  gender: yup
+    .string()
+    .oneOf(["male", "female", "other"], "Giới tính không hợp lệ")
+    .nullable(),
+  
+  address: yup
+    .string()
+    .max(255, "Địa chỉ không quá 255 ký tự")
+    .nullable(),
+  
+  membership_level: yup
+    .number()
+    .min(0, "Cấp độ thành viên tối thiểu là 0")
+    .max(4, "Cấp độ thành viên tối đa là 4")
+    .integer("Cấp độ phải là số nguyên")
+    .nullable()
+})
 
 export const schemaAddProduct = yup.object({
   name: yup.string().required("Tên sản phẩm bắt buộc!"),
