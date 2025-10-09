@@ -54,6 +54,7 @@ const Login = () => {
       toast.success(message || "Đăng nhập bằng Google thành công", { autoClose: 3000 });
       navigate("/");
     },
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     onError: (error: any) => {
       if (error.response?.status === 401) {
         toast.error("Tài khoản chưa được kích hoạt", { autoClose: 3000 });
