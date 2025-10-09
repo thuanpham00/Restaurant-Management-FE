@@ -1,27 +1,21 @@
 import { useEffect, useState } from "react"
-import { Link, useNavigate } from "react-router-dom"
+import { Link } from "react-router-dom"
 import { assets } from "src/Assets/assets"
 import { clientAPI } from "src/Apis/Client/home.api"
 import Header from "src/Client/Components/HeaderClient"
 import Footer from "src/Client/Components/FooterClient"
 import { Statistics } from "src/Types/statistics.type"
 import { Dish } from "src/Types/dish.type"
-import { CategoryDishes } from "src/Types/dishCategory.type"
-import { Chef, Promotion } from "src/Types/utils.type"
-import { DiningTable } from "src/Types/diningTable.type"
+import { CategoryDishByMenu } from "src/Types/dishCategory.type"
+import { Chef } from "src/Types/utils.type"
+
 
 const Home = () => {
-  const [stats, setStats] = useState<Statistics>({ restaurants: 0, new_dishes: 0, years_experience: 0 })
+  const [stats, setStats] = useState<Statistics>({ total_customers: 0, total_orders: 0, total_reservations: 0, active_table_sessions: 0 })
   const [popularDishes, setPopularDishes] = useState<Dish[]>([])
-  const [categories, setCategories] = useState<CategoryDishes[]>([])
+  const [categories, setCategories] = useState<CategoryDishByMenu[]>([])
   const [selectedCategory, setSelectedCategory] = useState<string>("All")
-  const [promotions, setPromotions] = useState<Promotion[]>([])
   const [chefs, setChefs] = useState<Chef[]>([])
-  const [tables, setTables] = useState<DiningTable[]>([])
-  const [formData, setFormData] = useState<{ reserved_at: string; number_of_people: number }>({
-    reserved_at: "",
-    number_of_people: 1
-  })
   // const [email, setEmail] = useState<string>("")
   const [loading, setLoading] = useState<{
     stats: boolean
@@ -57,7 +51,6 @@ const Home = () => {
     tables: null,
     newsletter: null
   })
-  const navigate = useNavigate()
 
   useEffect(() => {
     // Fetch statistics
@@ -97,18 +90,6 @@ const Home = () => {
         setLoading((prev) => ({ ...prev, categories: false }))
       })
 
-    // Fetch promotions
-    clientAPI
-      .getPromotions()
-      .then((response) => {
-        setPromotions(response.data.data)
-        setLoading((prev) => ({ ...prev, promotions: false }))
-      })
-      .catch(() => {
-        setError((prev) => ({ ...prev, promotions: "Error fetching promotions" }))
-        setLoading((prev) => ({ ...prev, promotions: false }))
-      })
-
     // Fetch chefs
     clientAPI
       .getChefs()
@@ -122,25 +103,6 @@ const Home = () => {
         setLoading((prev) => ({ ...prev, chefs: false }))
       })
   }, [])
-
-  const handleTableSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoading((prev) => ({ ...prev, tables: true }))
-    try {
-      const token = localStorage.getItem("token")
-      if (!token) {
-        navigate("/login")
-        return
-      }
-      const response = await clientAPI.getAvailableTables(formData)
-      setTables(response.data.data)
-      setLoading((prev) => ({ ...prev, tables: false }))
-    } catch (err) {
-      console.log(err)
-      setError((prev) => ({ ...prev, tables: "Error fetching available tables or please login" }))
-      setLoading((prev) => ({ ...prev, tables: false }))
-    }
-  }
 
   const filteredDishes = Array.isArray(categories)
     ? selectedCategory === "All"
@@ -167,18 +129,18 @@ const Home = () => {
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 md:gap-8 lg:gap-16 text-center text-white">
               <div>
-                <div className="text-4xl md:text-5xl lg:text-6xl font-medium mb-1 md:mb-2">{stats.restaurants}</div>
-                <div className="text-base md:text-lg lg:text-xl">Number Restaurant</div>
+                <div className="text-4xl md:text-5xl lg:text-6xl font-medium mb-1 md:mb-2">{stats.total_customers}</div>
+                <div className="text-base md:text-lg lg:text-xl">Number Customer </div>
               </div>
               <div>
-                <div className="text-4xl md:text-5xl lg:text-6xl font-medium mb-1 md:mb-2">{stats.new_dishes}</div>
-                <div className="text-base md:text-lg lg:text-xl">New Food Menu Dishes</div>
+                <div className="text-4xl md:text-5xl lg:text-6xl font-medium mb-1 md:mb-2">{stats.total_orders}</div>
+                <div className="text-base md:text-lg lg:text-xl">Total Orders</div>
               </div>
               <div>
                 <div className="text-4xl md:text-5xl lg:text-6xl font-medium mb-1 md:mb-2">
-                  {stats.years_experience}
+                  {stats.active_table_sessions}
                 </div>
-                <div className="text-base md:text-lg lg:text-xl">Years of experience</div>
+                <div className="text-base md:text-lg lg:text-xl">Total number of empty tables</div>
               </div>
             </div>
           )}
@@ -216,16 +178,6 @@ const Home = () => {
                   </div>
                   <p className="text-white/80 text-sm md:text-base mb-4">{dish.desc}</p>
                   <div className="flex items-center justify-between">
-                    <div className="flex space-x-1">
-                      {[...Array(5)].map((_, i) => (
-                        <img
-                          key={i}
-                          src={i < Math.round(dish.reviews_avg_rating || 0) ? assets.icons.star8 : assets.icons.star9}
-                          alt="star"
-                          className="w-5 h-5 md:w-6 md:h-6"
-                        />
-                      ))}
-                    </div>
                     <Link
                       to={`/dish/${dish.id}`}
                       className="text-white hover:text-orange-400 transition-colors text-sm md:text-base"
@@ -253,54 +205,6 @@ const Home = () => {
       {/* Booking & Location Section */}
       <section className="bg-gray-900 py-16 px-6 sm:px-8 lg:px-[135px]">
         <div className="grid lg:grid-cols-2 gap-8">
-          <div className="bg-orange-400 p-10 rounded-lg">
-            <h2 className="text-gray-900 text-3xl md:text-4xl font-medium mb-8">Reserve! Book Now</h2>
-            <form onSubmit={handleTableSubmit}>
-              <div className="grid md:grid-cols-2 gap-6 mb-8">
-                <div>
-                  <span className="text-gray-900 text-2xl font-medium mb-2 block">Set date</span>
-                  <input
-                    type="datetime-local"
-                    value={formData.reserved_at}
-                    onChange={(e) => setFormData({ ...formData, reserved_at: e.target.value })}
-                    className="w-full bg-transparent border-b border-gray-900 text-gray-900"
-                    required
-                  />
-                </div>
-                <div>
-                  <span className="text-gray-900 text-2xl font-medium mb-2 block">Guests</span>
-                  <input
-                    type="number"
-                    value={formData.number_of_people}
-                    onChange={(e) => setFormData({ ...formData, number_of_people: parseInt(e.target.value) })}
-                    min="1"
-                    className="w-full bg-transparent border-b border-gray-900 text-gray-900"
-                    required
-                  />
-                </div>
-              </div>
-              <button
-                type="submit"
-                className="w-full bg-gray-900 text-white py-4 px-8 rounded font-medium hover:bg-gray-800 transition-colors"
-                disabled={loading.tables}
-              >
-                {loading.tables ? "Checking..." : "Book now"}
-              </button>
-            </form>
-            {error.tables && <div className="text-red-500 mt-4">{error.tables}</div>}
-            {tables.length > 0 && (
-              <div className="mt-4">
-                <h3 className="text-gray-900 text-xl">Available Tables:</h3>
-                <ul>
-                  {tables.map((table) => (
-                    <li key={table.id}>
-                      Table {table.table_number} (Capacity: {table.capacity})
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-          </div>
           <div className="relative">
             <div
               className="absolute inset-0 bg-cover bg-center rounded-lg"
@@ -372,7 +276,7 @@ const Home = () => {
                 <span>All</span>
                 {selectedCategory === "All" && <div className="h-px bg-orange-400 w-full mt-2"></div>}
               </button>
-              {categories.map((category: CategoryDishes) => (
+              {categories.map((category: CategoryDishByMenu) => (
                 <button
                   key={category.id}
                   className={`block text-center cursor-pointer ${
@@ -390,30 +294,17 @@ const Home = () => {
               <div className="space-y-8">
                 {filteredDishes.slice(0, Math.ceil(filteredDishes.length / 2)).map((item: Dish) => (
                   <div key={item.id} className="flex items-center justify-between">
-                    <div className="flex items-center space-x-4">
+                    <div className="flex items-center">
                       <img
                         src={assets.ellipses.ellipse30}
                         alt={item.name}
-                        className="w-19 h-19 rounded-full object-cover"
+                        className="w-19 h-19 rounded-full object-cover mr-4"
                       />
-                      <h3 className="text-white text-3xl font-medium max-w-xs">{item.name}</h3>
+                      <div className="flex flex-col">
+                        <h3 className="text-white text-3xl font-medium max-w-xs">{item.name}</h3>
+                        <span className="text-white text-2xl font-medium mt-1">${item.price}</span>
+                      </div>
                     </div>
-                    <span className="text-white text-3xl font-medium">${item.price}</span>
-                  </div>
-                ))}
-              </div>
-              <div className="space-y-8">
-                {filteredDishes.slice(Math.ceil(filteredDishes.length / 2)).map((item: Dish) => (
-                  <div key={item.id} className="flex items-center justify-between">
-                    <div className="flex items-center space-x-4">
-                      <img
-                        src={assets.ellipses.ellipse30}
-                        alt={item.name}
-                        className="w-19 h-19 rounded-full object-cover"
-                      />
-                      <h3 className="text-white text-3xl font-medium max-w-xs">{item.name}</h3>
-                    </div>
-                    <span className="text-white text-3xl font-medium">${item.price}</span>
                   </div>
                 ))}
               </div>
@@ -473,59 +364,7 @@ const Home = () => {
         <div className="text-center mb-16">
           <h2 className="text-white text-4xl md:text-5xl lg:text-6xl font-medium">Our Daily Offers</h2>
         </div>
-        {loading.promotions || loading.dishes ? (
-          <div>Loading...</div>
-        ) : error.promotions || error.dishes ? (
-          <div>{error.promotions || error.dishes}</div>
-        ) : Array.isArray(promotions) &&
-          promotions.length > 0 &&
-          Array.isArray(popularDishes) &&
-          popularDishes.length > 0 ? (
-          <div className="grid lg:grid-cols-2 gap-8 items-center">
-            <div className="relative">
-              <img
-                src={assets.rectangles.soup}
-                alt="Special offer"
-                className="w-full h-[434px] object-cover rounded-lg"
-              />
-              <div className="absolute inset-0 bg-gradient-to-r from-black/60 to-transparent rounded-lg" />
-              <div className="absolute top-1/2 left-8 transform -translate-y-1/2 text-white">
-                <h3 className="text-3xl font-semibold mb-4">{promotions[0].description || "Lunch Time"}</h3>
-                <div className="flex items-center mb-4">
-                  <span className="text-8xl font-bold text-orange-400 mr-2">
-                    {promotions[0].discount_percent || 30}%
-                  </span>
-                  <span className="text-3xl font-semibold">off</span>
-                </div>
-                <p className="text-lg mb-6 max-w-xs">We love food, lots of different and food, just like you.</p>
-                <button className="bg-orange-400/80 hover:bg-orange-400 px-8 py-3 rounded font-semibold transition-colors">
-                  Order Now
-                </button>
-              </div>
-              <div className="absolute inset-4 border border-white/20 rounded-lg pointer-events-none" />
-            </div>
-            <div className="space-y-6">
-              {popularDishes.slice(0, 3).map((item) => (
-                <div key={item.id} className="flex items-start space-x-4">
-                  <img
-                    src={assets.rectangles.shrimp}
-                    alt={item.name}
-                    className="w-32 h-32 object-cover rounded-lg flex-shrink-0"
-                  />
-                  <div className="flex-1">
-                    <div className="flex justify-between items-start mb-2">
-                      <h3 className="text-white text-2xl font-medium">{item.name}</h3>
-                      <span className="text-white text-3xl font-medium">${item.price}</span>
-                    </div>
-                    <p className="text-white/80 text-lg">{item.desc}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        ) : (
-          <div>No promotions or popular dishes available</div>
-        )}
+
       </section>
 
       {/* Features Banner */}

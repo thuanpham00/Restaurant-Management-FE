@@ -16,19 +16,5 @@ export type Dish = {
     created_at: string
     updated_at: string
   }
-  reviews_avg_rating?: number
 }
 
-export type DishClient = {
-  id: string
-  name: string
-  description: string
-  price: number
-  image: string | null
-  is_active: boolean
-  reviews_avg_rating: number | null
-  category?: {
-    id: string
-    name: string
-  } | null
-}
