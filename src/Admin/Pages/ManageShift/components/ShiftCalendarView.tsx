@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { Button, Form, Input, InputNumber, Modal, Select, Spin, Tag, TimePicker } from "antd"
 import dayjs from "dayjs"
@@ -390,6 +389,7 @@ export default function ShiftCalendarView() {
         </div>
       ) : (
         <div style={{ height: 700 }}>
+          {/* @ts-ignore - React Big Calendar type issue */}
           <Calendar
             localizer={localizer}
             events={events}
