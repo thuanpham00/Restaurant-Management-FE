@@ -5,9 +5,6 @@ import { path } from "src/Constants/path"
 import LayoutAuthAdmin from "../Layouts/LayoutAuthAdmin"
 import { rolesForApi } from "src/Helpers/role_permission"
 import { useAppStore } from "src/StateGlobal/zustand"
-import ManageDish from "../Pages/ManageDished/Pages/ManageDish"
-import ManageMenu from "../Pages/ManageDished/Pages/ManageMenu"
-import MenuDetail from "../Pages/ManageDished/Pages/MenuDetail"
 
 const AdminLogin = lazy(() => import("../Pages/AdminLogin"))
 const ManageDashboard = lazy(() => import("../Pages/ManageDashboard"))
@@ -22,6 +19,10 @@ const ManageEmployee = lazy(() => import("../Pages/ManageEmployee"))
 const ManageShift = lazy(() => import("../Pages/ManageShift"))
 const ManagePayroll = lazy(() => import("../Pages/ManagePayroll"))
 const PayrollDetail = lazy(() => import("../Pages/ManagePayroll/PayrollDetail"))
+const ManageReservation = lazy(() => import("../Pages/ManageTable/Pages/ManageReservation"))
+const ManageMenu = lazy(() => import("../Pages/ManageDished/Pages/ManageMenu"))
+const ManageDish = lazy(() => import("../Pages/ManageDished/Pages/ManageDish"))
+const MenuDetail = lazy(() => import("../Pages/ManageDished/Pages/MenuDetail"))
 
 const ProtectedRoute = () => {
   const { isAuthenticated } = useAppStore()

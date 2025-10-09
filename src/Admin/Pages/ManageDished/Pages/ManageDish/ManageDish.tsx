@@ -17,7 +17,7 @@ import {
   Tag
 } from "antd"
 import { isUndefined, omit, omitBy } from "lodash"
-import { Beef } from "lucide-react"
+import { Beef, Filter, RotateCcw } from "lucide-react"
 import { Fragment, useMemo, useState } from "react"
 import { Helmet } from "react-helmet-async"
 import { createSearchParams, useNavigate, useSearchParams } from "react-router-dom"
@@ -51,8 +51,6 @@ export default function ManageDish() {
     isUndefined
   )
 
-  console.log(queryConfig)
-
   const { data, isFetching } = useQuery({
     queryKey: ["listDish", queryConfig],
     queryFn: () => {
@@ -78,7 +76,7 @@ export default function ManageDish() {
   })
 
   const paginated = data?.data.data
-  const listDish = paginated?.items
+  const listDish = paginated?.data
 
   const listNameDishCategory = getListDishCategory.data?.data?.data || ([] as { id: string; name: string }[])
 
@@ -431,12 +429,14 @@ export default function ManageDish() {
 
           <div className="flex items-center justify-between gap-1">
             <Form.Item>
-              <Button onClick={resetFilterForm}>Reset</Button>
+              <Button type="primary" htmlType="submit" icon={<Filter size={16} />}>
+                Lọc
+              </Button>
             </Form.Item>
 
             <Form.Item>
-              <Button type="primary" htmlType="submit">
-                Áp dụng
+              <Button onClick={resetFilterForm} icon={<RotateCcw size={16} />}>
+                Reset
               </Button>
             </Form.Item>
           </div>
@@ -463,7 +463,7 @@ export default function ManageDish() {
             <div style={{ minHeight: 100, width: 300, marginTop: 10 }} />
           </Spin>
         </div>
-      ) : (listDish as Dishes[]).length === 0 ? (
+      ) : (listDish as Dishes[])?.length === 0 ? (
         <Empty description="Không có món ăn hợp lệ" className="mt-16" />
       ) : (
         <Fragment>
@@ -484,7 +484,7 @@ export default function ManageDish() {
           <div style={{ marginTop: 16, textAlign: "center", display: "flex", justifyContent: "flex-end" }}>
             <Pagination
               current={parseInt(queryConfig.page as string)}
-              total={paginated?.meta.total}
+              total={paginated?.total}
               pageSize={parseInt(queryConfig.per_page as string)}
               onChange={handlePaginationChange}
               showSizeChanger
@@ -494,64 +494,73 @@ export default function ManageDish() {
         </Fragment>
       )}
 
-      {/* Modal Edit */}
       <Modal
         title="Thông tin món ăn"
         open={isModalOpen}
         width={700}
         style={{ top: 40 }}
         onCancel={() => setIsModalOpen(false)}
-        onOk={handleUpdate}
-        confirmLoading={updateMutation.isPending || createMutation.isPending}
+        footer={false}
       >
-        <Form form={form} layout="vertical" className="flex items-center">
-          <div>
-            <Form.Item name="name" label="Tên món" rules={[{ required: true, message: "Vui lòng nhập tên món" }]}>
-              <Input placeholder="Nhập tên món" />
-            </Form.Item>
-            {/* Mô tả */}
-            <Form.Item name="desc" label="Mô tả">
-              <Input.TextArea rows={3} placeholder="Mô tả món ăn..." />
-            </Form.Item>
-            <div className="flex items-center justify-between">
-              <Form.Item label="Giá gốc" className="flex-1" name="price">
+        <Form form={form} layout="vertical" onFinish={handleUpdate}>
+          <div className="flex items-center">
+            <div>
+              <Form.Item name="name" label="Tên món" rules={[{ required: true, message: "Vui lòng nhập tên món" }]}>
                 <Input placeholder="Nhập tên món" />
               </Form.Item>
+              {/* Mô tả */}
+              <Form.Item name="desc" label="Mô tả">
+                <Input.TextArea rows={3} placeholder="Mô tả món ăn..." />
+              </Form.Item>
+              <div className="flex items-center justify-between">
+                <Form.Item label="Giá gốc" className="flex-1" name="price">
+                  <Input placeholder="Nhập tên món" />
+                </Form.Item>
 
-              <Form.Item
-                className="flex-1"
-                name="cooking_time"
-                label="Thời gian nấu"
-                rules={[{ required: true, message: "Nhập thời gian nấu" }]}
-              >
-                <InputNumber min={1} addonAfter="phút" />
+                <Form.Item
+                  className="flex-1"
+                  name="cooking_time"
+                  label="Thời gian nấu"
+                  rules={[{ required: true, message: "Nhập thời gian nấu" }]}
+                >
+                  <InputNumber min={1} addonAfter="phút" />
+                </Form.Item>
+              </div>
+              <Form.Item name="category_id" label="Loại món" rules={[{ required: true, message: "Chọn loại món" }]}>
+                <Select placeholder="Chọn loại món">
+                  {listNameDishCategory?.map((c: any) => (
+                    <Select.Option key={c.id} value={c.id}>
+                      {c.name}
+                    </Select.Option>
+                  ))}
+                </Select>
+              </Form.Item>
+              <Form.Item name="is_active" label="Trạng thái" initialValue={true}>
+                <Switch checkedChildren="Hiện" unCheckedChildren="Ẩn" />
               </Form.Item>
             </div>
-            <Form.Item name="category_id" label="Loại món" rules={[{ required: true, message: "Chọn loại món" }]}>
-              <Select placeholder="Chọn loại món">
-                {listNameDishCategory?.map((c: any) => (
-                  <Select.Option key={c.id} value={c.id}>
-                    {c.name}
-                  </Select.Option>
-                ))}
-              </Select>
-            </Form.Item>
-            <Form.Item name="is_active" label="Trạng thái" initialValue={true}>
-              <Switch checkedChildren="Hiện" unCheckedChildren="Ẩn" />
-            </Form.Item>
+            <div>
+              <Form.Item name="image">
+                <div className="flex items-center justify-center flex-col px-4 shadow-sm">
+                  <div className="mb-2 text-black dark:text-white">Ảnh món ăn</div>
+                  <img
+                    src={previewImage || avatarWatch || assets.rectangles.Burger}
+                    className="h-28 w-28 rounded-full mx-auto"
+                    alt="avatar default"
+                  />
+                  <InputFileImage onChange={handleChangeImage} />
+                </div>
+              </Form.Item>
+            </div>
           </div>
-          <div>
-            <Form.Item name="image">
-              <div className="flex items-center justify-center flex-col px-4 shadow-sm">
-                <div className="mb-2 text-black dark:text-white">Ảnh món ăn</div>
-                <img
-                  src={previewImage || avatarWatch || assets.rectangles.Burger}
-                  className="h-28 w-28 rounded-full mx-auto"
-                  alt="avatar default"
-                />
-                <InputFileImage onChange={handleChangeImage} />
-              </div>
-            </Form.Item>
+
+          <div className="flex justify-end mt-4">
+            <Button onClick={() => setIsModalOpen(false)} className="mr-2">
+              Hủy
+            </Button>
+            <Button type="primary" htmlType="submit" loading={updateMutation.isPending || createMutation.isPending}>
+              {typeof editingId === "string" ? "Cập nhật món ăn" : "Thêm món ăn"}
+            </Button>
           </div>
         </Form>
       </Modal>

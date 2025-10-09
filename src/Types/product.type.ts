@@ -9,7 +9,6 @@ export enum TableSessionType {
 export enum TableSessionStatus {
   "Pending",
   "Active",
-  "Paying",
   "Completed",
   "Cancelled"
 }

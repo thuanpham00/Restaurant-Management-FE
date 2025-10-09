@@ -3,7 +3,7 @@ import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tansta
 import { Button, Empty, Form, Input, Modal, Pagination, Spin, Table, Tag } from "antd"
 import { ColumnsType } from "antd/es/table"
 import { isUndefined, omit, omitBy } from "lodash"
-import { Beef } from "lucide-react"
+import { Beef, Filter, RotateCcw } from "lucide-react"
 import { Fragment, useState } from "react"
 import { Helmet } from "react-helmet-async"
 import { createSearchParams, Link, useNavigate, useSearchParams } from "react-router-dom"
@@ -44,7 +44,7 @@ export default function ManageDishCategory() {
   })
 
   const paginated = data?.data.data
-  const listCategoryDish = paginated?.items
+  const listCategoryDish = paginated?.data
 
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingId, setEditingId] = useState<string | null | boolean>(null)
@@ -266,12 +266,14 @@ export default function ManageDishCategory() {
           </Form.Item>
 
           <Form.Item>
-            <Button onClick={resetFilterForm}>Reset</Button>
+            <Button type="primary" htmlType="submit" icon={<Filter size={16} />}>
+              Lọc
+            </Button>
           </Form.Item>
 
           <Form.Item>
-            <Button type="primary" htmlType="submit">
-              Áp dụng
+            <Button onClick={resetFilterForm} icon={<RotateCcw size={16} />}>
+              Reset
             </Button>
           </Form.Item>
         </Form>
@@ -316,7 +318,7 @@ export default function ManageDishCategory() {
           <div style={{ marginTop: 16, textAlign: "center", display: "flex", justifyContent: "flex-end" }}>
             <Pagination
               current={parseInt(queryConfig.page as string)}
-              total={paginated?.meta.total}
+              total={paginated?.total}
               pageSize={parseInt(queryConfig.per_page as string)}
               onChange={handlePaginationChange}
               showSizeChanger
@@ -331,16 +333,26 @@ export default function ManageDishCategory() {
         title="Thông tin thể loại"
         open={isModalOpen}
         onCancel={() => setIsModalOpen(false)}
+        footer={false}
         onOk={handleUpdate}
         confirmLoading={updateMutation.isPending || createMutation.isPending}
       >
-        <Form form={form} layout="vertical">
+        <Form form={form} layout="vertical" onFinish={handleUpdate}>
           <Form.Item name="name" label="Tên thể loại" rules={[{ required: true, message: "Vui lòng nhập tên" }]}>
             <Input />
           </Form.Item>
           <Form.Item name="desc" label="Mô tả">
             <Input.TextArea rows={3} />
           </Form.Item>
+
+          <div className="flex justify-end mt-4">
+            <Button onClick={() => setIsModalOpen(false)} className="mr-2">
+              Hủy
+            </Button>
+            <Button type="primary" htmlType="submit" loading={updateMutation.isPending || createMutation.isPending}>
+              {typeof editingId === "string" ? "Cập nhật thể loại" : "Thêm thể loại"}
+            </Button>
+          </div>
         </Form>
       </Modal>
     </div>

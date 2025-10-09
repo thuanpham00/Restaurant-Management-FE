@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { keepPreviousData, useQuery } from "@tanstack/react-query"
 import { Button, Modal, Spin, Table } from "antd"
-import { History } from "lucide-react"
+import { History, NotebookTabs } from "lucide-react"
 import { useState } from "react"
 import { Link } from "react-router-dom"
 import { tableSessionAPI } from "src/Apis/Admin"
@@ -11,8 +11,9 @@ import { renderSessionStatus, renderSessionType } from "../../Pages/TableDetail/
 export default function HistoryTableSession({ idDiningTable }: { idDiningTable: string }) {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [pagination, setPagination] = useState({ current: 1, pageSize: 5 })
-
-  const showModal = () => {
+  const [typeSession, setTypeSession] = useState("")
+  const showModal = (type_session: string) => {
+    setTypeSession(type_session)
     setIsModalOpen(true)
   }
 
@@ -29,7 +30,21 @@ export default function HistoryTableSession({ idDiningTable }: { idDiningTable: 
     placeholderData: keepPreviousData
   })
 
+  const { data: dataListPendingTableSession, isFetching: isFetchingListPendingTableSession } = useQuery({
+    queryKey: ["listPendingTableSession", idDiningTable],
+    queryFn: () => {
+      const controller = new AbortController()
+      setTimeout(() => controller.abort(), 10000)
+      return tableSessionAPI.getListPendingTableSessionByIdTable(idDiningTable)
+    },
+    retry: 0,
+    enabled: Boolean(isModalOpen),
+    staleTime: 3 * 60 * 1000,
+    placeholderData: keepPreviousData
+  })
+
   const listHistoryTableSession = (data?.data?.data || []) as HistoryTableSessionType[]
+  const listPendingTableSession = (dataListPendingTableSession?.data?.data || []) as HistoryTableSessionType[]
 
   const columns = [
     {
@@ -99,7 +114,7 @@ export default function HistoryTableSession({ idDiningTable }: { idDiningTable: 
   ]
 
   return (
-    <div className="mt-4 flex justify-start">
+    <div className="flex gap-2">
       <Button
         type="primary"
         icon={<History size={16} />}
@@ -116,9 +131,20 @@ export default function HistoryTableSession({ idDiningTable }: { idDiningTable: 
           e.currentTarget.style.backgroundColor = "#ef4444"
           e.currentTarget.style.borderColor = "#ef4444"
         }}
-        onClick={showModal}
+        onClick={() => showModal("history")}
       >
         Lịch sử phiên bàn
+      </Button>
+
+      <Button
+        type="primary"
+        icon={<NotebookTabs size={16} />}
+        style={{
+          width: "140px"
+        }}
+        onClick={() => showModal("pending")}
+      >
+        Phiên bàn chờ
       </Button>
 
       <Modal
@@ -129,7 +155,7 @@ export default function HistoryTableSession({ idDiningTable }: { idDiningTable: 
         footer={false}
         width={1300}
       >
-        {isFetching ? (
+        {isFetching || isFetchingListPendingTableSession ? (
           <div className="flex justify-center items-center py-10">
             <Spin size="large" tip="Đang tải dữ liệu...">
               <div style={{ minHeight: 100, width: 300, marginTop: 10 }} />
@@ -138,12 +164,12 @@ export default function HistoryTableSession({ idDiningTable }: { idDiningTable: 
         ) : (
           <Table
             columns={columns}
-            dataSource={listHistoryTableSession}
+            dataSource={typeSession === "history" ? listHistoryTableSession : listPendingTableSession}
             rowKey="session_id"
             pagination={{
               current: pagination.current,
               pageSize: pagination.pageSize,
-              total: listHistoryTableSession.length,
+              total: typeSession === "history" ? listHistoryTableSession.length : listPendingTableSession.length,
               onChange: (page, pageSize) => setPagination({ current: page, pageSize })
             }}
           />

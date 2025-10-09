@@ -3,13 +3,13 @@ import { Row, Spin, Pagination, Empty, Divider, Button, Modal, Form, InputNumber
 import omitBy from "lodash/omitBy"
 import isUndefined from "lodash/isUndefined"
 import useQueryParams from "src/Hook/useQueryParams"
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { diningTableAPI, tableSessionAPI } from "src/Apis/Admin"
 import { ErrorResponse, PaginatedResponse, TableSession } from "src/Types/utils.type"
 import { Helmet } from "react-helmet-async"
 import "antd/dist/reset.css"
 import { createSearchParams, useNavigate, useSearchParams } from "react-router-dom"
-import { Table } from "lucide-react"
+import { Filter, RotateCcw, Table } from "lucide-react"
 import { Fragment, useState } from "react"
 import { toast } from "react-toastify"
 import { isError422 } from "src/Helpers/utils"
@@ -41,16 +41,18 @@ export default function ManageTable() {
       setTimeout(() => controller.abort(), 10000)
       return tableSessionAPI.getListTableSession(queryConfig, controller.signal)
     },
-    retry: 0
+    retry: 0,
+    staleTime: 3 * 60 * 1000, // dưới 3 phút nó không gọi lại api
+    placeholderData: keepPreviousData
   })
 
   const paginated: PaginatedResponse<TableSession> | undefined = data?.data.data
-  const listTableSession = paginated?.items || []
+  const listTableSession = paginated?.data || []
 
   const [searchParams, setSearchParams] = useSearchParams()
   const handlePaginationChange = (page: number, pageSize: number) => {
     searchParams.set("page", page.toString())
-    searchParams.set("limit", pageSize.toString())
+    searchParams.set("per_page", pageSize.toString())
     setSearchParams(searchParams) // trigger re-render → useQuery tự refetch
   }
 
@@ -150,7 +152,6 @@ export default function ManageTable() {
               <Select.Option value="empty">Trống</Select.Option>
               <Select.Option value="pending">Đặt trước</Select.Option>
               <Select.Option value="active">Đang phục vụ</Select.Option>
-              <Select.Option value="paying">Thanh toán</Select.Option>
               <Select.Option value="completed">Hoàn tất</Select.Option>
               <Select.Option value="cancelled">Hủy</Select.Option>
             </Select>
@@ -164,12 +165,14 @@ export default function ManageTable() {
           </Form.Item>
 
           <Form.Item>
-            <Button onClick={resetFilterForm}>Reset</Button>
+            <Button type="primary" htmlType="submit" icon={<Filter size={16} />}>
+              Lọc
+            </Button>
           </Form.Item>
 
           <Form.Item>
-            <Button type="primary" htmlType="submit">
-              Áp dụng
+            <Button onClick={resetFilterForm} icon={<RotateCcw size={16} />}>
+              Reset
             </Button>
           </Form.Item>
         </Form>
@@ -241,7 +244,7 @@ export default function ManageTable() {
           <div style={{ marginTop: 16, textAlign: "center", display: "flex", justifyContent: "flex-end" }}>
             <Pagination
               current={parseInt(queryConfig.page as string)}
-              total={paginated?.meta.total}
+              total={paginated?.total}
               pageSize={parseInt(queryConfig.per_page as string)}
               onChange={handlePaginationChange}
               showSizeChanger

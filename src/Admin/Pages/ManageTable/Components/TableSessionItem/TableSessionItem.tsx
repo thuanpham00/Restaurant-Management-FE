@@ -14,8 +14,6 @@ export default function TableSessionItem({ table, index }: { table: TableSession
         return <Tag color="orange">Đang chờ</Tag>
       case TableSessionStatus.Active:
         return <Tag color="blue">Đang phục vụ</Tag>
-      case TableSessionStatus.Paying:
-        return <Tag color="purple">Thanh toán</Tag>
       case TableSessionStatus.Completed:
         return <Tag color="gray">Hoàn tất</Tag>
       case TableSessionStatus.Cancelled:

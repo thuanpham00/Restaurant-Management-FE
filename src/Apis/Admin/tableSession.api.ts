@@ -33,6 +33,13 @@ export const tableSessionAPI = {
     )
   },
 
+  getListPendingTableSessionByIdTable: (idDiningTable: string) => {
+    return Http.get<SuccessResponse<HistoryTableSession[]>>(
+      `/api/auth/table-sessions/${idDiningTable}/session-pending`,
+      {}
+    )
+  },
+
   getHistoryTableSessionDetailByIdTableAndIdTableSession: (idDiningTable: string, idTableSession: string) => {
     return Http.get<SuccessResponse<HistoryTableSessionDetail>>(
       `/api/auth/table-sessions/${idDiningTable}/session-history/${idTableSession}`,

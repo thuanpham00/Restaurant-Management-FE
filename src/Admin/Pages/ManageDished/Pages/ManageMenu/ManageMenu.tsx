@@ -16,7 +16,7 @@ import {
   Tag
 } from "antd"
 import { isUndefined, omit, omitBy } from "lodash"
-import { Beef } from "lucide-react"
+import { Beef, Filter, RotateCcw } from "lucide-react"
 import { Helmet } from "react-helmet-async"
 import { createSearchParams, Link, useNavigate, useSearchParams } from "react-router-dom"
 import { Fragment } from "react/jsx-runtime"
@@ -58,7 +58,7 @@ export default function ManageMenu() {
   })
 
   const paginated = data?.data.data as PaginatedResponse<Menus>
-  const listMenu = (paginated?.items || []) as Menus[]
+  const listMenu = (paginated?.data || []) as Menus[]
 
   const [searchParams, setSearchParams] = useSearchParams()
   const handlePaginationChange = (page: number, pageSize: number) => {
@@ -239,12 +239,14 @@ export default function ManageMenu() {
 
           <div className="flex items-center justify-between gap-1">
             <Form.Item>
-              <Button onClick={resetFilterForm}>Reset</Button>
+              <Button type="primary" htmlType="submit" icon={<Filter size={16} />}>
+                Lọc
+              </Button>
             </Form.Item>
 
             <Form.Item>
-              <Button type="primary" htmlType="submit">
-                Áp dụng
+              <Button onClick={resetFilterForm} icon={<RotateCcw size={16} />}>
+                Reset
               </Button>
             </Form.Item>
           </div>
@@ -307,7 +309,7 @@ export default function ManageMenu() {
           <div style={{ marginTop: 16, textAlign: "center", display: "flex", justifyContent: "flex-end" }}>
             <Pagination
               current={parseInt(queryConfig.page as string)}
-              total={paginated?.meta.total}
+              total={paginated?.total}
               pageSize={parseInt(queryConfig.per_page as string)}
               onChange={handlePaginationChange}
               showSizeChanger

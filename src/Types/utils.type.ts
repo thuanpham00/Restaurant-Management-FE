@@ -202,6 +202,53 @@ export type HistoryTableSessionDetail = {
   }[]
 }
 
+export type MenuDetailListItem = {
+  menu: {
+    id: string
+    name: string
+  }
+  items: {
+    id: string
+    menu_id: string
+    dish_id: string
+    dish_name: string
+    price_base: string
+    price: string
+    notes: string
+    dish_image: string
+  }[]
+}
+
+export type AddDishToMenu = {
+  id: string
+  name: string
+  price: string
+  image: string
+}
+
+export type Reservation = {
+  id: string
+  customer_id: string
+  reserved_at: string
+  number_of_people: number
+  status: number
+  notes: string
+  created_at: string
+  updated_at: string
+  customer: {
+    id: string
+    full_name: string
+    phone: string
+    gender: string
+    address: string
+    membership_level: number
+    user_id: string
+    created_at: string
+    updated_at: string
+    membership_label: string
+  }
+}
+
 export type PaginationLink = {
   url: string | null
   label: string
@@ -210,11 +257,17 @@ export type PaginationLink = {
 }
 
 export type PaginatedResponse<T> = {
-  items: T[]
-  meta: {
-    current_page: number
-    per_page: number
-    total: number
-    last_page: number
-  }
+  current_page: number
+  data: T[]
+  first_page_url: string
+  from: number
+  last_page: number
+  last_page_url: string
+  links: PaginationLink[]
+  next_page_url: string | null
+  path: string
+  per_page: number
+  prev_page_url: string | null
+  to: number
+  total: number
 }
