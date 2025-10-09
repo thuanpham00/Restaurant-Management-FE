@@ -383,8 +383,8 @@ export default function ManageDish() {
 
             <Form.Item name="is_active">
               <Select placeholder="Trạng thái" allowClear className="w-32">
-                <Select.Option value="1">Mở</Select.Option>
-                <Select.Option value="0">Tắt</Select.Option>
+                <Select.Option value="1">Hoạt động</Select.Option>
+                <Select.Option value="0">Ngừng</Select.Option>
               </Select>
             </Form.Item>
 
