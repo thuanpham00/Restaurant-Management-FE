@@ -9,8 +9,8 @@ const Footer = () => (
           <img src={assets.icons.group55} alt="Logo" className="w-48 h-12 mb-8" />
           <p className="text-white/80 mb-6">Download the WowWraps app today.</p>
           <div className="flex space-y-4 flex-col">
-            <img src={assets.icons.frame} alt="App Store" className="h-14" />
-            <img src={assets.icons.frame1} alt="Google Play" className="h-14" />
+            <img src={assets.icons.frame} alt="App Store" className="h-[70px]" />
+            <img src={assets.icons.frame1} alt="Google Play" className="h-[70px]" />
           </div>
         </div>
   
@@ -80,7 +80,7 @@ const Footer = () => (
           <div>
             <h3 className="text-white text-xl font-medium mb-6">Legal</h3>
             <div className="space-y-3 text-white/80">
-              <p>Website by uihut.com</p>
+              <p>Website by huit.com</p>
               <p>©2022. All Rights Reserved</p>
             </div>
           </div>
