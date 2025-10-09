@@ -30,5 +30,8 @@ export type queryParamConfigMenu = queryParamConfig & {
 }
 
 export type queryParamConfigReservation = queryParamConfig & {
-  is_active?: string
+  customer_name?: string
+  customer_phone?: string
+  date_time?: string
+  reserved_at?: string
 }

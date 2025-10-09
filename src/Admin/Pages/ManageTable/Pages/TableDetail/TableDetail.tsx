@@ -40,47 +40,99 @@ const { Title } = Typography
 export const renderSessionType = (type: number) => {
   switch (type) {
     case 0:
-      return <Tag color="blue">Offline</Tag>
+      return (
+        <Tag color="blue" className="text-[15px] font-semibold">
+          Offline
+        </Tag>
+      )
     case 1:
-      return <Tag color="purple">Ghép bàn</Tag>
+      return (
+        <Tag color="purple" className="text-[15px] font-semibold">
+          Ghép bàn
+        </Tag>
+      )
     case 2:
-      return <Tag color="orange">Đặt trước</Tag>
+      return (
+        <Tag color="orange" className="text-[15px] font-semibold">
+          Đặt trước
+        </Tag>
+      )
     case 3:
-      return <Tag color="green">Tách bàn</Tag>
+      return (
+        <Tag color="green" className="text-[15px] font-semibold">
+          Tách bàn
+        </Tag>
+      )
     default:
-      return <Tag>Khác</Tag>
+      return <Tag className="text-[15px] font-semibold">Khác</Tag>
   }
 }
 
 export const renderSessionStatus = (status: number) => {
   switch (status) {
     case 0:
-      return <Tag color="default">Chờ</Tag>
+      return (
+        <Tag color="default" className="text-[15px] font-semibold">
+          Chờ
+        </Tag>
+      )
     case 1:
-      return <Tag color="processing">Đang phục vụ</Tag>
+      return (
+        <Tag color="processing" className="text-[15px] font-semibold">
+          Đang phục vụ
+        </Tag>
+      )
     case 2:
-      return <Tag color="success">Hoàn tất</Tag>
+      return (
+        <Tag color="success" className="text-[15px] font-semibold">
+          Hoàn tất
+        </Tag>
+      )
     case 3:
-      return <Tag color="error">Hủy</Tag>
+      return (
+        <Tag color="error" className="text-[15px] font-semibold">
+          Hủy
+        </Tag>
+      )
     default:
-      return <Tag>Không rõ</Tag>
+      return <Tag className="text-[15px] font-semibold">Không rõ</Tag>
   }
 }
 
 const renderOrderStatus = (status: number) => {
   switch (status) {
     case 0:
-      return <Tag color="default">Chờ</Tag>
+      return (
+        <Tag color="default" className="text-[15px] font-semibold">
+          Chờ
+        </Tag>
+      )
     case 1:
-      return <Tag color="processing">Đang chế biến</Tag>
+      return (
+        <Tag color="processing" className="text-[15px] font-semibold">
+          Đang chế biến
+        </Tag>
+      )
     case 2:
-      return <Tag color="warning">Đã phục vụ</Tag>
+      return (
+        <Tag color="warning" className="text-[15px] font-semibold">
+          Đã phục vụ
+        </Tag>
+      )
     case 3:
-      return <Tag color="success">Đã thanh toán</Tag>
+      return (
+        <Tag color="success" className="text-[15px] font-semibold">
+          Đã thanh toán
+        </Tag>
+      )
     case 4:
-      return <Tag color="error">Đã hủy</Tag>
+      return (
+        <Tag color="error" className="text-[15px] font-semibold">
+          Đã hủy
+        </Tag>
+      )
     default:
-      return <Tag>Chờ</Tag>
+      return <Tag className="text-[15px] font-semibold">Chờ</Tag>
   }
 }
 

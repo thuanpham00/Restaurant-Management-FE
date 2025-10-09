@@ -20,3 +20,11 @@ export type Reservation = {
     membership_label: string
   }
 }
+
+export type ReservationCheckAssignTable = {
+  reservation_id: string
+  customer_name: string
+  session_id: string
+  dining_table_id: string
+  assigned: boolean
+}

@@ -12,6 +12,7 @@ export default function HistoryTableSession({ idDiningTable }: { idDiningTable: 
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [pagination, setPagination] = useState({ current: 1, pageSize: 5 })
   const [typeSession, setTypeSession] = useState("")
+
   const showModal = (type_session: string) => {
     setTypeSession(type_session)
     setIsModalOpen(true)
@@ -148,7 +149,7 @@ export default function HistoryTableSession({ idDiningTable }: { idDiningTable: 
       </Button>
 
       <Modal
-        title="Lịch sử phiên bàn"
+        title={typeSession === "history" ? "Lịch sử phiên bàn" : "Danh sách phiên bàn chờ"}
         closable={{ "aria-label": "Custom Close Button" }}
         open={isModalOpen}
         onCancel={() => setIsModalOpen(false)}

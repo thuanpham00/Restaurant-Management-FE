@@ -1,23 +1,34 @@
-import { keepPreviousData, useQuery } from "@tanstack/react-query"
-import { Empty, Pagination, Spin, Table, Tabs } from "antd"
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { Button, DatePicker, Empty, Form, Input, Pagination, Spin, Table, Tabs } from "antd"
 import { ColumnsType } from "antd/es/table"
-import { isUndefined, omitBy } from "lodash"
+import dayjs from "dayjs"
+import { isUndefined, omit, omitBy } from "lodash"
+import { Filter, RotateCcw } from "lucide-react"
 import { useState } from "react"
 import { Helmet } from "react-helmet-async"
-import { useSearchParams } from "react-router-dom"
+import { createSearchParams, useNavigate, useSearchParams } from "react-router-dom"
+import { toast } from "react-toastify"
 import { Fragment } from "react/jsx-runtime"
 import NavigateBack from "src/Admin/Components/NavigateBack"
 import { reservationsAPI } from "src/Apis/Admin/reservation.api"
+import { path } from "src/Constants/path"
+import { cleanObject } from "src/Helpers/common"
 import useQueryParams from "src/Hook/useQueryParams"
 import { queryParamConfigReservation } from "src/Types/queryParams.type"
-import { Reservation } from "src/Types/reservation.type"
+import { Reservation, ReservationCheckAssignTable } from "src/Types/reservation.type"
 
 export default function ManageReservation() {
+  const navigate = useNavigate()
+  const queryClient = useQueryClient()
   const queryParams: queryParamConfigReservation = useQueryParams()
   const queryConfig: queryParamConfigReservation = omitBy(
     {
       page: queryParams.page || "1",
-      per_page: queryParams.per_page || "5"
+      per_page: queryParams.per_page || "5",
+      customer_name: queryParams.customer_name,
+      customer_phone: queryParams.customer_phone,
+      reserved_at: queryParams.reserved_at
     },
     isUndefined
   )
@@ -51,12 +62,12 @@ export default function ManageReservation() {
       title: "Mã đặt bàn",
       dataIndex: "id",
       key: "id",
-      render: (id) => <span className="font-medium">{id}</span>
+      render: (id: string) => <span className="font-medium">{id}</span>
     },
     {
       title: "Khách hàng",
       key: "customer",
-      render: (_, record) => (
+      render: (_: any, record: Reservation) => (
         <div>
           <div className="font-semibold">{record.customer.full_name}</div>
           <div className="text-gray-500 text-sm">{record.customer.phone}</div>
@@ -72,13 +83,13 @@ export default function ManageReservation() {
       title: "Ngày đặt",
       dataIndex: "reserved_at",
       key: "reserved_at",
-      render: (date) => new Date(date).toLocaleString()
+      render: (date: string) => new Date(date).toLocaleString()
     },
     {
       title: "Trạng thái",
       dataIndex: "status",
       key: "status",
-      render: (status) => {
+      render: (status: number) => {
         switch (status) {
           case 0:
             return <span className="text-gray-600">Chờ</span>
@@ -97,15 +108,43 @@ export default function ManageReservation() {
       title: "Ghi chú",
       dataIndex: "notes",
       key: "notes",
-      render: (text) => <span className="text-gray-700">{text || "-"}</span>
+      render: (text: string) => <span className="text-gray-700">{text || "-"}</span>
     },
     {
       title: "Tạo lúc",
       dataIndex: "created_at",
       key: "created_at",
-      render: (date) => new Date(date).toLocaleString()
+      render: (date: string) => new Date(date).toLocaleString()
+    },
+    activeTab === "pending" && {
+      title: <div className="text-center">Hành động</div>,
+      key: "action",
+      render: (_: any, record: any) => (
+        <div className="flex justify-center gap-2">
+          <Button type="primary" onClick={() => handleAction("confirm", record)}>
+            Xác nhận
+          </Button>
+          <Button danger onClick={() => handleAction("cancel", record)}>
+            Từ chối
+          </Button>
+        </div>
+      )
+    },
+    (activeTab === "confirmed" || activeTab === "completed") && {
+      title: <div className="text-center">Trạng thái bàn</div>,
+      key: "action",
+      render: (_: any, record: Reservation) => {
+        const findReservation = listCheckAssignedTable?.find((item) => item.reservation_id === record.id)?.assigned
+        return (
+          <div
+            className={`${findReservation === true ? "bg-green-500" : "bg-red-500"} px-2 py-1 rounded-md text-center text-white`}
+          >
+            {findReservation === true ? "Đã xếp bàn" : "Chưa xếp bàn"}
+          </div>
+        )
+      }
     }
-  ]
+  ].filter(Boolean) as ColumnsType<Reservation>
 
   const onTabChange = (key: string) => {
     setActiveTab(key as typeof activeTab)
@@ -136,15 +175,78 @@ export default function ManageReservation() {
     completed: listReservation?.filter((r) => r.status === 3).length || 0
   }
 
+  const mutationUpdateStatus = useMutation({
+    mutationFn: ({ id, status }: { id: string; status: number }) => reservationsAPI.update(status, id),
+
+    onSuccess: () => {
+      toast.success("Cập nhật trạng thái thành công 🎉", {
+        autoClose: 1500
+      })
+      queryClient.invalidateQueries({ queryKey: ["listReservation"] })
+    },
+    onError: (error: any) => {
+      toast.error(error?.response?.data?.message || "Cập nhật thất bại ❌", {
+        autoClose: 1500
+      })
+    }
+  })
+
+  const handleAction = (type: "confirm" | "cancel", record: any) => {
+    if (type === "confirm") {
+      mutationUpdateStatus.mutate({ id: record.id, status: 1 })
+    } else {
+      mutationUpdateStatus.mutate({ id: record.id, status: 2 })
+    }
+  }
+
+  // 1. Form filter
+  const [filterForm] = Form.useForm()
+
+  const handleApplyForm = (values: any) => {
+    const reservedAt = values.reserved_at ? dayjs(values.reserved_at).format("YYYY-MM-DD HH:mm:ss") : undefined
+
+    const params: queryParamConfigReservation = cleanObject({
+      ...queryConfig,
+      page: 1,
+      customer_name: values.customer_name,
+      customer_phone: values.customer_phone,
+      reserved_at: reservedAt
+    })
+    navigate({
+      pathname: `${path.AdminReservations}`,
+      search: createSearchParams(params).toString()
+    })
+  }
+
+  const resetFilterForm = () => {
+    const filteredSearch = omit(queryConfig, ["customer_name", "customer_phone", "reserved_at"])
+    navigate({ pathname: `${path.AdminReservations}`, search: createSearchParams(filteredSearch).toString() })
+    filterForm.resetFields()
+  }
+
+  const { data: dataListCheckAssignedTable } = useQuery({
+    queryKey: ["listCheckAssignedTables", queryConfig],
+    queryFn: () => {
+      const controller = new AbortController()
+      setTimeout(() => controller.abort(), 10000)
+      return reservationsAPI.getListCheckAssignedTables(controller.signal)
+    },
+    retry: 0,
+    staleTime: 3 * 60 * 1000,
+    placeholderData: keepPreviousData
+  })
+
+  const listCheckAssignedTable = dataListCheckAssignedTable?.data.data as ReservationCheckAssignTable[]
+
   return (
     <div>
       <Helmet>
-        <title>Danh sách Đặt bàn</title>
+        <title>Danh sách đặt bàn của khách hàng</title>
         <meta name="description" content="Đây là trang Restaurant Management - Quản lý bàn" />
       </Helmet>
       <NavigateBack />
       <h1 className="text-2xl font-bold text-gray-800 bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600 my-2">
-        Danh sách đặt bàn
+        Danh sách đặt bàn của khách hàng
       </h1>
 
       <Tabs activeKey={activeTab} onChange={onTabChange}>
@@ -153,6 +255,46 @@ export default function ManageReservation() {
         <Tabs.TabPane tab={`Hoàn thành (${countByStatus.completed})`} key="completed" />
         <Tabs.TabPane tab={`Đã hủy (${countByStatus.cancelled})`} key="cancelled" />
       </Tabs>
+
+      <div className="mt-2 flex flex-wrap items-center justify-between gap-4 mb-4">
+        <Form
+          form={filterForm}
+          layout="inline"
+          onFinish={handleApplyForm}
+          className="flex flex-wrap items-center gap-1"
+          initialValues={{ capacity: undefined, status: undefined, is_active: undefined }}
+        >
+          <div className="text-[15px] font-semibold">Bộ lọc & tìm kiếm: </div>
+          <Form.Item name="customer_name">
+            <Input placeholder="Tên người đặt..." className="w-42" />
+          </Form.Item>
+
+          <Form.Item name="customer_phone">
+            <Input placeholder="Số điện thoại..." className="w-42" />
+          </Form.Item>
+
+          <Form.Item name="reserved_at">
+            <DatePicker
+              showTime={{ format: "HH:mm" }}
+              format="YYYY-MM-DD HH:mm"
+              placeholder="Chọn ngày & giờ"
+              className="w-56"
+            />
+          </Form.Item>
+
+          <Form.Item>
+            <Button type="primary" htmlType="submit" icon={<Filter size={16} />}>
+              Lọc
+            </Button>
+          </Form.Item>
+
+          <Form.Item>
+            <Button icon={<RotateCcw size={16} />} onClick={resetFilterForm}>
+              Reset
+            </Button>
+          </Form.Item>
+        </Form>
+      </div>
 
       {isFetching ? (
         <div

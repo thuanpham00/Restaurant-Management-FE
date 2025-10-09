@@ -99,7 +99,7 @@ export default function TableSessionHistoryDetail() {
       <NavigateBack />
 
       <h1 className="text-2xl font-bold text-gray-800 bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600 my-2">
-        Lịch sử chi tiết phiên bàn {idTableSession}
+        Thông tin phiên bàn {idTableSession}
       </h1>
 
       <Row gutter={12}>

@@ -7,19 +7,40 @@ import { TableSession } from "src/Types/tableSession.type"
 
 export default function TableSessionItem({ table, index }: { table: TableSession; index: number }) {
   const getStatusTag = (table: TableSession) => {
-    if (!table.session_id) return <Tag color="green">Trống</Tag>
+    if (!table.session_id)
+      return (
+        <Tag color="green" className="text-[14px] font-semibold">
+          Trống
+        </Tag>
+      )
 
     switch (table.session_status) {
       case TableSessionStatus.Pending:
-        return <Tag color="orange">Đang chờ</Tag>
+        return (
+          <Tag color="orange" className="text-[14px] font-semibold">
+            Đang chờ
+          </Tag>
+        )
       case TableSessionStatus.Active:
-        return <Tag color="blue">Đang phục vụ</Tag>
+        return (
+          <Tag color="blue" className="text-[14px] font-semibold">
+            Đang phục vụ
+          </Tag>
+        )
       case TableSessionStatus.Completed:
-        return <Tag color="gray">Hoàn tất</Tag>
+        return (
+          <Tag color="gray" className="text-[14px] font-semibold">
+            Hoàn tất
+          </Tag>
+        )
       case TableSessionStatus.Cancelled:
-        return <Tag color="red">Hủy</Tag>
+        return (
+          <Tag color="red" className="text-[14px] font-semibold">
+            Hủy
+          </Tag>
+        )
       default:
-        return <Tag>Không xác định</Tag>
+        return <Tag className="text-[14px] font-semibold">Không xác định</Tag>
     }
   }
 
@@ -27,13 +48,29 @@ export default function TableSessionItem({ table, index }: { table: TableSession
     if (!table.session_type && table.session_type !== 0) return null
     switch (table.session_type) {
       case TableSessionType.Offline:
-        return <Tag color="default">Offline</Tag>
+        return (
+          <Tag color="default" className="text-[14px] font-semibold">
+            Offline
+          </Tag>
+        )
       case TableSessionType.Merge:
-        return <Tag color="gold">Ghép bàn</Tag>
+        return (
+          <Tag color="gold" className="text-[14px] font-semibold">
+            Ghép bàn
+          </Tag>
+        )
       case TableSessionType.Reservation:
-        return <Tag color="cyan">Đặt trước</Tag>
+        return (
+          <Tag color="cyan" className="text-[14px] font-semibold">
+            Đặt trước
+          </Tag>
+        )
       case TableSessionType.Split:
-        return <Tag color="magenta">Tách bàn</Tag>
+        return (
+          <Tag color="magenta" className="text-[14px] font-semibold">
+            Tách bàn
+          </Tag>
+        )
       default:
         return null
     }

@@ -177,7 +177,6 @@ export default function ManageTable() {
             </Button>
           </Form.Item>
         </Form>
-        {/* Thêm bàn mới */}
         <Button
           type="primary"
           icon={<Table />}
