@@ -14,8 +14,8 @@ import { path } from "src/Constants/path"
 import { cleanObject } from "src/Helpers/common"
 import { isError400 } from "src/Helpers/utils"
 import useQueryParams from "src/Hook/useQueryParams"
+import { CategoryDishes } from "src/Types/dishCategory.type"
 import { queryParamConfigCategoryDish } from "src/Types/queryParams.type"
-import { CategoryDishes } from "src/Types/utils.type"
 
 export default function ManageDishCategory() {
   const navigate = useNavigate()

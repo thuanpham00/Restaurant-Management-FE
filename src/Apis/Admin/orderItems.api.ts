@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import Http from "src/Helpers/http"
-import { HistoryTableSessionDetail, SuccessResponse } from "src/Types/utils.type"
+import { HistoryTableSessionDetail } from "src/Types/tableSession.type"
+import { SuccessResponse } from "src/Types/utils.type"
 
 export const orderItemsAPI = {
   addOrderItem: (body: {

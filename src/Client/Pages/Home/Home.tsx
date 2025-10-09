@@ -1,29 +1,36 @@
-import { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { assets } from "src/Assets/assets";
-import { clientAPI } from "src/Apis/Client/home.api";
-import Header from "src/Client/Components/HeaderClient";
-import Footer from "src/Client/Components/FooterClient";
-import { Statistics, Dishes, CategoryDishes, Promotion, Chef, DiningTable } from "src/Types/utils.type";
+import { useEffect, useState } from "react"
+import { Link, useNavigate } from "react-router-dom"
+import { assets } from "src/Assets/assets"
+import { clientAPI } from "src/Apis/Client/home.api"
+import Header from "src/Client/Components/HeaderClient"
+import Footer from "src/Client/Components/FooterClient"
+import { Statistics } from "src/Types/statistics.type"
+import { Dish } from "src/Types/dish.type"
+import { CategoryDishes } from "src/Types/dishCategory.type"
+import { Chef, Promotion } from "src/Types/utils.type"
+import { DiningTable } from "src/Types/diningTable.type"
 
 const Home = () => {
-  const [stats, setStats] = useState<Statistics>({ restaurants: 0, new_dishes: 0, years_experience: 0 });
-  const [popularDishes, setPopularDishes] = useState<Dishes[]>([]);
-  const [categories, setCategories] = useState<CategoryDishes[]>([]);
-  const [selectedCategory, setSelectedCategory] = useState<string>("All");
-  const [promotions, setPromotions] = useState<Promotion[]>([]);
-  const [chefs, setChefs] = useState<Chef[]>([]);
-  const [tables, setTables] = useState<DiningTable[]>([]);
-  const [formData, setFormData] = useState<{ reserved_at: string; number_of_people: number }>({ reserved_at: "", number_of_people: 1 });
-  const [email, setEmail] = useState<string>("");
+  const [stats, setStats] = useState<Statistics>({ restaurants: 0, new_dishes: 0, years_experience: 0 })
+  const [popularDishes, setPopularDishes] = useState<Dish[]>([])
+  const [categories, setCategories] = useState<CategoryDishes[]>([])
+  const [selectedCategory, setSelectedCategory] = useState<string>("All")
+  const [promotions, setPromotions] = useState<Promotion[]>([])
+  const [chefs, setChefs] = useState<Chef[]>([])
+  const [tables, setTables] = useState<DiningTable[]>([])
+  const [formData, setFormData] = useState<{ reserved_at: string; number_of_people: number }>({
+    reserved_at: "",
+    number_of_people: 1
+  })
+  // const [email, setEmail] = useState<string>("")
   const [loading, setLoading] = useState<{
-    stats: boolean;
-    dishes: boolean;
-    categories: boolean;
-    promotions: boolean;
-    chefs: boolean;
-    tables: boolean;
-    newsletter: boolean;
+    stats: boolean
+    dishes: boolean
+    categories: boolean
+    promotions: boolean
+    chefs: boolean
+    tables: boolean
+    newsletter: boolean
   }>({
     stats: true,
     dishes: true,
@@ -31,16 +38,16 @@ const Home = () => {
     promotions: true,
     chefs: true,
     tables: false,
-    newsletter: false,
-  });
+    newsletter: false
+  })
   const [error, setError] = useState<{
-    stats: string | null;
-    dishes: string | null;
-    categories: string | null;
-    promotions: string | null;
-    chefs: string | null;
-    tables: string | null;
-    newsletter: string | null;
+    stats: string | null
+    dishes: string | null
+    categories: string | null
+    promotions: string | null
+    chefs: string | null
+    tables: string | null
+    newsletter: string | null
   }>({
     stats: null,
     dishes: null,
@@ -48,91 +55,98 @@ const Home = () => {
     promotions: null,
     chefs: null,
     tables: null,
-    newsletter: null,
-  });
-  const navigate = useNavigate();
+    newsletter: null
+  })
+  const navigate = useNavigate()
 
   useEffect(() => {
     // Fetch statistics
-    clientAPI.getStatistics()
+    clientAPI
+      .getStatistics()
       .then((response) => {
-        setStats(response.data.data);
-        setLoading((prev) => ({ ...prev, stats: false }));
+        setStats(response.data.data)
+        setLoading((prev) => ({ ...prev, stats: false }))
       })
       .catch((err) => {
-        setError((prev) => ({ ...prev, stats: "Error fetching statistics" }));
-        setLoading((prev) => ({ ...prev, stats: false }));
-      });
+        console.log(err)
+        setError((prev) => ({ ...prev, stats: "Error fetching statistics" }))
+        setLoading((prev) => ({ ...prev, stats: false }))
+      })
 
     // Fetch popular dishes
-    clientAPI.getPopularDishes()
+    clientAPI
+      .getPopularDishes()
       .then((response) => {
-        setPopularDishes(response.data.data);
-        setLoading((prev) => ({ ...prev, dishes: false }));
+        setPopularDishes(response.data.data)
+        setLoading((prev) => ({ ...prev, dishes: false }))
       })
-      .catch((err) => {
-        setError((prev) => ({ ...prev, dishes: "Error fetching popular dishes" }));
-        setLoading((prev) => ({ ...prev, dishes: false }));
-      });
+      .catch(() => {
+        setError((prev) => ({ ...prev, dishes: "Error fetching popular dishes" }))
+        setLoading((prev) => ({ ...prev, dishes: false }))
+      })
 
     // Fetch menu categories
-    clientAPI.getMenuCategories()
+    clientAPI
+      .getMenuCategories()
       .then((response) => {
-        setCategories(response.data.data);
-        setLoading((prev) => ({ ...prev, categories: false }));
+        setCategories(response.data.data)
+        setLoading((prev) => ({ ...prev, categories: false }))
       })
-      .catch((err) => {
-        setError((prev) => ({ ...prev, categories: "Error fetching menu categories" }));
-        setLoading((prev) => ({ ...prev, categories: false }));
-      });
+      .catch(() => {
+        setError((prev) => ({ ...prev, categories: "Error fetching menu categories" }))
+        setLoading((prev) => ({ ...prev, categories: false }))
+      })
 
     // Fetch promotions
-    clientAPI.getPromotions()
+    clientAPI
+      .getPromotions()
       .then((response) => {
-        setPromotions(response.data.data);
-        setLoading((prev) => ({ ...prev, promotions: false }));
+        setPromotions(response.data.data)
+        setLoading((prev) => ({ ...prev, promotions: false }))
       })
-      .catch((err) => {
-        setError((prev) => ({ ...prev, promotions: "Error fetching promotions" }));
-        setLoading((prev) => ({ ...prev, promotions: false }));
-      });
+      .catch(() => {
+        setError((prev) => ({ ...prev, promotions: "Error fetching promotions" }))
+        setLoading((prev) => ({ ...prev, promotions: false }))
+      })
 
     // Fetch chefs
-    clientAPI.getChefs()
+    clientAPI
+      .getChefs()
       .then((response) => {
-        setChefs(response.data.data);
-        setLoading((prev) => ({ ...prev, chefs: false }));
+        setChefs(response.data.data)
+        setLoading((prev) => ({ ...prev, chefs: false }))
       })
       .catch((err) => {
-        setError((prev) => ({ ...prev, chefs: "Error fetching chefs" }));
-        setLoading((prev) => ({ ...prev, chefs: false }));
-      });
-  }, []);
+        console.log(err)
+        setError((prev) => ({ ...prev, chefs: "Error fetching chefs" }))
+        setLoading((prev) => ({ ...prev, chefs: false }))
+      })
+  }, [])
 
   const handleTableSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading((prev) => ({ ...prev, tables: true }));
+    e.preventDefault()
+    setLoading((prev) => ({ ...prev, tables: true }))
     try {
-      const token = localStorage.getItem("token");
+      const token = localStorage.getItem("token")
       if (!token) {
-        navigate("/login");
-        return;
+        navigate("/login")
+        return
       }
-      const response = await clientAPI.getAvailableTables(formData);
-      setTables(response.data.data);
-      setLoading((prev) => ({ ...prev, tables: false }));
+      const response = await clientAPI.getAvailableTables(formData)
+      setTables(response.data.data)
+      setLoading((prev) => ({ ...prev, tables: false }))
     } catch (err) {
-      setError((prev) => ({ ...prev, tables: "Error fetching available tables or please login" }));
-      setLoading((prev) => ({ ...prev, tables: false }));
+      console.log(err)
+      setError((prev) => ({ ...prev, tables: "Error fetching available tables or please login" }))
+      setLoading((prev) => ({ ...prev, tables: false }))
     }
-  };
-
+  }
 
   const filteredDishes = Array.isArray(categories)
-  ? selectedCategory === "All"
-    ? categories.flatMap((cat) => cat.dishes || [])
-    : categories.find((cat) => cat.name === selectedCategory)?.dishes || []
-  : [];
+    ? selectedCategory === "All"
+      ? categories.flatMap((cat) => cat.dishes || [])
+      : categories.find((cat) => cat.name === selectedCategory)?.dishes || []
+    : []
 
   return (
     <div className="bg-gray-900 min-h-screen">
@@ -161,7 +175,9 @@ const Home = () => {
                 <div className="text-base md:text-lg lg:text-xl">New Food Menu Dishes</div>
               </div>
               <div>
-                <div className="text-4xl md:text-5xl lg:text-6xl font-medium mb-1 md:mb-2">{stats.years_experience}</div>
+                <div className="text-4xl md:text-5xl lg:text-6xl font-medium mb-1 md:mb-2">
+                  {stats.years_experience}
+                </div>
                 <div className="text-base md:text-lg lg:text-xl">Years of experience</div>
               </div>
             </div>
@@ -176,8 +192,8 @@ const Home = () => {
             Most popular food
           </h2>
           <p className="text-white/80 text-base md:text-lg max-w-2xl mx-auto px-4">
-            A list of most popular Bangladeshi food including mains, drinks, and deserts you must try while in Bangladesh,
-            for an authentic experience. Check now!
+            A list of most popular Bangladeshi food including mains, drinks, and deserts you must try while in
+            Bangladesh, for an authentic experience. Check now!
           </p>
         </div>
         {loading.dishes ? (
@@ -242,7 +258,7 @@ const Home = () => {
             <form onSubmit={handleTableSubmit}>
               <div className="grid md:grid-cols-2 gap-6 mb-8">
                 <div>
-                  <label className="text-gray-900 text-2xl font-medium mb-2 block">Set date</label>
+                  <span className="text-gray-900 text-2xl font-medium mb-2 block">Set date</span>
                   <input
                     type="datetime-local"
                     value={formData.reserved_at}
@@ -252,7 +268,7 @@ const Home = () => {
                   />
                 </div>
                 <div>
-                  <label className="text-gray-900 text-2xl font-medium mb-2 block">Guests</label>
+                  <span className="text-gray-900 text-2xl font-medium mb-2 block">Guests</span>
                   <input
                     type="number"
                     value={formData.number_of_people}
@@ -277,7 +293,9 @@ const Home = () => {
                 <h3 className="text-gray-900 text-xl">Available Tables:</h3>
                 <ul>
                   {tables.map((table) => (
-                    <li key={table.id}>Table {table.table_number} (Capacity: {table.capacity})</li>
+                    <li key={table.id}>
+                      Table {table.table_number} (Capacity: {table.capacity})
+                    </li>
                   ))}
                 </ul>
               </div>
@@ -330,89 +348,89 @@ const Home = () => {
 
       {/* Menu Section */}
       <section className="bg-gray-900 py-16 px-6 sm:px-8 lg:px-[135px]">
-      <div className="text-center mb-16">
-        <p className="text-white/80 mb-4">Our menu</p>
-        <h2 className="text-white text-4xl md:text-5xl lg:text-6xl font-medium mb-6">Choose & Taste What You Like</h2>
-        <p className="text-white/80 text-lg max-w-2xl mx-auto">
-          A list of top Bangladeshi food including mains, drinks, and deserts you must try while in Bangladesh, for an
-          authentic experience. Check now!
-        </p>
-      </div>
-      {loading.categories ? (
-        <div>Loading...</div>
-      ) : error.categories ? (
-        <div>{error.categories}</div>
-      ) : Array.isArray(categories) && categories.length > 0 ? (
-        <>
-          <div className="flex flex-wrap justify-center gap-8 mb-8">
-            <div
-              className={`text-center cursor-pointer ${
-                selectedCategory === "All" ? "text-orange-400" : "text-white"
-              } text-3xl font-medium hover:text-orange-400 transition-colors`}
-              onClick={() => setSelectedCategory("All")}
-            >
-              <span>All</span>
-              {selectedCategory === "All" && <div className="h-px bg-orange-400 w-full mt-2"></div>}
-            </div>
-            {categories.map((category: CategoryDishes) => (
-              <div
-                key={category.id}
+        <div className="text-center mb-16">
+          <p className="text-white/80 mb-4">Our menu</p>
+          <h2 className="text-white text-4xl md:text-5xl lg:text-6xl font-medium mb-6">Choose & Taste What You Like</h2>
+          <p className="text-white/80 text-lg max-w-2xl mx-auto">
+            A list of top Bangladeshi food including mains, drinks, and deserts you must try while in Bangladesh, for an
+            authentic experience. Check now!
+          </p>
+        </div>
+        {loading.categories ? (
+          <div>Loading...</div>
+        ) : error.categories ? (
+          <div>{error.categories}</div>
+        ) : Array.isArray(categories) && categories.length > 0 ? (
+          <>
+            <div className="flex flex-wrap justify-center gap-8 mb-8">
+              <button
                 className={`text-center cursor-pointer ${
-                  selectedCategory === category.name ? "text-orange-400" : "text-white"
+                  selectedCategory === "All" ? "text-orange-400" : "text-white"
                 } text-3xl font-medium hover:text-orange-400 transition-colors`}
-                onClick={() => setSelectedCategory(category.name)}
+                onClick={() => setSelectedCategory("All")}
               >
-                <span>{category.name}</span>
-                {selectedCategory === category.name && <div className="h-px bg-orange-400 w-full mt-2"></div>}
+                <span>All</span>
+                {selectedCategory === "All" && <div className="h-px bg-orange-400 w-full mt-2"></div>}
+              </button>
+              {categories.map((category: CategoryDishes) => (
+                <button
+                  key={category.id}
+                  className={`block text-center cursor-pointer ${
+                    selectedCategory === category.name ? "text-orange-400" : "text-white"
+                  } text-3xl font-medium hover:text-orange-400 transition-colors`}
+                  onClick={() => setSelectedCategory(category.name)}
+                >
+                  <span>{category.name}</span>
+                  {selectedCategory === category.name && <div className="h-px bg-orange-400 w-full mt-2"></div>}
+                </button>
+              ))}
+            </div>
+            <div className="h-px bg-white/20 w-full mb-8"></div>
+            <div className="grid lg:grid-cols-2 gap-8">
+              <div className="space-y-8">
+                {filteredDishes.slice(0, Math.ceil(filteredDishes.length / 2)).map((item: Dish) => (
+                  <div key={item.id} className="flex items-center justify-between">
+                    <div className="flex items-center space-x-4">
+                      <img
+                        src={assets.ellipses.ellipse30}
+                        alt={item.name}
+                        className="w-19 h-19 rounded-full object-cover"
+                      />
+                      <h3 className="text-white text-3xl font-medium max-w-xs">{item.name}</h3>
+                    </div>
+                    <span className="text-white text-3xl font-medium">${item.price}</span>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
-          <div className="h-px bg-white/20 w-full mb-8"></div>
-          <div className="grid lg:grid-cols-2 gap-8">
-            <div className="space-y-8">
-              {filteredDishes.slice(0, Math.ceil(filteredDishes.length / 2)).map((item: Dishes) => (
-                <div key={item.id} className="flex items-center justify-between">
-                  <div className="flex items-center space-x-4">
-                    <img
-                      src={assets.ellipses.ellipse30}
-                      alt={item.name}
-                      className="w-19 h-19 rounded-full object-cover"
-                    />
-                    <h3 className="text-white text-3xl font-medium max-w-xs">{item.name}</h3>
+              <div className="space-y-8">
+                {filteredDishes.slice(Math.ceil(filteredDishes.length / 2)).map((item: Dish) => (
+                  <div key={item.id} className="flex items-center justify-between">
+                    <div className="flex items-center space-x-4">
+                      <img
+                        src={assets.ellipses.ellipse30}
+                        alt={item.name}
+                        className="w-19 h-19 rounded-full object-cover"
+                      />
+                      <h3 className="text-white text-3xl font-medium max-w-xs">{item.name}</h3>
+                    </div>
+                    <span className="text-white text-3xl font-medium">${item.price}</span>
                   </div>
-                  <span className="text-white text-3xl font-medium">${item.price}</span>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
-            <div className="space-y-8">
-              {filteredDishes.slice(Math.ceil(filteredDishes.length / 2)).map((item: Dishes) => (
-                <div key={item.id} className="flex items-center justify-between">
-                  <div className="flex items-center space-x-4">
-                    <img
-                      src={assets.ellipses.ellipse30}
-                      alt={item.name}
-                      className="w-19 h-19 rounded-full object-cover"
-                    />
-                    <h3 className="text-white text-3xl font-medium max-w-xs">{item.name}</h3>
-                  </div>
-                  <span className="text-white text-3xl font-medium">${item.price}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </>
-      ) : (
-        <div>No categories available</div>
-      )}
-    </section>
+          </>
+        ) : (
+          <div>No categories available</div>
+        )}
+      </section>
 
       {/* Gallery Section */}
       <section className="bg-gray-900 py-16 px-6 sm:px-8 lg:px-[135px]">
         <div className="text-center mb-16">
           <h2 className="text-white text-4xl md:text-5xl lg:text-6xl font-medium mb-6">Visit Our Restaurant</h2>
           <p className="text-white/80 text-lg max-w-2xl mx-auto">
-            Quality country-style menu selection, friendly and efficient service, combined with genuine value has kept Our
-            Best serving families like yours for over 28.
+            Quality country-style menu selection, friendly and efficient service, combined with genuine value has kept
+            Our Best serving families like yours for over 28.
           </p>
         </div>
         <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
@@ -452,54 +470,63 @@ const Home = () => {
 
       {/* Daily Offers Section */}
       <section className="bg-gray-900 py-16 px-6 sm:px-8 lg:px-[135px]">
-      <div className="text-center mb-16">
-        <h2 className="text-white text-4xl md:text-5xl lg:text-6xl font-medium">Our Daily Offers</h2>
-      </div>
-      {loading.promotions || loading.dishes ? (
-        <div>Loading...</div>
-      ) : error.promotions || error.dishes ? (
-        <div>{error.promotions || error.dishes}</div>
-      ) : Array.isArray(promotions) && promotions.length > 0 && Array.isArray(popularDishes) && popularDishes.length > 0 ? (
-    <div className="grid lg:grid-cols-2 gap-8 items-center">
-      <div className="relative">
-        <img
-          src={assets.rectangles.soup}
-          alt="Special offer"
-          className="w-full h-[434px] object-cover rounded-lg"
-        />
-        <div className="absolute inset-0 bg-gradient-to-r from-black/60 to-transparent rounded-lg" />
-        <div className="absolute top-1/2 left-8 transform -translate-y-1/2 text-white">
-          <h3 className="text-3xl font-semibold mb-4">{promotions[0].description || "Lunch Time"}</h3>
-          <div className="flex items-center mb-4">
-            <span className="text-8xl font-bold text-orange-400 mr-2">{promotions[0].discount_percent || 30}%</span>
-            <span className="text-3xl font-semibold">off</span>
-          </div>
-          <p className="text-lg mb-6 max-w-xs">We love food, lots of different and food, just like you.</p>
-          <button className="bg-orange-400/80 hover:bg-orange-400 px-8 py-3 rounded font-semibold transition-colors">
-            Order Now
-          </button>
+        <div className="text-center mb-16">
+          <h2 className="text-white text-4xl md:text-5xl lg:text-6xl font-medium">Our Daily Offers</h2>
         </div>
-        <div className="absolute inset-4 border border-white/20 rounded-lg pointer-events-none" />
-      </div>
-      <div className="space-y-6">
-        {popularDishes.slice(0, 3).map((item) => (
-          <div key={item.id} className="flex items-start space-x-4">
-            <img src={assets.rectangles.shrimp} alt={item.name} className="w-32 h-32 object-cover rounded-lg flex-shrink-0" />
-            <div className="flex-1">
-              <div className="flex justify-between items-start mb-2">
-                <h3 className="text-white text-2xl font-medium">{item.name}</h3>
-                <span className="text-white text-3xl font-medium">${item.price}</span>
+        {loading.promotions || loading.dishes ? (
+          <div>Loading...</div>
+        ) : error.promotions || error.dishes ? (
+          <div>{error.promotions || error.dishes}</div>
+        ) : Array.isArray(promotions) &&
+          promotions.length > 0 &&
+          Array.isArray(popularDishes) &&
+          popularDishes.length > 0 ? (
+          <div className="grid lg:grid-cols-2 gap-8 items-center">
+            <div className="relative">
+              <img
+                src={assets.rectangles.soup}
+                alt="Special offer"
+                className="w-full h-[434px] object-cover rounded-lg"
+              />
+              <div className="absolute inset-0 bg-gradient-to-r from-black/60 to-transparent rounded-lg" />
+              <div className="absolute top-1/2 left-8 transform -translate-y-1/2 text-white">
+                <h3 className="text-3xl font-semibold mb-4">{promotions[0].description || "Lunch Time"}</h3>
+                <div className="flex items-center mb-4">
+                  <span className="text-8xl font-bold text-orange-400 mr-2">
+                    {promotions[0].discount_percent || 30}%
+                  </span>
+                  <span className="text-3xl font-semibold">off</span>
+                </div>
+                <p className="text-lg mb-6 max-w-xs">We love food, lots of different and food, just like you.</p>
+                <button className="bg-orange-400/80 hover:bg-orange-400 px-8 py-3 rounded font-semibold transition-colors">
+                  Order Now
+                </button>
               </div>
-              <p className="text-white/80 text-lg">{item.desc}</p>
+              <div className="absolute inset-4 border border-white/20 rounded-lg pointer-events-none" />
+            </div>
+            <div className="space-y-6">
+              {popularDishes.slice(0, 3).map((item) => (
+                <div key={item.id} className="flex items-start space-x-4">
+                  <img
+                    src={assets.rectangles.shrimp}
+                    alt={item.name}
+                    className="w-32 h-32 object-cover rounded-lg flex-shrink-0"
+                  />
+                  <div className="flex-1">
+                    <div className="flex justify-between items-start mb-2">
+                      <h3 className="text-white text-2xl font-medium">{item.name}</h3>
+                      <span className="text-white text-3xl font-medium">${item.price}</span>
+                    </div>
+                    <p className="text-white/80 text-lg">{item.desc}</p>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
-        ))}
-      </div>
-    </div>
-  ) : (
-    <div>No promotions or popular dishes available</div>
-  )}
-</section>
+        ) : (
+          <div>No promotions or popular dishes available</div>
+        )}
+      </section>
 
       {/* Features Banner */}
       <section className="bg-orange-400 py-12">
@@ -510,7 +537,7 @@ const Home = () => {
               { icon: assets.icons.star5, img: assets.images.image30, title: "Self Services" },
               { icon: assets.icons.star2, img: assets.images.image28, title: "Best Food" },
               { icon: assets.icons.star6, img: assets.images.image31, title: "Fast Delivery" },
-              { icon: assets.icons.star4, img: assets.images.image29, title: "Super Taste" },
+              { icon: assets.icons.star4, img: assets.images.image29, title: "Super Taste" }
             ].map((feature, index) => (
               <div key={index} className="flex flex-col items-center">
                 <div className="relative w-14 h-14 mb-2">
@@ -530,35 +557,35 @@ const Home = () => {
 
       {/* Chefs Section */}
       <section className="bg-gray-900 py-16 px-6 sm:px-8 lg:px-[135px]">
-      <div className="text-center mb-16">
-        <h2 className="text-white text-4xl md:text-5xl lg:text-6xl font-medium mb-6">They will cook for you</h2>
-        <p className="text-white/80 text-lg max-w-3xl mx-auto">
-          Our Diners can enjoy cooking for themselves, or visiting a curated selection of restaurants in the area. They
-          will cook for you and make sure you have a home away from home at all times.
-        </p>
-      </div>
-      {loading.chefs ? (
-        <div>Loading...</div>
-      ) : error.chefs ? (
-        <div>{error.chefs}</div>
-      ) : (chefs || []).length === 0 ? (
-        <div>No chefs available</div>
-      ) : (
-        <div className="grid md:grid-cols-3 gap-8">
-          {(chefs || []).map((chef: Chef) => (
-            <div key={chef.id} className="text-center">
-              <img
-                src={chef.avatar || assets.rectangles.chef2}
-                alt={chef.name}
-                className="w-full h-[443px] object-cover border border-white/50 rounded-lg mb-6"
-              />
-              <h3 className="text-white text-3xl font-medium mb-2">{chef.name}</h3>
-              <p className="text-white text-lg font-semibold">Chef</p>
-            </div>
-          ))}
+        <div className="text-center mb-16">
+          <h2 className="text-white text-4xl md:text-5xl lg:text-6xl font-medium mb-6">They will cook for you</h2>
+          <p className="text-white/80 text-lg max-w-3xl mx-auto">
+            Our Diners can enjoy cooking for themselves, or visiting a curated selection of restaurants in the area.
+            They will cook for you and make sure you have a home away from home at all times.
+          </p>
         </div>
-      )}
-    </section>
+        {loading.chefs ? (
+          <div>Loading...</div>
+        ) : error.chefs ? (
+          <div>{error.chefs}</div>
+        ) : (chefs || []).length === 0 ? (
+          <div>No chefs available</div>
+        ) : (
+          <div className="grid md:grid-cols-3 gap-8">
+            {(chefs || []).map((chef: Chef) => (
+              <div key={chef.id} className="text-center">
+                <img
+                  src={chef.avatar || assets.rectangles.chef2}
+                  alt={chef.name}
+                  className="w-full h-[443px] object-cover border border-white/50 rounded-lg mb-6"
+                />
+                <h3 className="text-white text-3xl font-medium mb-2">{chef.name}</h3>
+                <p className="text-white text-lg font-semibold">Chef</p>
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
 
       {/* Blog Section */}
       <section className="bg-gray-900 py-16 px-6 sm:px-8 lg:px-[135px]">
@@ -568,13 +595,17 @@ const Home = () => {
         </div>
         <div className="grid lg:grid-cols-2 gap-8">
           <div className="grid md:grid-cols-2 gap-6">
-            <img src={assets.rectangles.sandwich} alt="Blog post" className="w-full h-[348px] object-cover rounded-lg" />
+            <img
+              src={assets.rectangles.sandwich}
+              alt="Blog post"
+              className="w-full h-[348px] object-cover rounded-lg"
+            />
             <div>
               <p className="text-white mb-4">August 6, 2022</p>
               <h3 className="text-white text-3xl font-medium mb-4">The Most Expensive Cup of Coffee in the Usa</h3>
               <p className="text-white/80 text-lg mb-6">
-                Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque lauatium, totam rem
-                aperiam perspiciatis unde omnis.
+                Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque lauatium, totam
+                rem aperiam perspiciatis unde omnis.
               </p>
               <div className="flex justify-between text-white mb-6">
                 <span>Comments 165</span>
@@ -591,8 +622,8 @@ const Home = () => {
               <p className="text-white mb-4">August 6, 2022</p>
               <h3 className="text-white text-3xl font-medium mb-4">Chicken Soup With Spring Veggies And Pasta</h3>
               <p className="text-white/80 text-lg mb-6">
-                Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque lauatium, totam rem
-                aperiam perspiciatis unde omnis.
+                Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque lauatium, totam
+                rem aperiam perspiciatis unde omnis.
               </p>
               <div className="flex justify-between text-white mb-6">
                 <span>Comments 165</span>
@@ -640,7 +671,7 @@ const Home = () => {
 
       <Footer />
     </div>
-  );
-};
+  )
+}
 
-export default Home;
+export default Home

@@ -1,68 +1,68 @@
 // src/Components/Register.tsx
-import React, { useState } from "react";
-import { NavLink, useNavigate } from "react-router-dom";
-import { LucideUtensils, GithubIcon, Eye, EyeOff } from "lucide-react";
-import { Helmet } from "react-helmet-async";
-import { useForm } from "react-hook-form";
-import { yupResolver } from "@hookform/resolvers/yup";
-import { useMutation } from "@tanstack/react-query";
-import { toast } from "react-toastify";
-import { schemaRegister, SchemaRegisterType } from "src/Helpers/rule";
-import { isError422 } from "src/Helpers/utils";
-import { ErrorResponse, RegisterResponse } from "src/Types/utils.type";
-import { path } from "src/Constants/path";
-import {clientAPI} from "src/Apis/Client/auth.api";
+import { useState } from "react"
+import { NavLink, useNavigate } from "react-router-dom"
+import { LucideUtensils, Eye, EyeOff } from "lucide-react"
+import { Helmet } from "react-helmet-async"
+import { useForm } from "react-hook-form"
+import { yupResolver } from "@hookform/resolvers/yup"
+import { useMutation } from "@tanstack/react-query"
+import { toast } from "react-toastify"
+import { schemaRegister, SchemaRegisterType } from "src/Helpers/rule"
+import { isError422 } from "src/Helpers/utils"
+import { ErrorResponse } from "src/Types/utils.type"
+import { path } from "src/Constants/path"
+import { clientAPI } from "src/Apis/Client/auth.api"
 
-type FormData = SchemaRegisterType;
+type FormData = SchemaRegisterType
 
 const Register = () => {
-  const navigate = useNavigate();
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const navigate = useNavigate()
+  const [showPassword, setShowPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
 
   const {
     formState: { errors },
     setError,
     register,
-    handleSubmit,
-  } = useForm<FormData>({ resolver: yupResolver(schemaRegister) });
+    handleSubmit
+  } = useForm<FormData>({ resolver: yupResolver(schemaRegister) })
 
   const registerMutation = useMutation({
     mutationFn: (body: FormData) => {
-      return clientAPI.register(body);
-    },
-  });
+      return clientAPI.register(body)
+    }
+  })
 
   const handleSubmitForm = handleSubmit((data) => {
-    console.log("Form data:", data);
+    console.log("Form data:", data)
     registerMutation.mutate(data, {
       onSuccess: (response) => {
-        toast.success(response.data.message, { autoClose: 3000 });
-        navigate(path.Login);
+        toast.success(response.data.message, { autoClose: 3000 })
+        navigate(path.Login)
       },
       onError: (error) => {
         if (isError422<ErrorResponse<FormData>>(error)) {
-          const formError = error.response?.data.errors;
+          const formError = error.response?.data.errors
           if (formError && !Array.isArray(formError)) {
             if (formError.name && formError.name.length > 0) {
-              setError("name", { message: formError.name[0] });
+              setError("name", { message: formError.name[0] })
             }
             if (formError.email && formError.email.length > 0) {
-              setError("email", { message: formError.email[0] });
+              setError("email", { message: formError.email[0] })
             }
             if (formError.password && formError.password.length > 0) {
-              setError("password", { message: formError.password[0] });
+              setError("password", { message: formError.password[0] })
             }
             if (formError.password_confirmation && formError.password_confirmation.length > 0) {
-              setError("password_confirmation", { message: formError.password_confirmation[0] });
+              setError("password_confirmation", { message: formError.password_confirmation[0] })
             }
           } else {
-            toast.error(error.response?.data.message || "Đăng ký thất bại", { autoClose: 2000 });
+            toast.error(error.response?.data.message || "Đăng ký thất bại", { autoClose: 2000 })
           }
         }
-      },
-    });
-  });
+      }
+    })
+  })
 
   return (
     <div className="min-h-screen w-full flex items-center justify-center bg-black relative">
@@ -78,8 +78,9 @@ const Register = () => {
         <div
           className="absolute inset-0 opacity-40 bg-cover bg-center"
           style={{
-            backgroundImage: 'url("https://images.unsplash.com/photo-1504674900247-0877df9cc836?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80")',
-            backgroundBlendMode: "overlay",
+            backgroundImage:
+              'url("https://images.unsplash.com/photo-1504674900247-0877df9cc836?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80")',
+            backgroundBlendMode: "overlay"
           }}
         />
       </div>
@@ -184,7 +185,7 @@ const Register = () => {
         </div>
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default Register;
+export default Register

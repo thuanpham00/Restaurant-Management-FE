@@ -1,6 +1,7 @@
 import Http from "src/Helpers/http"
+import { CategoryDishes } from "src/Types/dishCategory.type"
 import { queryParamConfigCategoryDish } from "src/Types/queryParams.type"
-import { CategoryDishes, PaginatedResponse, SuccessResponse } from "src/Types/utils.type"
+import { PaginatedResponse, SuccessResponse } from "src/Types/utils.type"
 
 export const dishCategoryAPI = {
   getList: (params: queryParamConfigCategoryDish, signal: AbortSignal) => {

@@ -10,7 +10,7 @@ import NavigateBack from "src/Admin/Components/NavigateBack"
 import { reservationsAPI } from "src/Apis/Admin/reservation.api"
 import useQueryParams from "src/Hook/useQueryParams"
 import { queryParamConfigReservation } from "src/Types/queryParams.type"
-import { Reservation } from "src/Types/utils.type"
+import { Reservation } from "src/Types/reservation.type"
 
 export default function ManageReservation() {
   const queryParams: queryParamConfigReservation = useQueryParams()

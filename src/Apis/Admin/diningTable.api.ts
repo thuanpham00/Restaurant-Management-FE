@@ -1,5 +1,6 @@
 import Http from "src/Helpers/http"
-import { DiningTable, SuccessResponse } from "src/Types/utils.type"
+import { DiningTable } from "src/Types/diningTable.type"
+import { SuccessResponse } from "src/Types/utils.type"
 
 export const diningTableAPI = {
   createDiningTable: (body: { table_number: number; capacity: number; is_active: boolean }) => {

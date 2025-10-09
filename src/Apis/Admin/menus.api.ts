@@ -1,7 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import Http from "src/Helpers/http"
+import { AddDishToMenu, MenuDetailListItem, Menus } from "src/Types/menu.type"
 import { queryParamConfigMenu } from "src/Types/queryParams.type"
-import { AddDishToMenu, MenuDetailListItem, Menus, PaginatedResponse, SuccessResponse } from "src/Types/utils.type"
+import { PaginatedResponse, SuccessResponse } from "src/Types/utils.type"
 
 export const menusAPI = {
   getList: (params: queryParamConfigMenu, signal: AbortSignal) => {

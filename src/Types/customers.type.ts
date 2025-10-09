@@ -14,7 +14,7 @@ export type Customer = {
     email: string
     email_verified_at: string | null
     status: number
-    name : string
+    name: string
     avatar: string | null
     role_id: string
     created_at: string

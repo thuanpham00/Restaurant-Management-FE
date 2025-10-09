@@ -3,12 +3,11 @@ import { queryParamConfigTableSessions } from "src/Types/queryParams.type"
 import {
   HistoryTableSession,
   HistoryTableSessionDetail,
-  PaginatedResponse,
-  SuccessResponse,
   TableSession,
   TableSessionDetail,
   TableSessionOrder
-} from "src/Types/utils.type"
+} from "src/Types/tableSession.type"
+import { PaginatedResponse, SuccessResponse } from "src/Types/utils.type"
 
 export const tableSessionAPI = {
   getListTableSession: (params: queryParamConfigTableSessions, signal: AbortSignal) => {

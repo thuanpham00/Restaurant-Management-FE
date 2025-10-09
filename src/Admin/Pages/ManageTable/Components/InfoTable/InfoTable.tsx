@@ -5,7 +5,8 @@ import { useEffect, useState } from "react"
 import { toast } from "react-toastify"
 import { diningTableAPI } from "src/Apis/Admin"
 import { isError422 } from "src/Helpers/utils"
-import { ErrorResponse, TableSession, TableSessionDetail, TableSessionOrder } from "src/Types/utils.type"
+import { TableSession, TableSessionDetail, TableSessionOrder } from "src/Types/tableSession.type"
+import { ErrorResponse } from "src/Types/utils.type"
 
 export default function InfoTable({
   dataTable,

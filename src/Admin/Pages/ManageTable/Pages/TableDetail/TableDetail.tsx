@@ -26,7 +26,7 @@ import NavigateBack from "src/Admin/Components/NavigateBack"
 import { tableSessionAPI, orderItemsAPI, menusAPI } from "src/Apis/Admin"
 import { assets } from "src/Assets/assets"
 import "./TableDetail.css"
-import { TableSessionDetail, TableSessionOrder } from "src/Types/utils.type"
+import { TableSessionDetail, TableSessionOrder } from "src/Types/tableSession.type"
 import dayjs from "dayjs"
 import InfoTable from "../../Components/InfoTable"
 import HistoryTableSession from "../../Components/HistoryTableSession/HistoryTableSession"
@@ -35,7 +35,6 @@ import { toast } from "react-toastify"
 import { ColumnsType } from "antd/es/table"
 
 const { Search } = Input
-
 const { Title } = Typography
 
 export const renderSessionType = (type: number) => {
@@ -196,7 +195,7 @@ export default function TableDetail() {
       title: <div className="text-center">Chọn</div>,
       width: 70,
       fixed: "left",
-      render: (val: any, record: any) => (
+      render: (_: any, record: any) => (
         <div className="text-center">
           <Checkbox
             checked={listOrderAdd.some((item) => item.dish_id === record.dish_id)}
@@ -210,7 +209,7 @@ export default function TableDetail() {
       dataIndex: "index",
       key: "index",
       width: 100,
-      render: (val, record) => record.id
+      render: (_, record) => record.id
     },
     {
       title: "Tên món ăn",
@@ -281,7 +280,7 @@ export default function TableDetail() {
       title: "Số lượng",
       dataIndex: "quantity",
       key: "quantity",
-      render: (_, record, index) => (
+      render: (_, _record, index) => (
         <InputNumber
           min={1}
           defaultValue={1}

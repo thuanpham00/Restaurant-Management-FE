@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { Button, Form, Input, InputNumber, Modal, Select, Spin, Tag, TimePicker } from "antd"
 import dayjs from "dayjs"
@@ -8,12 +9,7 @@ import "react-big-calendar/lib/css/react-big-calendar.css"
 import { toast } from "react-toastify"
 import { employeeShiftsAPI, shiftsAPI } from "src/Apis/Admin"
 import { employeesAPI } from "src/Apis/Admin/employees.api"
-import {
-  CalendarEvent,
-  EmployeeShift,
-  SHIFT_STATUS_COLORS,
-  SHIFT_STATUS_LABELS
-} from "src/Types/shift.type"
+import { CalendarEvent, EmployeeShift, SHIFT_STATUS_COLORS, SHIFT_STATUS_LABELS } from "src/Types/shift.type"
 import { PaginatedResponse } from "src/Types/utils.type"
 import "./ManageShift.css"
 
@@ -23,27 +19,19 @@ const localizer = dayjsLocalizer(dayjs)
 const convertToCalendarEvents = (employeeShifts: EmployeeShift[]): CalendarEvent[] => {
   return employeeShifts.map((es) => {
     const shiftDate = dayjs(es.shift?.shift_date)
-    
+
     // Parse time từ "HH:mm:ss" string
     const parseTime = (timeStr: string) => {
-      const [hours, minutes] = timeStr.split(':')
+      const [hours, minutes] = timeStr.split(":")
       return { hour: parseInt(hours), minute: parseInt(minutes) }
     }
-    
+
     const startTime = es.shift?.start_time ? parseTime(es.shift.start_time) : { hour: 0, minute: 0 }
     const endTime = es.shift?.end_time ? parseTime(es.shift.end_time) : { hour: 23, minute: 59 }
 
-    const start = shiftDate
-      .hour(startTime.hour)
-      .minute(startTime.minute)
-      .second(0)
-      .toDate()
+    const start = shiftDate.hour(startTime.hour).minute(startTime.minute).second(0).toDate()
 
-    const end = shiftDate
-      .hour(endTime.hour)
-      .minute(endTime.minute)
-      .second(0)
-      .toDate()
+    const end = shiftDate.hour(endTime.hour).minute(endTime.minute).second(0).toDate()
 
     return {
       id: es.id,
@@ -129,18 +117,18 @@ export default function ShiftCalendarView() {
 
   const shiftOptions =
     (shiftsData?.data?.data as any)?.data
-    ?.filter((shift: any) => {
-      return !shift.employee_assignments || shift.employee_assignments.length === 0
-    })
-    ?.map((shift: any) => {
-      const startTime = shift.start_time ? shift.start_time.slice(0, 5) : '00:00'
-      const endTime = shift.end_time ? shift.end_time.slice(0, 5) : '23:59'
-      const shiftDate = shift.shift_date ? dayjs(shift.shift_date).format('DD/MM/YYYY') : ''
-      return {
-        label: `${shift.name} (${startTime} - ${endTime}) - ${shiftDate}`,
-        value: shift.id
-      }
-    }) || []
+      ?.filter((shift: any) => {
+        return !shift.employee_assignments || shift.employee_assignments.length === 0
+      })
+      ?.map((shift: any) => {
+        const startTime = shift.start_time ? shift.start_time.slice(0, 5) : "00:00"
+        const endTime = shift.end_time ? shift.end_time.slice(0, 5) : "23:59"
+        const shiftDate = shift.shift_date ? dayjs(shift.shift_date).format("DD/MM/YYYY") : ""
+        return {
+          label: `${shift.name} (${startTime} - ${endTime}) - ${shiftDate}`,
+          value: shift.id
+        }
+      }) || []
 
   // ========== MUTATIONS ==========
   const createShiftMutation = useMutation({
@@ -225,10 +213,10 @@ export default function ShiftCalendarView() {
 
   const handleSelectSlot = (slotInfo: SlotInfo) => {
     setSelectedDate(slotInfo.start)
-    setIsCreatingNewShift(false) 
+    setIsCreatingNewShift(false)
     assignForm.setFieldsValue({
       shift_date: dayjs(slotInfo.start),
-      mode: 'existing'
+      mode: "existing"
     })
     setIsAssignModalOpen(true)
   }
@@ -242,8 +230,8 @@ export default function ShiftCalendarView() {
   }
 
   const handleModeChange = (mode: string) => {
-    setIsCreatingNewShift(mode === 'new')
-    if (mode === 'new') {
+    setIsCreatingNewShift(mode === "new")
+    if (mode === "new") {
       assignForm.setFieldsValue({ shift_id: undefined })
     }
   }
@@ -254,7 +242,7 @@ export default function ShiftCalendarView() {
         let shiftId = values.shift_id
 
         // Nếu chế độ tạo ca mới
-        if (values.mode === 'new') {
+        if (values.mode === "new") {
           // Bước 1: Tạo ca mới
           const shiftData = {
             name: values.shift_name,
@@ -262,10 +250,10 @@ export default function ShiftCalendarView() {
             start_time: dayjs(values.start_time).format("HH:mm:ss"),
             end_time: dayjs(values.end_time).format("HH:mm:ss")
           }
-          
+
           const shiftResult = await createShiftMutation.mutateAsync(shiftData)
           shiftId = shiftResult.data.data.id
-          
+
           toast.success("Tạo ca mới thành công!", { autoClose: 1000 })
         }
 
@@ -402,7 +390,6 @@ export default function ShiftCalendarView() {
         </div>
       ) : (
         <div style={{ height: 700 }}>
-          {/* @ts-ignore - React Big Calendar type issue */}
           <Calendar
             localizer={localizer}
             events={events}
@@ -456,24 +443,13 @@ export default function ShiftCalendarView() {
                 <strong>Ngày:</strong> {dayjs(selectedEvent.resource.shift?.shift_date).format("DD/MM/YYYY")}
               </div>
               <div>
-                <strong>Giờ:</strong>{" "}
-                {selectedEvent.resource.shift?.start_time?.slice(0, 5)} -{" "}
+                <strong>Giờ:</strong> {selectedEvent.resource.shift?.start_time?.slice(0, 5)} -{" "}
                 {selectedEvent.resource.shift?.end_time?.slice(0, 5)}
               </div>
               <div>
                 <strong>Trạng thái:</strong>{" "}
-                <Tag
-                  color={
-                    SHIFT_STATUS_COLORS[
-                      selectedEvent.resource.status as keyof typeof SHIFT_STATUS_COLORS
-                    ]
-                  }
-                >
-                  {
-                    SHIFT_STATUS_LABELS[
-                      selectedEvent.resource.status as keyof typeof SHIFT_STATUS_LABELS
-                    ]
-                  }
+                <Tag color={SHIFT_STATUS_COLORS[selectedEvent.resource.status as keyof typeof SHIFT_STATUS_COLORS]}>
+                  {SHIFT_STATUS_LABELS[selectedEvent.resource.status as keyof typeof SHIFT_STATUS_LABELS]}
                 </Tag>
               </div>
             </div>
@@ -523,7 +499,7 @@ export default function ShiftCalendarView() {
                 </Button>
               )}
 
-              {selectedEvent.resource.check_in && !selectedEvent.resource.check_out&& (
+              {selectedEvent.resource.check_in && !selectedEvent.resource.check_out && (
                 <Button danger icon={<XCircle size={16} />} onClick={handleOpenCheckOutModal}>
                   Check-out
                 </Button>
@@ -549,9 +525,9 @@ export default function ShiftCalendarView() {
         footer={
           <div className="flex justify-end gap-2">
             <Button onClick={handleCloseAssignModal}>Hủy</Button>
-            <Button 
-              type="primary" 
-              onClick={handleSubmitAssign} 
+            <Button
+              type="primary"
+              onClick={handleSubmitAssign}
               loading={assignMutation.isPending || createShiftMutation.isPending}
             >
               {isCreatingNewShift ? "Tạo ca & Phân công" : "Phân công"}
@@ -584,9 +560,9 @@ export default function ShiftCalendarView() {
 
           {/* Existing Shift Mode */}
           {!isCreatingNewShift && (
-            <Form.Item 
-              name="shift_id" 
-              label="Ca làm việc" 
+            <Form.Item
+              name="shift_id"
+              label="Ca làm việc"
               rules={[{ required: !isCreatingNewShift, message: "Vui lòng chọn ca!" }]}
             >
               <Select placeholder="Chọn ca có sẵn" options={shiftOptions} />
@@ -626,7 +602,7 @@ export default function ShiftCalendarView() {
               </div>
             </>
           )}
-          
+
           <Form.Item name="notes" label="Ghi chú">
             <Input.TextArea rows={2} placeholder="Ghi chú thêm..." />
           </Form.Item>
@@ -656,11 +632,7 @@ export default function ShiftCalendarView() {
         }
       >
         <Form form={checkInForm} layout="vertical" className="mt-4">
-          <Form.Item
-            name="time"
-            label="Giờ check-in"
-            rules={[{ required: true, message: "Vui lòng chọn giờ!" }]}
-          >
+          <Form.Item name="time" label="Giờ check-in" rules={[{ required: true, message: "Vui lòng chọn giờ!" }]}>
             <TimePicker className="w-full" format="HH:mm" />
           </Form.Item>
           <Form.Item name="notes" label="Ghi chú">
@@ -684,11 +656,7 @@ export default function ShiftCalendarView() {
         }
       >
         <Form form={checkOutForm} layout="vertical" className="mt-4">
-          <Form.Item
-            name="time"
-            label="Giờ check-out"
-            rules={[{ required: true, message: "Vui lòng chọn giờ!" }]}
-          >
+          <Form.Item name="time" label="Giờ check-out" rules={[{ required: true, message: "Vui lòng chọn giờ!" }]}>
             <TimePicker className="w-full" format="HH:mm" />
           </Form.Item>
           <Form.Item name="overtime_hours" label="Tăng ca (giờ)">
@@ -708,11 +676,7 @@ export default function ShiftCalendarView() {
         footer={
           <div className="flex justify-end gap-2">
             <Button onClick={() => setIsUpdateStatusModalOpen(false)}>Hủy</Button>
-            <Button
-              type="primary"
-              onClick={handleSubmitUpdateStatus}
-              loading={updateStatusMutation.isPending}
-            >
+            <Button type="primary" onClick={handleSubmitUpdateStatus} loading={updateStatusMutation.isPending}>
               Cập nhật
             </Button>
           </div>
@@ -727,11 +691,7 @@ export default function ShiftCalendarView() {
             <Select>
               {Object.entries(SHIFT_STATUS_LABELS).map(([key, label]) => (
                 <Select.Option key={key} value={parseInt(key)}>
-                  <Tag
-                    color={SHIFT_STATUS_COLORS[parseInt(key) as keyof typeof SHIFT_STATUS_COLORS]}
-                  >
-                    {label}
-                  </Tag>
+                  <Tag color={SHIFT_STATUS_COLORS[parseInt(key) as keyof typeof SHIFT_STATUS_COLORS]}>{label}</Tag>
                 </Select.Option>
               ))}
             </Select>

@@ -1,5 +1,21 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { Button, Form, Input, Modal, Select, Spin, Table, Tag, Descriptions, Badge, DatePicker, InputNumber, Switch } from "antd"
+import {
+  Button,
+  Form,
+  Input,
+  Modal,
+  Select,
+  Spin,
+  Table,
+  Tag,
+  Descriptions,
+  Badge,
+  DatePicker,
+  InputNumber,
+  Switch
+} from "antd"
 import { isUndefined, omitBy } from "lodash"
 import { Users, Edit, Trash2, Plus, Filter, RotateCcw } from "lucide-react"
 import { Fragment, useState, useEffect } from "react"
@@ -13,15 +29,14 @@ import { employeesAPI } from "src/Apis/Admin"
 import { path } from "src/Constants/path"
 import { cleanObject } from "src/Helpers/common"
 import useQueryParams from "src/Hook/useQueryParams"
-import { queryParamConfigEmployee } from "src/Types/employee.type"
 import { PaginatedResponse } from "src/Types/utils.type"
-import { Employee, EmployeeCreateInput } from "src/Types/employee.type"
+import { Employee, EmployeeCreateInput, queryParamConfigEmployee } from "src/Types/employee.type"
 
 const { Option } = Select
 
 const CONTRACT_TYPES = {
   0: { label: "Full-time", color: "green" },
-  1: { label: "Part-time", color: "blue" },
+  1: { label: "Part-time", color: "blue" }
 }
 
 const GENDER_OPTIONS = [
@@ -121,8 +136,7 @@ export default function ManageEmployee() {
   })
 
   const toggleActiveMutation = useMutation({
-    mutationFn: ({ id, is_active }: { id: string; is_active: boolean }) => 
-      employeesAPI.toggleActive(id, is_active),
+    mutationFn: ({ id, is_active }: { id: string; is_active: boolean }) => employeesAPI.toggleActive(id, is_active),
     onSuccess: () => {
       toast.success("Cập nhật trạng thái thành công!", { autoClose: 1500 })
       queryClient.invalidateQueries({ queryKey: ["listEmployees"] })
@@ -159,7 +173,7 @@ export default function ManageEmployee() {
     setIsDetailModalOpen(true)
     setIsEditMode(false)
     setHasChanges(false)
-    
+
     const values = {
       full_name: record.full_name,
       phone: record.phone,
@@ -316,32 +330,21 @@ export default function ManageEmployee() {
       key: "contract_type",
       render: (type: number) => {
         const contract = CONTRACT_TYPES[type as keyof typeof CONTRACT_TYPES]
-        return (
-          <Tag color={contract.color}>
-            {contract.label}
-          </Tag>
-        )
+        return <Tag color={contract.color}>{contract.label}</Tag>
       }
     },
     {
       title: "Lương cơ bản",
       dataIndex: "base_salary",
       key: "base_salary",
-      render: (salary: string) => (
-        <span className="font-medium">
-          {parseFloat(salary).toLocaleString("vi-VN")} đ
-        </span>
-      )
+      render: (salary: string) => <span className="font-medium">{parseFloat(salary).toLocaleString("vi-VN")} đ</span>
     },
     {
       title: "Trạng thái",
       dataIndex: "is_active",
       key: "is_active",
       render: (is_active: boolean) => (
-        <Badge 
-          status={is_active ? "success" : "error"} 
-          text={is_active ? "Hoạt động" : "Ngừng hoạt động"} 
-        />
+        <Badge status={is_active ? "success" : "error"} text={is_active ? "Hoạt động" : "Ngừng hoạt động"} />
       )
     },
     {
@@ -350,13 +353,13 @@ export default function ManageEmployee() {
       width: 200,
       render: (_: any, record: Employee) => (
         <div className="flex gap-2">
-          <Button 
-            size="small" 
-            type="primary" 
-            icon={<Edit size={16} />} 
+          <Button
+            size="small"
+            type="primary"
+            icon={<Edit size={16} />}
             onClick={(e) => {
-              e.stopPropagation() 
-              handleEdit(record) 
+              e.stopPropagation()
+              handleEdit(record)
             }}
           >
             Sửa
@@ -386,11 +389,7 @@ export default function ManageEmployee() {
 
       <div className="flex justify-between items-center mb-4">
         <h1 className="text-2xl font-bold text-gray-800">Nhân viên</h1>
-        <Button 
-          type="primary" 
-          icon={<Plus size={16} />}
-          onClick={() => setIsCreateModalOpen(true)}
-        >
+        <Button type="primary" icon={<Plus size={16} />} onClick={() => setIsCreateModalOpen(true)}>
           Thêm nhân viên
         </Button>
       </div>
@@ -430,13 +429,15 @@ export default function ManageEmployee() {
           </Form.Item>
 
           <Form.Item className="mb-0">
-            <Button type="primary" icon={<Filter size={16} />}  htmlType="submit">
+            <Button type="primary" icon={<Filter size={16} />} htmlType="submit">
               Lọc
             </Button>
           </Form.Item>
 
           <Form.Item className="mb-0">
-            <Button icon={<RotateCcw size={16} />} onClick={resetFilterForm}>Reset</Button>
+            <Button icon={<RotateCcw size={16} />} onClick={resetFilterForm}>
+              Reset
+            </Button>
           </Form.Item>
         </Form>
       </div>
@@ -466,8 +467,8 @@ export default function ManageEmployee() {
                 showTotal: (total) => `Tổng ${total} nhân viên`
               }}
               scroll={{
-                y: "calc(100vh - 500px)", 
-                x: true 
+                y: "calc(100vh - 500px)",
+                x: true
               }}
             />
           </div>
@@ -482,11 +483,7 @@ export default function ManageEmployee() {
         footer={
           <div className="flex justify-end gap-2">
             <Button onClick={handleCloseCreateModal}>Hủy</Button>
-            <Button
-              type="primary"
-              onClick={handleCreate}
-              loading={createMutation.isPending}
-            >
+            <Button type="primary" onClick={handleCreate} loading={createMutation.isPending}>
               Tạo mới
             </Button>
           </div>
@@ -619,11 +616,7 @@ export default function ManageEmployee() {
             </Form.Item>
           </div>
 
-          <Form.Item
-            name="role_id"
-            label="Vai trò"
-            rules={[{ required: true, message: "Vui lòng chọn vai trò!" }]}
-          >
+          <Form.Item name="role_id" label="Vai trò" rules={[{ required: true, message: "Vui lòng chọn vai trò!" }]}>
             <Input placeholder="Nhập role ID" />
           </Form.Item>
 
@@ -703,15 +696,14 @@ export default function ManageEmployee() {
                 </Tag>
               </Descriptions.Item>
               <Descriptions.Item label="Lương cơ bản">
-                <span className="font-medium">
-                  {parseFloat(employeeDetail.base_salary).toLocaleString("vi-VN")} đ
-                </span>
+                <span className="font-medium">{parseFloat(employeeDetail.base_salary).toLocaleString("vi-VN")} đ</span>
               </Descriptions.Item>
               <Descriptions.Item label="Ngày tuyển dụng">
-                {employeeDetail.hire_date 
-                  ? dayjs(employeeDetail.hire_date).format("DD/MM/YYYY")
-                  : <i className="text-gray-400">Chưa cập nhật</i>
-                }
+                {employeeDetail.hire_date ? (
+                  dayjs(employeeDetail.hire_date).format("DD/MM/YYYY")
+                ) : (
+                  <i className="text-gray-400">Chưa cập nhật</i>
+                )}
               </Descriptions.Item>
               <Descriptions.Item label="Trạng thái">
                 <Badge

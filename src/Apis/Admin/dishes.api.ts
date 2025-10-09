@@ -1,10 +1,11 @@
 import Http from "src/Helpers/http"
+import { Dish } from "src/Types/dish.type"
 import { queryParamConfigDish } from "src/Types/queryParams.type"
-import { Dishes, PaginatedResponse, SuccessResponse } from "src/Types/utils.type"
+import { PaginatedResponse, SuccessResponse } from "src/Types/utils.type"
 
 export const dishesAPI = {
   getList: (params: queryParamConfigDish, signal: AbortSignal) => {
-    return Http.get<SuccessResponse<PaginatedResponse<Dishes>>>(`/api/auth/dishes`, {
+    return Http.get<SuccessResponse<PaginatedResponse<Dish>>>(`/api/auth/dishes`, {
       params,
       signal
     })

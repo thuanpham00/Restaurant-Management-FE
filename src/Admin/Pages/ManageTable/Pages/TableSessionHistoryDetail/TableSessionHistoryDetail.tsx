@@ -3,7 +3,7 @@ import { Descriptions, Table, Tag, Spin, Empty, Row, Col, Card, Image } from "an
 import { ColumnsType } from "antd/es/table"
 import { useLocation } from "react-router-dom"
 import { useQuery } from "@tanstack/react-query"
-import { HistoryTableSessionDetail } from "src/Types/utils.type"
+import { HistoryTableSessionDetail } from "src/Types/tableSession.type"
 import { tableSessionAPI } from "src/Apis/Admin"
 import { Helmet } from "react-helmet-async"
 import NavigateBack from "src/Admin/Components/NavigateBack"

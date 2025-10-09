@@ -26,7 +26,7 @@ import { menusAPI } from "src/Apis"
 import { assets } from "src/Assets/assets"
 import { path } from "src/Constants/path"
 import { isError400 } from "src/Helpers/utils"
-import { AddDishToMenu, Menus } from "src/Types/utils.type"
+import { AddDishToMenu, Menus } from "src/Types/menu.type"
 
 type DishMenu = {
   id: string

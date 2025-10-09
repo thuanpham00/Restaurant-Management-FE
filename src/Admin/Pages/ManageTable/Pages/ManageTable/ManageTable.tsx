@@ -5,7 +5,7 @@ import isUndefined from "lodash/isUndefined"
 import useQueryParams from "src/Hook/useQueryParams"
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { diningTableAPI, tableSessionAPI } from "src/Apis/Admin"
-import { ErrorResponse, PaginatedResponse, TableSession } from "src/Types/utils.type"
+import { ErrorResponse, PaginatedResponse } from "src/Types/utils.type"
 import { Helmet } from "react-helmet-async"
 import "antd/dist/reset.css"
 import { createSearchParams, useNavigate, useSearchParams } from "react-router-dom"
@@ -19,6 +19,7 @@ import { path } from "src/Constants/path"
 import { omit } from "lodash"
 import NavigateBack from "src/Admin/Components/NavigateBack"
 import TableSessionItem from "../../Components/TableSessionItem"
+import { TableSession } from "src/Types/tableSession.type"
 
 export default function ManageTable() {
   const navigate = useNavigate()

@@ -30,8 +30,8 @@ import { path } from "src/Constants/path"
 import { cleanObject } from "src/Helpers/common"
 import { isError400 } from "src/Helpers/utils"
 import useQueryParams from "src/Hook/useQueryParams"
+import { Dish } from "src/Types/dish.type"
 import { queryParamConfigCategoryDish, queryParamConfigDish } from "src/Types/queryParams.type"
-import { Dishes } from "src/Types/utils.type"
 
 export default function ManageDish() {
   const navigate = useNavigate()
@@ -82,7 +82,7 @@ export default function ManageDish() {
 
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingId, setEditingId] = useState<string | null | boolean>(null)
-  const [form] = Form.useForm<Dishes>()
+  const [form] = Form.useForm<Dish>()
 
   const [file, setFile] = useState<File | null>(null)
   const avatarWatch = Form.useWatch("image", form)
@@ -103,7 +103,7 @@ export default function ManageDish() {
 
   // Update API
   const updateMutation = useMutation({
-    mutationFn: (values: Partial<Dishes>) => {
+    mutationFn: (values: Partial<Dish>) => {
       return dishesAPI.update(editingId as string, values)
     },
     onSuccess: () => {
@@ -463,7 +463,7 @@ export default function ManageDish() {
             <div style={{ minHeight: 100, width: 300, marginTop: 10 }} />
           </Spin>
         </div>
-      ) : (listDish as Dishes[])?.length === 0 ? (
+      ) : (listDish as Dish[])?.length === 0 ? (
         <Empty description="Không có món ăn hợp lệ" className="mt-16" />
       ) : (
         <Fragment>

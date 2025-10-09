@@ -26,9 +26,10 @@ import { path } from "src/Constants/path"
 import { cleanObject } from "src/Helpers/common"
 import useQueryParams from "src/Hook/useQueryParams"
 import { queryParamConfigMenu } from "src/Types/queryParams.type"
-import { Menus, PaginatedResponse } from "src/Types/utils.type"
+import { PaginatedResponse } from "src/Types/utils.type"
 import { useState } from "react"
 import { toast } from "react-toastify"
+import { Menus } from "src/Types/menu.type"
 
 export default function ManageMenu() {
   const navigate = useNavigate()

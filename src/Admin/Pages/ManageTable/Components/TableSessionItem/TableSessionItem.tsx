@@ -3,7 +3,7 @@ import { Link } from "react-router-dom"
 import { assets } from "src/Assets/assets"
 import { path } from "src/Constants/path"
 import { TableSessionStatus, TableSessionType } from "src/Types/product.type"
-import { TableSession } from "src/Types/utils.type"
+import { TableSession } from "src/Types/tableSession.type"
 
 export default function TableSessionItem({ table, index }: { table: TableSession; index: number }) {
   const getStatusTag = (table: TableSession) => {

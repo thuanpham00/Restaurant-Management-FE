@@ -5,7 +5,7 @@ import { History, NotebookTabs } from "lucide-react"
 import { useState } from "react"
 import { Link } from "react-router-dom"
 import { tableSessionAPI } from "src/Apis/Admin"
-import { HistoryTableSession as HistoryTableSessionType } from "src/Types/utils.type"
+import { HistoryTableSession as HistoryTableSessionType } from "src/Types/tableSession.type"
 import { renderSessionStatus, renderSessionType } from "../../Pages/TableDetail/TableDetail"
 
 export default function HistoryTableSession({ idDiningTable }: { idDiningTable: string }) {

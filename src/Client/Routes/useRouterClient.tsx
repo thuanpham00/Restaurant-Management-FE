@@ -1,42 +1,42 @@
 // src/Router/useRouterClient.tsx
-import { Navigate, Outlet, useLocation, useRoutes, useSearchParams } from "react-router-dom";
-import MainLayout from "../Layout/MainLayout";
-import MainLayoutAuth from "../Layout/MainLayoutAuth";
-import { path } from "../../Constants/path";
-import { lazy, Suspense } from "react";
-import { rolesForApi } from "src/Helpers/role_permission";
-import { useAppStore } from "src/StateGlobal/zustand";
+import { Navigate, Outlet, useLocation, useRoutes, useSearchParams } from "react-router-dom"
+import MainLayout from "../Layout/MainLayout"
+import MainLayoutAuth from "../Layout/MainLayoutAuth"
+import { path } from "../../Constants/path"
+import { lazy, Suspense } from "react"
+import { rolesForApi } from "src/Helpers/role_permission"
+import { useAppStore } from "src/StateGlobal/zustand"
 
 // Lazy load các component
-const Home = lazy(() => import("../Pages/Home"));
-const Menu = lazy(() => import("../Pages/Menu"));
+const Home = lazy(() => import("../Pages/Home"))
+const Menu = lazy(() => import("../Pages/Menu"))
 // const DetailMenu = lazy(() => import("../Pages/DetailMenu"));
-const Login = lazy(() => import("../Pages/Login"));
-const Register = lazy(() => import("../Pages/Register"));
+const Login = lazy(() => import("../Pages/Login"))
+const Register = lazy(() => import("../Pages/Register"))
 
 const ProjectRouter = () => {
-  const { isAuthenticated } = useAppStore();
-  const { pathname } = useLocation();
-  return isAuthenticated ? <Outlet /> : <Navigate to={`${path.Login}?redirect_url=${encodeURIComponent(pathname)}`} />;
-};
+  const { isAuthenticated } = useAppStore()
+  const { pathname } = useLocation()
+  return isAuthenticated ? <Outlet /> : <Navigate to={`${path.Login}?redirect_url=${encodeURIComponent(pathname)}`} />
+}
 
 const RejectRouter = () => {
-  const { isAuthenticated } = useAppStore();
-  const [searchParams] = useSearchParams();
+  const { isAuthenticated } = useAppStore()
+  const [searchParams] = useSearchParams()
   if (!isAuthenticated) {
-    return <Outlet />;
+    return <Outlet />
   }
-  const navigate = searchParams.get("redirect_url") || path.Home; // path.Home giờ là "/home"
-  return <Navigate to={navigate} />;
-};
+  const navigate = searchParams.get("redirect_url") || path.Home // path.Home giờ là "/home"
+  return <Navigate to={navigate} />
+}
 
 const BlockAdminForClient = () => {
-  const { role } = useAppStore();
+  const { role } = useAppStore()
   if (role === rolesForApi.ADMIN) {
-    return <Navigate to={path.AdminNotFound} replace />;
+    return <Navigate to={path.AdminNotFound} replace />
   }
-  return <Outlet />;
-};
+  return <Outlet />
+}
 
 export default function useRouterClient() {
   const routerElement = useRoutes([
@@ -54,7 +54,7 @@ export default function useRouterClient() {
                 <Suspense>
                   <Home />
                 </Suspense>
-              ),
+              )
             },
             {
               path: "home", // Thêm route "/home"
@@ -62,7 +62,7 @@ export default function useRouterClient() {
                 <Suspense>
                   <Home />
                 </Suspense>
-              ),
+              )
             },
             {
               path: "menu",
@@ -70,8 +70,8 @@ export default function useRouterClient() {
                 <Suspense>
                   <Menu />
                 </Suspense>
-              ),
-            },
+              )
+            }
             // {
             //   path: "product/:id",
             //   element: (
@@ -80,7 +80,7 @@ export default function useRouterClient() {
             //     </Suspense>
             //   ),
             // },
-          ],
+          ]
         },
         {
           path: "",
@@ -89,9 +89,9 @@ export default function useRouterClient() {
             {
               path: "",
               element: <MainLayoutAuth />,
-              children: [], // Các route yêu cầu xác thực
-            },
-          ],
+              children: [] // Các route yêu cầu xác thực
+            }
+          ]
         },
         {
           path: "",
@@ -103,7 +103,7 @@ export default function useRouterClient() {
                 <Suspense>
                   <Login />
                 </Suspense>
-              ),
+              )
             },
             {
               path: "register",
@@ -111,12 +111,12 @@ export default function useRouterClient() {
                 <Suspense>
                   <Register />
                 </Suspense>
-              ),
-            },
-          ],
-        },
-      ],
-    },
-  ]);
-  return routerElement;
+              )
+            }
+          ]
+        }
+      ]
+    }
+  ])
+  return routerElement
 }
