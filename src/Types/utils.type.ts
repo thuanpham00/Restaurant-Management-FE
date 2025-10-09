@@ -6,6 +6,16 @@ export type SuccessResponse<Data> = {
   data: Data
 }
 
+export type RegisterResponse = {
+  email: string;
+  expires_at: string;
+};
+
+export type GoogleAuthResponse = {
+  url: string;
+  provider: "google";
+};
+
 export type ErrorResponse<Data> = {
   status: string
   message: string
@@ -24,6 +34,60 @@ export type AuthResponse = {
   expires_in: number
 }
 
+export type Statistics = {
+  restaurants: number
+  new_dishes: number
+  years_experience: number
+}
+
+export type Chef = {
+  id: string
+  name: string
+  avatar: string | null
+}
+
+export interface Dish {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  image: string | null;
+  is_active: boolean;
+  reviews_avg_rating: number | null;
+  category?: {
+    id: string;
+    name: string;
+  } | null;
+}
+
+export interface Category {
+  id: string;
+  name: string;
+  description: string;
+  dishes: Dish[];
+}
+
+export type Promotion = {
+  id: string;
+  code: string;
+  description: string;
+  discount_percent: number;
+  start_date: string;
+  end_date: string;
+  usage_limit: number;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface SpecialMenu {
+  id: string;
+  name: string;
+  description: string;
+  is_active: boolean;
+  dishes: Dish[];
+}
+
 export type DiningTable = {
   table_number: number
   capacity: number
@@ -34,6 +98,7 @@ export type DiningTable = {
 }
 
 export type CategoryDishes = {
+  [x: string]: any
   id: string
   name: string
   desc: string
@@ -60,6 +125,7 @@ export type Dishes = {
     created_at: string
     updated_at: string
   }
+  reviews_avg_rating?: number;
 }
 
 export type Menus = {

@@ -317,6 +317,35 @@ export const schemaRole = schemaAuth.pick(["updated_at", "created_at"]).shape({
   description: yup.string().required("Mô tả vai trò bắt buộc!")
 })
 
+export const schemaRegister = yup
+  .object({
+    name: yup
+      .string()
+      .required("Tên bắt buộc!")
+      .min(2, "Tên phải có ít nhất 2 ký tự!")
+      .matches(/^[^\d]+$/, "Tên không được chứa số!"),
+    email: yup
+      .string()
+      .required("Email bắt buộc!")
+      .email("Email không đúng định dạng!")
+      .min(5, "Độ dài 5-160 ký tự!")
+      .max(160, "Độ dài 5-160 ký tự!"),
+    password: yup
+      .string()
+      .required("Mật khẩu bắt buộc!")
+      .min(6, "Độ dài 6-50 ký tự!")
+      .max(50, "Độ dài 6-50 ký tự!"),
+      password_confirmation: yup
+      .string()
+      .required("Xác nhận mật khẩu bắt buộc!")
+      .min(6, "Độ dài 6-50 ký tự!")
+      .max(50, "Độ dài 6-50 ký tự!")
+      .oneOf([yup.ref("password")], "Nhập lại mật khẩu không khớp!"),
+  })
+  .required()
+
+export type SchemaRegisterType = yup.InferType<typeof schemaRegister>
+
 export type SchemaAuthType = yup.InferType<typeof schemaAuth>
 
 export type SchemaProductType = SchemaAuthType & yup.InferType<typeof schemaProduct>

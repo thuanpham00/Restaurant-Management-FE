@@ -1,39 +1,57 @@
-import React from 'react';
-import Header from "src/Client/Components/HeaderClient"
-import Footer from "src/Client/Components/FooterClient"
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import Header from "src/Client/Components/HeaderClient";
+import Footer from "src/Client/Components/FooterClient";
 import { assets } from 'src/Assets/assets';
+import { clientAPI} from 'src/Apis/Client/menu.api';
+import {Dish, Category, SpecialMenu} from "src/Types/utils.type";
+
 // MenuItem Component
 interface MenuItemProps {
-  item: {
-    id: number;
-    name: string;
-    description: string;
-    price: number;
-    image: string;
-  };
+  item: Dish;
 }
 
 const MenuItem: React.FC<MenuItemProps> = ({ item }) => {
+  const navigate = useNavigate();
   return (
-    <div className="min-w-[300px] max-w-[350px] bg-gray-800 rounded-lg overflow-hidden transition-transform duration-300 hover:-translate-y-2 flex-shrink-0">
-      <div className="relative h-48 overflow-hidden">
+    <div 
+      className="min-w-[280px] max-w-[320px] bg-gray-800 rounded-xl shadow-lg overflow-hidden transition-transform duration-300 hover:-translate-y-2 cursor-pointer"
+      onClick={() => navigate(`/dish/${item.id}`)}
+    >
+      <div className="relative h-52 overflow-hidden">
         <img
-          src={item.image}
+          src={assets.rectangles.Breakfast_Bowl}
           alt={item.name}
-          className="w-full h-full object-cover transition-transform duration-500 hover:scale-110"
+          className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
         />
+        {item.reviews_avg_rating && item.reviews_avg_rating >= 4 && (
+          <span className="absolute top-3 right-3 bg-orange-500 text-white text-xs font-semibold px-3 py-1 rounded-full">
+            Bán chạy
+          </span>
+        )}
       </div>
-      <div className="p-4">
-        <h3 className="text-xl font-bold mb-2">{item.name}</h3>
-        <p className="text-gray-400 text-sm mb-3 h-12 overflow-hidden">
+      <div className="p-5">
+        <h3 className="text-lg font-semibold text-white mb-2 truncate">{item.name}</h3>
+        <p className="text-gray-400 text-sm mb-3 line-clamp-2">
           {item.description}
         </p>
         <div className="flex justify-between items-center">
-          <span className="text-2xl font-bold text-orange-400">
+          <span className="text-xl font-bold text-orange-400">
             ${item.price}
           </span>
-          <button className="bg-orange-500 hover:bg-orange-600 text-white py-2 px-4 rounded-md transition-colors">
-            Order Now
+          <button 
+            className={`py-2 px-4 rounded-lg text-sm font-medium transition-colors ${
+              item.is_active ? 'bg-orange-500 hover:bg-orange-600 text-white' : 'bg-gray-600 text-gray-400 cursor-not-allowed'
+            }`}
+            disabled={!item.is_active}
+            onClick={(e) => {
+              e.stopPropagation();
+              if (item.is_active) {
+                alert(`Đã thêm ${item.name} vào giỏ hàng`);
+              }
+            }}
+          >
+            {item.is_active ? 'Order Now' : 'Hết hàng'}
           </button>
         </div>
       </div>
@@ -44,157 +62,220 @@ const MenuItem: React.FC<MenuItemProps> = ({ item }) => {
 // MenuSection Component
 interface MenuSectionProps {
   title: string;
-  items: {
-    id: number;
-    name: string;
-    description: string;
-    price: number;
-    image: string;
-  }[];
+  items: Dish[];
 }
 
 const MenuSection: React.FC<MenuSectionProps> = ({ title, items }) => {
   return (
-    <section className="py-8">
-      <h2 className="text-3xl font-bold text-white mb-6">{title}</h2>
-      <div className="flex flex-wrap gap-8">
-        {items.map((item) => (
-          <MenuItem key={item.id} item={item} />
-        ))}
+    <section className="py-10">
+      <h2 className="text-3xl font-bold text-white mb-6 text-center">{title}</h2>
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+        {items.length > 0 ? (
+          items.map((item) => <MenuItem key={item.id} item={item} />)
+        ) : (
+          <p className="text-gray-400 text-center col-span-full">Không có món ăn nào.</p>
+        )}
       </div>
     </section>
   );
 };
 
-// Banner Component
-const Banner = () => {
+// Menu Component
+const Menu: React.FC = () => {
+  const navigate = useNavigate();
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [specialMenu, setSpecialMenu] = useState<SpecialMenu | null>(null);
+  const [search, setSearch] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [priceSort, setPriceSort] = useState<'asc' | 'desc' | null>(null);
+  const [status, setStatus] = useState<'active' | 'inactive' | null>(null);
+  const [filteredDishes, setFilteredDishes] = useState<Dish[]>([]);
+  const [activeTab, setActiveTab] = useState<string | 'special'>('special');
+  const [error, setError] = useState<string | null>(null);
+
+  // Lấy danh mục và menu đặc biệt khi component mount
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await clientAPI.getCategories();
+        if (response.data.status === 'success') {
+          setCategories(response.data.data);
+          setActiveTab(response.data.data.length > 0 ? response.data.data[0].id : 'special');
+        } else {
+          setError(response.data.message);
+        }
+      } catch (error) {
+        setError('Không thể tải danh mục món ăn');
+        console.error('Error fetching categories:', error);
+      }
+    };
+
+    const fetchSpecialMenu = async () => {
+      try {
+        const response = await clientAPI.getSpecialMenu();
+        if (response.data.status === 'success') {
+          setSpecialMenu(response.data.data);
+          if (response.data.data) {
+            setActiveTab('special'); // Ưu tiên hiển thị menu đặc biệt nếu có
+          }
+        } else {
+          setError(response.data.message);
+        }
+      } catch (error) {
+        setError('Không thể tải menu đặc biệt');
+        console.error('Error fetching special menu:', error);
+      }
+    };
+
+    fetchCategories();
+    fetchSpecialMenu();
+  }, []);
+
+  // Tìm kiếm và lọc món ăn
+  useEffect(() => {
+    const fetchFilteredDishes = async () => {
+      try {
+        const response = await clientAPI.searchFilter({
+          search: search || undefined,
+          category_id: selectedCategory || undefined,
+          price_sort: priceSort || undefined,
+          status: status || undefined,
+        });
+        if (response.data.status === 'success') {
+          setFilteredDishes(response.data.data);
+        } else {
+          setError(response.data.message);
+        }
+      } catch (error) {
+        setError('Không thể tìm kiếm hoặc lọc món ăn');
+        console.error('Error fetching filtered dishes:', error);
+      }
+    };
+
+    fetchFilteredDishes();
+  }, [search, selectedCategory, priceSort, status]);
+
   return (
-    <div className="relative my-16 overflow-hidden rounded-lg">
-      <div className="absolute inset-0 bg-gradient-to-r from-gray-900/90 to-gray-900/50">
-        <img
-          src="https://images.unsplash.com/photo-1543353071-10c8ba85a904?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80"
-          alt="Food background"
-          className="w-full h-full object-cover mix-blend-overlay"
-        />
-      </div>
-      <div className="relative py-20 px-8 md:px-16 flex flex-col items-center text-center">
-        <h2 className="text-4xl md:text-5xl font-serif mb-3">
-          Food Is Not Just
-        </h2>
-        <h2 className="text-4xl md:text-5xl font-serif mb-6">Eating Energy</h2>
-        <p className="text-gray-300 mb-8">It's an experience.</p>
-        <button className="bg-orange-500 hover:bg-orange-600 text-white py-2 px-6 rounded-md transition-colors">
-          Order Now
+    <div className="bg-gray-900 text-white min-h-screen">
+      <Header />
+      <div className="container mx-auto px-4 py-12">
+        {/* Tiêu đề trang */}
+        <div className="text-center mb-12">
+          <h1 className="text-4xl md:text-5xl font-serif font-bold text-white mb-4">   
+            Explore Menu
+          </h1>
+          <p className="text-gray-300 text-lg max-w-2xl mx-auto">
+            Experience unique dishes prepared with passion and creativity, bringing you wonderful emotions.
+          </p>
+        </div>
+
+        {/* Hiển thị lỗi nếu có */}
+        {error && (
+          <div className="bg-red-600/80 text-white p-4 rounded-lg mb-8 max-w-2xl mx-auto text-center shadow-md">
+            {error}
+          </div>
+        )}
+
+        {/* Nút quay lại */}
+        <button
+          className="mb-8 bg-gray-700 hover:bg-gray-600 text-white py-2 px-6 rounded-lg transition-colors shadow-md"
+          onClick={() => navigate(-1)}
+        >
+          Back
         </button>
+
+        {/* Thanh tìm kiếm và bộ lọc */}
+        <div className="mb-10 grid grid-cols-1 md:grid-cols-4 gap-4">
+          <input
+            type="text"
+            placeholder="Tìm kiếm món ăn..."
+            className="bg-gray-800 text-white p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+          <select
+            className="bg-gray-800 text-white p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+            value={selectedCategory || ''}
+            onChange={(e) => setSelectedCategory(e.target.value || null)}
+          >
+            <option value="">Tất cả danh mục</option>
+            {categories.map((category) => (
+              <option key={category.id} value={category.id}>
+                {category.name}
+              </option>
+            ))}
+          </select>
+          <select
+            className="bg-gray-800 text-white p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+            value={priceSort || ''}
+            onChange={(e) => setPriceSort((e.target.value as 'asc' | 'desc') || null)}
+          >
+            <option value="">Sắp xếp giá</option>
+            <option value="asc">Thấp → Cao</option>
+            <option value="desc">Cao → Thấp</option>
+          </select>
+          <select
+            className="bg-gray-800 text-white p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+            value={status || ''}
+            onChange={(e) => setStatus((e.target.value as 'active' | 'inactive') || null)}
+          >
+            <option value="">Tất cả trạng thái</option>
+            <option value="active">Đang bán</option>
+            <option value="inactive">Hết hàng</option>
+          </select>
+        </div>
+
+        {/* Kết quả tìm kiếm/lọc */}
+        {search || selectedCategory || priceSort || status ? (
+          <MenuSection title="Kết quả tìm kiếm" items={filteredDishes} />
+        ) : (
+          <>
+            {/* Tab danh mục và menu đặc biệt */}
+            <div className="flex gap-3 mb-8 overflow-x-auto pb-2">
+              {specialMenu && (
+                <button
+                  className={`flex items-center gap-2 py-2 px-5 rounded-lg transition-colors border ${
+                    activeTab === 'special'
+                      ? 'bg-orange-500 text-white border-orange-500'
+                      : 'bg-gray-700 text-gray-200 border-gray-600 hover:bg-gray-600'
+                  }`}
+                  onClick={() => setActiveTab('special')}
+                >
+                  <span className="text-yellow-300">✨</span>
+                  {specialMenu.name}
+                </button>
+              )}
+              {categories.map((category) => (
+                <button
+                  key={category.id}
+                  className={`py-2 px-5 rounded-lg transition-colors border ${
+                    activeTab === category.id
+                      ? 'bg-orange-500 text-white border-orange-500'
+                      : 'bg-gray-700 text-gray-200 border-gray-600 hover:bg-gray-600'
+                  }`}
+                  onClick={() => setActiveTab(category.id)}
+                >
+                  {category.name}
+                </button>
+              ))}
+            </div>
+
+            {/* Hiển thị món theo tab */}
+            {activeTab === 'special' && specialMenu ? (
+              <MenuSection title={specialMenu.name} items={specialMenu.dishes} />
+            ) : (
+              categories
+                .filter((category) => category.id === activeTab)
+                .map((category) => (
+                  <MenuSection key={category.id} title={category.name} items={category.dishes} />
+                ))
+            )}
+          </>
+        )}
       </div>
+      <Footer />
     </div>
   );
 };
 
-// App Component
-export function App() {
-  const menuData = {
-    breakfast: [
-      {
-        id: 1,
-        name: 'Egg Frittata Muffins',
-        description: 'Fluffy egg muffins with spinach, cherry tomatoes, and feta cheese',
-        price: 12,
-        image: assets.rectangles.egg,
-      },
-      {
-        id: 2,
-        name: 'Breakfast Bowl',
-        description: 'Steel-cut oats topped with fresh berries, banana, and honey drizzle',
-        price: 10,
-        image: assets.rectangles.Breakfast_Bowl,
-      },
-      {
-        id: 3,
-        name: 'Breakfast Sandwiches',
-        description: 'Fresh croissant filled with scrambled eggs, avocado, and bacon',
-        price: 14,
-        image: assets.rectangles.Breakfast_Sandwich,
-      },
-    ],
-    lunch: [
-      {
-        id: 4,
-        name: 'Crispy Chicken Burger',
-        description: 'Buttermilk fried chicken with special sauce and pickles on a brioche bun',
-        price: 16,
-        image: assets.rectangles.Burger,
-      },
-      {
-        id: 5,
-        name: 'Schezwan Noodles',
-        description: 'Hand-pulled noodles with house chili oil sauce and seasonal vegetables',
-        price: 14,
-        image: assets.rectangles.Noodles,
-      },
-
-    ],
-    dinner: [
-      {
-        id: 7,
-        name: 'Grilled Salmon',
-        description: 'Wild-caught salmon with lemon herb butter, served with roasted vegetables',
-        price: 24,
-        image: assets.rectangles.salmon,
-      },
-      {
-        id: 8,
-        name: 'Ribeye Steak',
-        description: 'Prime cut ribeye with truffle butter and garlic mashed potatoes',
-        price: 32,
-        image: assets.rectangles.steak,
-      },
-      {
-        id: 9,
-        name: 'Mushroom Risotto',
-        description: 'Creamy arborio rice with wild mushrooms, parmesan, and fresh herbs',
-        price: 18,
-        image: assets.rectangles.mushroom,
-      },
-    ],
-    starters: [
-      {
-        id: 10,
-        name: 'Truffle Fries',
-        description: 'Hand-cut fries tossed with truffle oil, parmesan, and fresh herbs',
-        price: 9,
-        image: assets.rectangles.fries,
-      },
-      {
-        id: 11,
-        name: 'Avocado Tartare',
-        description: 'Fresh avocado with citrus, chili flakes, and house-made tortilla chips',
-        price: 11,
-        image: assets.rectangles.avocado,
-      },
-      {
-        id: 12,
-        name: 'Crispy Calamari',
-        description: 'Lightly fried calamari served with lemon aioli and marinara sauce',
-        price: 13,
-        image: assets.rectangles.crispy,
-      },
-    ],
-  };
-
-  return (
-    <div className="bg-gray-900 text-white min-h-screen">
-        <Header/>
-      <div className="container mx-auto px-4 py-8">
-        <MenuSection title="Breakfast" items={menuData.breakfast} />
-        <Banner />
-        <MenuSection title="Lunch" items={menuData.lunch} />
-        <MenuSection title="Dinner" items={menuData.dinner} />
-        <MenuSection title="Starters" items={menuData.starters} />
-      </div>
-      <Footer/>
-    </div>
-  );
-}
-
-export default App;
+export default Menu;
