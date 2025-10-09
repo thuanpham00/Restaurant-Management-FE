@@ -24,7 +24,7 @@
 
 /* Tất cả menu items ở root level (không phải submenu) */
 .menu-sidebar .ant-menu-root > .ant-menu-item {
-  padding-inline: 26px !important;
+  padding-inline: 24px !important;
   color: white;
 }
 
@@ -37,7 +37,7 @@
 /* Active/Selected state cho tất cả root level items */
 .menu-sidebar .ant-menu-root > .ant-menu-item.ant-menu-item-selected {
   background-color: orange !important;
-  padding-inline: 26px !important;
+  padding-inline: 24px !important;
   color: white !important;
 }
 
