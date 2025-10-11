@@ -35,6 +35,7 @@ export const path = {
   AdminUsers: "/admin/users",
   AdminRoles: "/admin/roles",
   AdminPermissions: "/admin/permissions",
+  AdminPermissionMatrix: "/admin/permission-matrix",
   AdminNotFound: "/admin/not-found",
 
   AdminProfile: "/admin/profile"

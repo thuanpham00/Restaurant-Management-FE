@@ -22,6 +22,8 @@ const ManageShift = lazy(() => import("../Pages/ManageShift"))
 const ManagePayroll = lazy(() => import("../Pages/ManagePayroll"))
 const PayrollDetail = lazy(() => import("../Pages/ManagePayroll/PayrollDetail"))
 const ManageReservation = lazy(() => import("../Pages/ManageTable/Pages/ManageReservation"))
+const ManageRoles = lazy(() => import("../Pages/ManageRoles"))
+const ManagePermissionMatrix = lazy(() => import("../Pages/ManagePermissionMatrix"))
 
 const ProtectedRoute = () => {
   const { isAuthenticated } = useAppStore()
@@ -168,6 +170,22 @@ export default function useRouterAdmin() {
                   element: (
                     <Suspense>
                       <PayrollDetail />
+                    </Suspense>
+                  )
+                },
+                {
+                  path: path.AdminRoles,
+                  element: (
+                    <Suspense>
+                      <ManageRoles />
+                    </Suspense>
+                  )
+                },
+                {
+                  path: path.AdminPermissionMatrix,
+                  element: (
+                    <Suspense>
+                      <ManagePermissionMatrix />
                     </Suspense>
                   )
                 }

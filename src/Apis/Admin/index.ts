@@ -19,6 +19,7 @@ export { shiftsAPI, employeeShiftsAPI } from "./shifts.api"
 export { payrollAPI } from "./payroll.api"
 export { payrollItemsAPI } from "./payrollItems.api"
 export { rolesAPI } from "./roles.api"
+export { permissionsAPI } from "./permissions.api"
 
 import { authAPI } from "./auth.api"
 import { diningTableAPI } from "./diningTable.api"
@@ -33,13 +34,14 @@ import { shiftsAPI, employeeShiftsAPI } from "./shifts.api"
 import { payrollAPI } from "./payroll.api"
 import { payrollItemsAPI } from "./payrollItems.api"
 import { rolesAPI } from "./roles.api"
+import { permissionsAPI } from "./permissions.api"
 
 export const adminAPI = {
   auth: authAPI,
   diningTable: diningTableAPI,
   tableSession: tableSessionAPI,
   orderItems: orderItemsAPI,
-  dishes_category: dishCategoryAPI, 
+  dishes_category: dishCategoryAPI,
   dishes: dishesAPI,
   menus: menusAPI,
   customers: customersAPI,
@@ -48,5 +50,6 @@ export const adminAPI = {
   employeeShifts: employeeShiftsAPI,
   payroll: payrollAPI,
   payrollItems: payrollItemsAPI,
-  roles: rolesAPI
+  roles: rolesAPI,
+  permissions: permissionsAPI
 }

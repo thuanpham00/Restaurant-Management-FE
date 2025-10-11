@@ -25,7 +25,8 @@ import {
   Info,
   LogOut,
   Ham,
-  UserCircle
+  UserCircle,
+  Grid
 } from "lucide-react"
 import { path } from "src/Constants/path"
 import SidebarItem from "../SidebarItem"
@@ -65,8 +66,7 @@ export default function Sidebar() {
     { name: "Quản lý đánh giá", icon: Star, path: path.AdminReviews },
     { name: "Quản lý người dùng", icon: UserCog, path: path.AdminUsers },
     { name: "Quản lý vai trò", icon: Shield, path: path.AdminRoles },
-    { name: "Quản lý quyền hệ thống", icon: ShieldCheck, path: path.AdminPermissions },
-
+    { name: "Ma trận phân quyền", icon: Grid, path: path.AdminPermissionMatrix },
     { name: "Danh sách món", icon: Ham, path: path.AdminDish }
   ]
 
@@ -214,13 +214,13 @@ export default function Sidebar() {
           key: path.AdminDish,
           label: (
             <SidebarItem
-              className={`${checkActive(sideBarList[23].path) ? "text-[14px] text-white font-semibold" : "text-[14px] text-white font-normal hover:text-[#495057] duration-200 ease-in"}`}
+              className={`${checkActive(sideBarList[22].path) ? "text-[14px] text-white font-semibold" : "text-[14px] text-white font-normal hover:text-[#495057] duration-200 ease-in"}`}
               classNameWrapper={`flex items-center gap-2 cursor-pointer`}
-              icon={React.createElement(sideBarList[23].icon, {
-                color: checkActive(sideBarList[23].path) ? "white" : "white"
+              icon={React.createElement(sideBarList[22].icon, {
+                color: checkActive(sideBarList[22].path) ? "white" : "white"
               })}
-              nameSideBar={sideBarList[23].name}
-              path={sideBarList[23].path}
+              nameSideBar={sideBarList[22].name}
+              path={sideBarList[22].path}
             />
           )
         },
@@ -403,70 +403,10 @@ export default function Sidebar() {
     },
     {
       key: "sub6",
-      label: <div className="font-semibold text-[15px] text-white">Quản lý Đánh giá & thông báo</div>,
-      children: [
-        {
-          key: "18",
-          label: (
-            <SidebarItem
-              className={`${checkActive(sideBarList[2].path) ? "text-[14px] text-white font-semibold" : "text-[14px] text-white font-normal hover:text-[#495057] duration-200 ease-in"}`}
-              classNameWrapper={`flex items-center gap-2 cursor-pointer`}
-              icon={React.createElement(sideBarList[2].icon, {
-                color: checkActive(sideBarList[2].path) ? "white" : "white"
-              })}
-              nameSideBar={sideBarList[2].name}
-              path={sideBarList[2].path}
-            />
-          )
-        },
-        {
-          key: "19",
-          label: (
-            <SidebarItem
-              className={`${checkActive(sideBarList[9].path) ? "text-[14px] text-white font-semibold" : "text-[14px] text-white font-normal hover:text-[#495057] duration-200 ease-in"}`}
-              classNameWrapper={`flex items-center gap-2 cursor-pointer`}
-              icon={React.createElement(sideBarList[9].icon, {
-                color: checkActive(sideBarList[9].path) ? "white" : "white"
-              })}
-              nameSideBar={sideBarList[9].name}
-              path={sideBarList[9].path}
-            />
-          )
-        }
-      ]
-    },
-    {
-      type: "divider"
-    },
-    {
-      key: "sub7",
       label: <div className="font-semibold text-[15px] text-white">Quản lý Đánh giá</div>,
       children: [
         {
-          key: "20",
-          label: (
-            <SidebarItem
-              className={`${checkActive(sideBarList[18].path) ? "text-[14px] text-white font-semibold" : "text-[14px] text-white font-normal hover:text-[#495057] duration-200 ease-in"}`}
-              classNameWrapper={`flex items-center gap-2 cursor-pointer`}
-              icon={React.createElement(sideBarList[18].icon, {
-                color: checkActive(sideBarList[18].path) ? "white" : "white"
-              })}
-              nameSideBar={sideBarList[18].name}
-              path={sideBarList[18].path}
-            />
-          )
-        }
-      ]
-    },
-    {
-      type: "divider"
-    },
-    {
-      key: "sub8",
-      label: <div className="font-semibold text-[15px] text-white">Cấu hình & bảo mật</div>,
-      children: [
-        {
-          key: "21",
+          key: path.AdminReviews,
           label: (
             <SidebarItem
               className={`${checkActive(sideBarList[19].path) ? "text-[14px] text-white font-semibold" : "text-[14px] text-white font-normal hover:text-[#495057] duration-200 ease-in"}`}
@@ -478,9 +418,18 @@ export default function Sidebar() {
               path={sideBarList[19].path}
             />
           )
-        },
+        }
+      ]
+    },
+    {
+      type: "divider"
+    },
+    {
+      key: "sub7",
+      label: <div className="font-semibold text-[15px] text-white">Cấu hình & Bảo mật</div>,
+      children: [
         {
-          key: "22",
+          key: path.AdminUsers,
           label: (
             <SidebarItem
               className={`${checkActive(sideBarList[20].path) ? "text-[14px] text-white font-semibold" : "text-[14px] text-white font-normal hover:text-[#495057] duration-200 ease-in"}`}
@@ -494,7 +443,7 @@ export default function Sidebar() {
           )
         },
         {
-          key: "23",
+          key: path.AdminRoles,
           label: (
             <SidebarItem
               className={`${checkActive(sideBarList[21].path) ? "text-[14px] text-white font-semibold" : "text-[14px] text-white font-normal hover:text-[#495057] duration-200 ease-in"}`}
@@ -504,6 +453,20 @@ export default function Sidebar() {
               })}
               nameSideBar={sideBarList[21].name}
               path={sideBarList[21].path}
+            />
+          )
+        },
+        {
+          key: path.AdminPermissionMatrix,
+          label: (
+            <SidebarItem
+              className={`${checkActive(sideBarList[22].path) ? "text-[14px] text-white font-semibold" : "text-[14px] text-white font-normal hover:text-[#495057] duration-200 ease-in"}`}
+              classNameWrapper={`flex items-center gap-2 cursor-pointer`}
+              icon={React.createElement(sideBarList[22].icon, {
+                color: checkActive(sideBarList[22].path) ? "white" : "white"
+              })}
+              nameSideBar={sideBarList[22].name}
+              path={sideBarList[22].path}
             />
           )
         }
