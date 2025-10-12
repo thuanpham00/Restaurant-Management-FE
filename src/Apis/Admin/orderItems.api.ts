@@ -15,11 +15,11 @@ export const orderItemsAPI = {
       status: number
     }[]
   }) => {
-    return Http.post<SuccessResponse<any>>(`/api/auth/order-items/add-order`, body)
+    return Http.post<SuccessResponse<any>>(`/api/order-items/add-order`, body)
   },
 
   updateListOrderItem: (items: Record<string, { status: number; quantity: number }>) => {
-    return Http.put<SuccessResponse<HistoryTableSessionDetail>>(`/api/auth/order-items/update-order`, {
+    return Http.put<SuccessResponse<HistoryTableSessionDetail>>(`/api/order-items/update-order`, {
       items
     })
   }

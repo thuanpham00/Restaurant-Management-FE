@@ -1,13 +1,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { Button, DatePicker, Empty, Form, Input, Pagination, Spin, Table, Tabs } from "antd"
+import { Button, DatePicker, Empty, Form, Input, Pagination, Spin, Table, Tabs, Tag } from "antd"
 import { ColumnsType } from "antd/es/table"
 import dayjs from "dayjs"
 import { isUndefined, omit, omitBy } from "lodash"
 import { Filter, RotateCcw } from "lucide-react"
 import { useState } from "react"
 import { Helmet } from "react-helmet-async"
-import { createSearchParams, useNavigate, useSearchParams } from "react-router-dom"
+import { createSearchParams, useNavigate } from "react-router-dom"
 import { toast } from "react-toastify"
 import { Fragment } from "react/jsx-runtime"
 import NavigateBack from "src/Admin/Components/NavigateBack"
@@ -17,15 +17,16 @@ import { cleanObject } from "src/Helpers/common"
 import useQueryParams from "src/Hook/useQueryParams"
 import { queryParamConfigReservation } from "src/Types/queryParams.type"
 import { Reservation, ReservationCheckAssignTable } from "src/Types/reservation.type"
+import ArrangementTable from "../../Components/ArrangementTable"
 
 export default function ManageReservation() {
+  const [currentPage, setCurrentPage] = useState(1)
+  const [pageSize, setPageSize] = useState(5)
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const queryParams: queryParamConfigReservation = useQueryParams()
   const queryConfig: queryParamConfigReservation = omitBy(
     {
-      page: queryParams.page || "1",
-      per_page: queryParams.per_page || "5",
       customer_name: queryParams.customer_name,
       customer_phone: queryParams.customer_phone,
       reserved_at: queryParams.reserved_at
@@ -33,7 +34,7 @@ export default function ManageReservation() {
     isUndefined
   )
 
-  const [activeTab, setActiveTab] = useState<"pending" | "confirmed" | "completed" | "cancelled">("confirmed")
+  const [activeTab, setActiveTab] = useState<"pending" | "confirmed" | "completed" | "cancelled">("pending")
 
   const { data, isFetching } = useQuery({
     queryKey: ["listReservation", queryConfig],
@@ -47,14 +48,28 @@ export default function ManageReservation() {
     placeholderData: keepPreviousData
   })
 
-  const paginated = data?.data.data
-  const listReservation = paginated?.data
+  const listReservation = data?.data.data
 
-  const [searchParams, setSearchParams] = useSearchParams()
-  const handlePaginationChange = (page: number, pageSize: number) => {
-    searchParams.set("page", page.toString())
-    searchParams.set("per_page", pageSize.toString())
-    setSearchParams(searchParams) // trigger re-render → useQuery tự refetch
+  const filteredReservations = listReservation?.filter((r) => {
+    switch (activeTab) {
+      case "pending":
+        return r.status === 0
+      case "confirmed":
+        return r.status === 1
+      case "cancelled":
+        return r.status === 2
+      case "completed":
+        return r.status === 3
+      default:
+        return true
+    }
+  }) // sau khi phân loại xong -> phân trang
+
+  const paginatedReservations = filteredReservations?.slice((currentPage - 1) * pageSize, currentPage * pageSize)
+
+  const handlePaginationChange = (page: number, size?: number) => {
+    setCurrentPage(page)
+    if (size) setPageSize(size)
   }
 
   const columns: ColumnsType<Reservation> = [
@@ -121,10 +136,15 @@ export default function ManageReservation() {
       key: "action",
       render: (_: any, record: any) => (
         <div className="flex justify-center gap-2">
-          <Button type="primary" onClick={() => handleAction("confirm", record)}>
+          <Button
+            type="primary"
+            onClick={() => {
+              setArrangement(record)
+            }}
+          >
             Xác nhận
           </Button>
-          <Button danger onClick={() => handleAction("cancel", record)}>
+          <Button danger onClick={() => handleAction(record)}>
             Từ chối
           </Button>
         </div>
@@ -136,10 +156,10 @@ export default function ManageReservation() {
       render: (_: any, record: Reservation) => {
         const findReservation = listCheckAssignedTable?.find((item) => item.reservation_id === record.id)?.assigned
         return (
-          <div
-            className={`${findReservation === true ? "bg-green-500" : "bg-red-500"} px-2 py-1 rounded-md text-center text-white`}
-          >
-            {findReservation === true ? "Đã xếp bàn" : "Chưa xếp bàn"}
+          <div className="flex justify-center">
+            <Tag color={`${findReservation === true ? "blue" : "red"}`} className={`px-2 py-1 rounded-md text-white`}>
+              {findReservation === true ? "Đã xếp bàn" : "Chưa xếp bàn"}
+            </Tag>
           </div>
         )
       }
@@ -148,25 +168,8 @@ export default function ManageReservation() {
 
   const onTabChange = (key: string) => {
     setActiveTab(key as typeof activeTab)
-
-    searchParams.set("page", "1")
-    setSearchParams(searchParams)
+    setCurrentPage(1) // reset page khi đổi tab
   }
-
-  const filteredReservations = listReservation?.filter((r) => {
-    switch (activeTab) {
-      case "pending":
-        return r.status === 0
-      case "confirmed":
-        return r.status === 1
-      case "cancelled":
-        return r.status === 2
-      case "completed":
-        return r.status === 3
-      default:
-        return true
-    }
-  })
 
   const countByStatus = {
     pending: listReservation?.filter((r) => r.status === 0).length || 0,
@@ -176,13 +179,16 @@ export default function ManageReservation() {
   }
 
   const mutationUpdateStatus = useMutation({
-    mutationFn: ({ id, status }: { id: string; status: number }) => reservationsAPI.update(status, id),
+    mutationFn: ({ id, status }: { id: string; status: number }) =>
+      reservationsAPI.update(id, {
+        status
+      }),
 
     onSuccess: () => {
       toast.success("Cập nhật trạng thái thành công 🎉", {
         autoClose: 1500
       })
-      queryClient.invalidateQueries({ queryKey: ["listReservation"] })
+      queryClient.invalidateQueries({ queryKey: ["listReservation", queryConfig] })
     },
     onError: (error: any) => {
       toast.error(error?.response?.data?.message || "Cập nhật thất bại ❌", {
@@ -191,15 +197,10 @@ export default function ManageReservation() {
     }
   })
 
-  const handleAction = (type: "confirm" | "cancel", record: any) => {
-    if (type === "confirm") {
-      mutationUpdateStatus.mutate({ id: record.id, status: 1 })
-    } else {
-      mutationUpdateStatus.mutate({ id: record.id, status: 2 })
-    }
+  const handleAction = (record: any) => {
+    mutationUpdateStatus.mutate({ id: record.id, status: 2 })
   }
 
-  // 1. Form filter
   const [filterForm] = Form.useForm()
 
   const handleApplyForm = (values: any) => {
@@ -238,6 +239,8 @@ export default function ManageReservation() {
 
   const listCheckAssignedTable = dataListCheckAssignedTable?.data.data as ReservationCheckAssignTable[]
 
+  const [arrangement, setArrangement] = useState<Reservation | null>(null)
+
   return (
     <div>
       <Helmet>
@@ -249,50 +252,71 @@ export default function ManageReservation() {
         Danh sách đặt bàn của khách hàng
       </h1>
 
-      <Tabs activeKey={activeTab} onChange={onTabChange}>
-        <Tabs.TabPane tab={`Xác nhận (${countByStatus.confirmed})`} key="confirmed" />
-        <Tabs.TabPane tab={`Chờ (${countByStatus.pending})`} key="pending" />
-        <Tabs.TabPane tab={`Hoàn thành (${countByStatus.completed})`} key="completed" />
-        <Tabs.TabPane tab={`Đã hủy (${countByStatus.cancelled})`} key="cancelled" />
-      </Tabs>
+      <Tabs
+        activeKey={activeTab}
+        onChange={onTabChange}
+        items={[
+          {
+            label: `Chờ (${countByStatus.pending})`,
+            key: "pending"
+          },
+          {
+            label: `Xác nhận (${countByStatus.confirmed})`,
+            key: "confirmed"
+          },
+          {
+            label: `Đã hủy (${countByStatus.cancelled})`,
+            key: "cancelled"
+          },
+          {
+            label: `Hoàn thành (${countByStatus.completed})`,
+            key: "completed"
+          }
+        ]}
+      />
 
-      <div className="mt-2 flex flex-wrap items-center justify-between gap-4 mb-4">
+      <div className="mt-2 mb-4">
         <Form
           form={filterForm}
           layout="inline"
           onFinish={handleApplyForm}
-          className="flex flex-wrap items-center gap-1"
+          className="flex flex-wrap justify-between items-center w-full"
           initialValues={{ capacity: undefined, status: undefined, is_active: undefined }}
         >
-          <div className="text-[15px] font-semibold">Bộ lọc & tìm kiếm: </div>
-          <Form.Item name="customer_name">
-            <Input placeholder="Tên người đặt..." className="w-42" />
-          </Form.Item>
+          <div className="flex items-center gap-1">
+            <div className="text-[15px] font-semibold">Bộ lọc & tìm kiếm: </div>
+            <Form.Item name="customer_name">
+              <Input placeholder="Tên người đặt..." className="w-42" />
+            </Form.Item>
 
-          <Form.Item name="customer_phone">
-            <Input placeholder="Số điện thoại..." className="w-42" />
-          </Form.Item>
+            <Form.Item name="customer_phone">
+              <Input placeholder="Số điện thoại..." className="w-42" />
+            </Form.Item>
 
-          <Form.Item name="reserved_at">
-            <DatePicker
-              showTime={{ format: "HH:mm" }}
-              format="YYYY-MM-DD HH:mm"
-              placeholder="Chọn ngày & giờ"
-              className="w-56"
-            />
-          </Form.Item>
+            <Form.Item name="reserved_at">
+              <DatePicker
+                showTime={{ format: "HH:mm" }}
+                format="YYYY-MM-DD HH:mm"
+                placeholder="Chọn ngày & giờ"
+                className="w-56"
+              />
+            </Form.Item>
 
-          <Form.Item>
-            <Button type="primary" htmlType="submit" icon={<Filter size={16} />}>
-              Lọc
-            </Button>
-          </Form.Item>
+            <Form.Item>
+              <Button type="primary" htmlType="submit" icon={<Filter size={16} />}>
+                Lọc
+              </Button>
+            </Form.Item>
 
-          <Form.Item>
-            <Button icon={<RotateCcw size={16} />} onClick={resetFilterForm}>
-              Reset
-            </Button>
-          </Form.Item>
+            <Form.Item>
+              <Button icon={<RotateCcw size={16} />} onClick={resetFilterForm}>
+                Reset
+              </Button>
+            </Form.Item>
+          </div>
+          <div>
+            <ArrangementTable queryConfig={queryConfig} arrangement={arrangement} setArrangement={setArrangement} />
+          </div>
         </Form>
       </div>
 
@@ -310,7 +334,7 @@ export default function ManageReservation() {
             <div style={{ minHeight: 100, width: 300, marginTop: 10 }} />
           </Spin>
         </div>
-      ) : (filteredReservations as Reservation[]).length === 0 ? (
+      ) : (filteredReservations as Reservation[])?.length === 0 ? (
         <Empty description="Không có đặt bàn hợp lệ" className="mt-16" />
       ) : (
         <Fragment>
@@ -318,7 +342,7 @@ export default function ManageReservation() {
             rowKey="id"
             loading={isFetching}
             columns={columns}
-            dataSource={filteredReservations as Reservation[]}
+            dataSource={paginatedReservations as Reservation[]}
             pagination={false}
             bordered
             rowClassName={(_, index) =>
@@ -330,9 +354,9 @@ export default function ManageReservation() {
 
           <div style={{ marginTop: 16, textAlign: "center", display: "flex", justifyContent: "flex-end" }}>
             <Pagination
-              current={parseInt(queryConfig.page as string)}
-              total={paginated?.total}
-              pageSize={parseInt(queryConfig.per_page as string)}
+              current={currentPage}
+              total={(filteredReservations || []).length}
+              pageSize={pageSize}
               onChange={handlePaginationChange}
               showSizeChanger
               pageSizeOptions={["5", "10", "20", "50"]}

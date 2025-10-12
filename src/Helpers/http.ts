@@ -4,9 +4,9 @@ import {
   getAccessTokenFromLS,
   setAccessTokenToLS,
   setAvatarImageToLS,
+  setEmployeeIdToLS,
   setNameUserToLS,
-  setRoleToLS,
-  setUserIdToLS
+  setRoleToLS
 } from "src/Helpers/auth"
 import { config } from "src/Constants/config"
 import { AuthResponse, MessageResponse, SuccessResponse } from "src/Types/utils.type"
@@ -54,8 +54,7 @@ class http {
           setNameUserToLS(data.data.user.name)
           setRoleToLS(data.data.user.role.name)
           setAvatarImageToLS(data.data.user.avatar as string)
-          setUserIdToLS(data.data.user.id)
-          // ở server sẽ tự động lưu RT vào cookie ở trình duyệt
+          setEmployeeIdToLS(data.data.user.employee_profile.id)
         }
         if (response.config.url === "/api/auth/logout") {
           clearLS()
@@ -83,7 +82,6 @@ class http {
         if (isError401(error)) {
           const config = error.response?.config || ({ headers: {} } as InternalAxiosRequestConfig)
           const { url } = config
-          console.log(error)
           // lỗi Unauthorized (401) có nhiều trường hợp
           // - token không đúng
           // - không truyền token

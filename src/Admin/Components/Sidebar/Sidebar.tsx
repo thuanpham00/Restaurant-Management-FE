@@ -40,7 +40,7 @@ import { useAppStore } from "src/StateGlobal/zustand"
 export default function Sidebar() {
   const location = useLocation()
   const navigate = useNavigate()
-  const { setIsAuthenticated, setAvatar, setNameUser, setRole, setUserId } = useAppStore()
+  const { setIsAuthenticated, setAvatar, setNameUser, setRole, setEmployeeId } = useAppStore()
 
   const sideBarList = [
     { name: "Thống kê", icon: LayoutDashboard, path: path.AdminDashboard },
@@ -341,6 +341,34 @@ export default function Sidebar() {
       label: <div className="font-semibold text-[15px] text-white">Quản lý Tài chính</div>,
       children: [
         {
+          key: path.AdminInvoices,
+          label: (
+            <SidebarItem
+              className={`${checkActive(sideBarList[15].path) ? "text-[14px] text-white font-semibold" : "text-[14px] text-white font-normal hover:text-[#495057] duration-200 ease-in"}`}
+              classNameWrapper={`flex items-center gap-2 cursor-pointer`}
+              icon={React.createElement(sideBarList[15].icon, {
+                color: checkActive(sideBarList[15].path) ? "white" : "white"
+              })}
+              nameSideBar={sideBarList[15].name}
+              path={sideBarList[15].path}
+            />
+          )
+        },
+        {
+          key: path.AdminPromotions,
+          label: (
+            <SidebarItem
+              className={`${checkActive(sideBarList[17].path) ? "text-[14px] text-white font-semibold" : "text-[14px] text-white font-normal hover:text-[#495057] duration-200 ease-in"}`}
+              classNameWrapper={`flex items-center gap-2 cursor-pointer`}
+              icon={React.createElement(sideBarList[17].icon, {
+                color: checkActive(sideBarList[17].path) ? "white" : "white"
+              })}
+              nameSideBar={sideBarList[17].name}
+              path={sideBarList[17].path}
+            />
+          )
+        },
+        {
           key: "14",
           label: (
             <SidebarItem
@@ -355,20 +383,6 @@ export default function Sidebar() {
           )
         },
         {
-          key: "15",
-          label: (
-            <SidebarItem
-              className={`${checkActive(sideBarList[15].path) ? "text-[14px] text-white font-semibold" : "text-[14px] text-white font-normal hover:text-[#495057] duration-200 ease-in"}`}
-              classNameWrapper={`flex items-center gap-2 cursor-pointer`}
-              icon={React.createElement(sideBarList[15].icon, {
-                color: checkActive(sideBarList[15].path) ? "white" : "white"
-              })}
-              nameSideBar={sideBarList[15].name}
-              path={sideBarList[15].path}
-            />
-          )
-        },
-        {
           key: "16",
           label: (
             <SidebarItem
@@ -379,20 +393,6 @@ export default function Sidebar() {
               })}
               nameSideBar={sideBarList[16].name}
               path={sideBarList[16].path}
-            />
-          )
-        },
-        {
-          key: "17",
-          label: (
-            <SidebarItem
-              className={`${checkActive(sideBarList[17].path) ? "text-[14px] text-white font-semibold" : "text-[14px] text-white font-normal hover:text-[#495057] duration-200 ease-in"}`}
-              classNameWrapper={`flex items-center gap-2 cursor-pointer`}
-              icon={React.createElement(sideBarList[17].icon, {
-                color: checkActive(sideBarList[17].path) ? "white" : "white"
-              })}
-              nameSideBar={sideBarList[17].name}
-              path={sideBarList[17].path}
             />
           )
         }
@@ -525,7 +525,7 @@ export default function Sidebar() {
         setNameUser(null)
         setRole(null)
         setAvatar(null)
-        setUserId(null)
+        setEmployeeId(null)
 
         navigate(path.AdminLogin)
       }

@@ -1,12 +1,15 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import {
+  Badge,
   Button,
+  Card,
   Checkbox,
   Col,
   Collapse,
   DatePicker,
   Descriptions,
+  Divider,
   Form,
   Image,
   Input,
@@ -14,6 +17,7 @@ import {
   Modal,
   Row,
   Select,
+  Space,
   Spin,
   Table,
   Tag,
@@ -33,6 +37,8 @@ import HistoryTableSession from "../../Components/HistoryTableSession/HistoryTab
 import { ChefHat, CookingPot, HandCoins } from "lucide-react"
 import { toast } from "react-toastify"
 import { ColumnsType } from "antd/es/table"
+import PromotionForm from "../../Components/PromotionForm"
+import PaymentDetailModal from "../../Components/PaymentDetailModal"
 
 const { Search } = Input
 const { Title } = Typography
@@ -41,30 +47,30 @@ export const renderSessionType = (type: number) => {
   switch (type) {
     case 0:
       return (
-        <Tag color="blue" className="text-[15px] font-semibold">
+        <Tag color="blue" className="text-[14px] font-semibold">
           Offline
         </Tag>
       )
     case 1:
       return (
-        <Tag color="purple" className="text-[15px] font-semibold">
+        <Tag color="purple" className="text-[14px] font-semibold">
           Ghép bàn
         </Tag>
       )
     case 2:
       return (
-        <Tag color="orange" className="text-[15px] font-semibold">
+        <Tag color="orange" className="text-[14px] font-semibold">
           Đặt trước
         </Tag>
       )
     case 3:
       return (
-        <Tag color="green" className="text-[15px] font-semibold">
+        <Tag color="green" className="text-[14px] font-semibold">
           Tách bàn
         </Tag>
       )
     default:
-      return <Tag className="text-[15px] font-semibold">Khác</Tag>
+      return <Tag className="text-[14px] font-semibold">Khác</Tag>
   }
 }
 
@@ -72,30 +78,30 @@ export const renderSessionStatus = (status: number) => {
   switch (status) {
     case 0:
       return (
-        <Tag color="default" className="text-[15px] font-semibold">
+        <Tag color="default" className="text-[14px] font-semibold">
           Chờ
         </Tag>
       )
     case 1:
       return (
-        <Tag color="processing" className="text-[15px] font-semibold">
+        <Tag color="processing" className="text-[14px] font-semibold">
           Đang phục vụ
         </Tag>
       )
     case 2:
       return (
-        <Tag color="success" className="text-[15px] font-semibold">
+        <Tag color="success" className="text-[14px] font-semibold">
           Hoàn tất
         </Tag>
       )
     case 3:
       return (
-        <Tag color="error" className="text-[15px] font-semibold">
+        <Tag color="error" className="text-[14px] font-semibold">
           Hủy
         </Tag>
       )
     default:
-      return <Tag className="text-[15px] font-semibold">Không rõ</Tag>
+      return <Tag className="text-[14px] font-semibold">Không rõ</Tag>
   }
 }
 
@@ -103,36 +109,36 @@ const renderOrderStatus = (status: number) => {
   switch (status) {
     case 0:
       return (
-        <Tag color="default" className="text-[15px] font-semibold">
+        <Tag color="default" className="text-[14px] font-semibold">
           Chờ
         </Tag>
       )
     case 1:
       return (
-        <Tag color="processing" className="text-[15px] font-semibold">
+        <Tag color="processing" className="text-[14px] font-semibold">
           Đang chế biến
         </Tag>
       )
     case 2:
       return (
-        <Tag color="warning" className="text-[15px] font-semibold">
+        <Tag color="warning" className="text-[14px] font-semibold">
           Đã phục vụ
         </Tag>
       )
     case 3:
       return (
-        <Tag color="success" className="text-[15px] font-semibold">
+        <Tag color="success" className="text-[14px] font-semibold">
           Đã thanh toán
         </Tag>
       )
     case 4:
       return (
-        <Tag color="error" className="text-[15px] font-semibold">
+        <Tag color="error" className="text-[14px] font-semibold">
           Đã hủy
         </Tag>
       )
     default:
-      return <Tag className="text-[15px] font-semibold">Chờ</Tag>
+      return <Tag className="text-[14px] font-semibold">Chờ</Tag>
   }
 }
 
@@ -143,6 +149,20 @@ const orderItemStatusOptions = [
   { label: "Đã Hủy", value: 3 }
 ]
 
+const statusText: Record<number, string> = {
+  0: "Chưa thanh toán",
+  1: "Đã thanh toán 1 phần",
+  2: "Đã thanh toán",
+  3: "Đã hủy"
+}
+
+const statusColor: Record<number, "default" | "success" | "warning" | "error" | "processing"> = {
+  0: "error", // Unpaid -> đỏ
+  1: "warning", // Partially Paid -> vàng
+  2: "success", // Paid -> xanh lá
+  3: "default" // Cancelled -> xám
+}
+
 const { Panel } = Collapse
 
 export default function TableDetail() {
@@ -150,6 +170,7 @@ export default function TableDetail() {
 
   const { state } = useLocation()
   const dataTable = state?.dataTable
+
   const nameTable = state?.tableName
   const idDiningTable = dataTable.dining_table_id
 
@@ -167,6 +188,7 @@ export default function TableDetail() {
   })
 
   const dataTableSessionDetail = data?.data?.data as TableSessionDetail
+  console.log(dataTableSessionDetail)
 
   const { data: dataTableSessionOrderRes, isFetching: isFetchingDataTableSessionOrder } = useQuery({
     queryKey: ["detailTableSessionOrder", dataTableSessionDetail?.session_id],
@@ -233,6 +255,8 @@ export default function TableDetail() {
   }
 
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [showInvoice, setShowInvoice] = useState(false)
+  const [showPaymentModal, setShowPaymentModal] = useState(false)
 
   const { data: listDishMenuInActiveData, isLoading: isLoadingDishes } = useQuery({
     queryKey: ["ListDishInMenuActive", dataTableSessionDetail?.session_id],
@@ -427,6 +451,25 @@ export default function TableDetail() {
     setIsModalOpen(false)
   }
 
+  const [vat, setVat] = useState<number>(10) // default VAT 1%
+  const [totalPercentage, setTotalPercentage] = useState<number>(0)
+  const [listPromotionApply, setListPromotionApply] = useState<
+    { promotion_id: string; discount_value: number }[] | null
+  >(null)
+
+  const [formPayment] = Form.useForm()
+
+  const finalAmount = useMemo(() => {
+    const subtotal = Number(dataTableSessionOrder?.total_amount ?? 0) // Tạm tính
+    const discountPercent = Number(totalPercentage ?? 0) // Giảm giá %
+    const vatPercent = vat ?? 0 // VAT %
+
+    const discounted = subtotal * (1 - discountPercent / 100)
+    const total = discounted * (1 + vatPercent / 100)
+
+    return total
+  }, [dataTableSessionOrder?.total_amount, totalPercentage, vat])
+
   return (
     <div className="table-detail">
       <Helmet>
@@ -447,7 +490,33 @@ export default function TableDetail() {
           )}
         </h1>
         <div className="flex justify-end gap-2 mb-2">
-          <HistoryTableSession idDiningTable={idDiningTable} />
+          <Button
+            className="py-4 shadow-md"
+            type="primary"
+            icon={<HandCoins />}
+            disabled={dataTableSessionDetail === undefined}
+            onClick={() => setShowInvoice(true)}
+            style={{
+              backgroundColor: "#f56a00", // đỏ cam
+              borderColor: "#f56a00",
+              width: "100%",
+              transition: "background-color 0.2s ease, border-color 0.2s ease",
+              opacity: dataTableSessionDetail === undefined ? 0.8 : 1, // mờ nếu disabled
+              cursor: dataTableSessionDetail === undefined ? "not-allowed" : "pointer" // con trỏ phù hợp
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = "#ff7a45" // hover nhạt hơn
+              e.currentTarget.style.borderColor = "#ff7a45"
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = "#f56a00"
+              e.currentTarget.style.borderColor = "#f56a00"
+            }}
+          >
+            Tiến hành thanh toán
+          </Button>
+
+          <HistoryTableSession idDiningTable={idDiningTable} tableNumber={dataTable.table_number} />
         </div>
       </div>
 
@@ -580,7 +649,6 @@ export default function TableDetail() {
                     </Descriptions>
                   </Panel>
 
-                  {/* Panel 2: Thông tin Order */}
                   <Panel
                     key="orderInfo"
                     header={
@@ -716,10 +784,11 @@ export default function TableDetail() {
 
                         <div className="mt-2 flex justify-end gap-2">
                           <Button
-                            className="mt-2 py-4 bg-orange-500"
+                            className="mt-2 py-4 bg-lime-600"
                             type="primary"
                             icon={<ChefHat />}
                             onClick={() => setIsModalOpen(true)}
+                            disabled={showInvoice}
                           >
                             Thêm Order
                           </Button>
@@ -727,6 +796,7 @@ export default function TableDetail() {
                             className="mt-2 py-4"
                             type="primary"
                             icon={<CookingPot />}
+                            disabled={showInvoice}
                             onClick={handleUpdateOrderItemList}
                           >
                             Cập nhật order
@@ -736,16 +806,135 @@ export default function TableDetail() {
                     )}
                   </Panel>
                 </Collapse>
-                <div className="flex justify-end fixed bottom-1 right-8 z-[1] py-2">
-                  <Button
-                    className="py-4 bg-green-500 shadow-md"
-                    type="primary"
-                    icon={<HandCoins />}
-                    onClick={() => setIsModalOpen(true)}
+
+                <Modal
+                  title={`Hóa đơn của phiên bàn ${dataTable.session_id}`}
+                  open={showInvoice}
+                  onCancel={() => setShowInvoice(false)}
+                  footer={null}
+                  width={1000}
+                  style={{ top: 50 }}
+                  bodyStyle={{
+                    height: 500,
+                    overflowY: "auto"
+                  }}
+                >
+                  <Card
+                    title={`Bàn ${nameTable}`}
+                    extra={<Badge status={statusColor[0]} text={statusText[0]} />}
+                    bordered={true}
                   >
-                    Tiến hành thanh toán
-                  </Button>
-                </div>
+                    <Table
+                      bordered
+                      dataSource={dataTableSessionOrder?.items}
+                      columns={[
+                        {
+                          title: "Món ăn",
+                          dataIndex: ["dish", "dish_name"],
+                          key: "dish_name",
+                          render: (_: any, record: any) => (
+                            <div className="flex items-center gap-2">
+                              {record.dish.image ? (
+                                <Image
+                                  src={record.dish.image}
+                                  alt={record.dish.dish_name}
+                                  className="rounded-md object-cover"
+                                  width={64}
+                                  height={64}
+                                />
+                              ) : (
+                                <Image
+                                  src={assets.rectangles.Burger}
+                                  alt={record.dish.dish_name}
+                                  className="w-12 h-12 rounded-md object-cover"
+                                  width={64}
+                                  height={64}
+                                />
+                              )}
+                              <div>
+                                <p className="font-medium">{record.dish.dish_name}</p>
+                                <p className="text-xs text-gray-500">{record.dish.category_name}</p>
+                              </div>
+                            </div>
+                          )
+                        },
+                        {
+                          title: "Số lượng",
+                          dataIndex: "quantity",
+                          key: "quantity",
+                          align: "center",
+                          render: (val: number) => <div className="text-center">{val}</div>
+                        },
+                        {
+                          title: "Đơn giá",
+                          dataIndex: "item_price",
+                          key: "item_price",
+                          render: (val: string) => `${Number(val).toLocaleString("vi-VN")} đ`,
+                          align: "right"
+                        },
+                        {
+                          title: "Thành tiền",
+                          dataIndex: "total_price",
+                          key: "total_price",
+                          render: (val: string) => `${Number(val).toLocaleString("vi-VN")} đ`,
+                          align: "right"
+                        }
+                      ]}
+                      pagination={false}
+                    />
+
+                    <PromotionForm
+                      setTotalPercentage={setTotalPercentage}
+                      setListPromotionApply={setListPromotionApply}
+                    />
+
+                    <Divider />
+
+                    <Form
+                      form={formPayment}
+                      layout="vertical"
+                      onValuesChange={(changedValue) => {
+                        if (changedValue.vat !== undefined) setVat(changedValue.vat)
+                      }}
+                      initialValues={{
+                        vat: 10
+                      }}
+                    >
+                      <Descriptions column={1} bordered size="small" layout="horizontal">
+                        <Descriptions.Item label="Tạm tính" contentStyle={{ color: "red", fontWeight: 500 }}>
+                          {Number(dataTableSessionOrder?.total_amount).toLocaleString("vi-VN")} đ
+                        </Descriptions.Item>
+                        <Descriptions.Item label="Giảm giá">{totalPercentage} %</Descriptions.Item>
+                        <Descriptions.Item label="Thuế VAT">
+                          <Form.Item name="vat" noStyle>
+                            <InputNumber min={0} max={100} formatter={(value) => `${value} %`} />
+                          </Form.Item>
+                        </Descriptions.Item>
+                        <Descriptions.Item label="Tổng tiền">
+                          <b>{finalAmount.toLocaleString("vi-VN")} đ</b>
+                        </Descriptions.Item>
+                      </Descriptions>
+
+                      <Space className="mt-4">
+                        <Button type="primary" onClick={() => setShowPaymentModal(true)}>
+                          Tiến hành thanh toán
+                        </Button>
+                      </Space>
+                    </Form>
+                  </Card>
+                </Modal>
+
+                <PaymentDetailModal
+                  open={showPaymentModal}
+                  onClose={() => setShowPaymentModal(false)}
+                  totalAmount={Number(dataTableSessionOrder?.total_amount) || 0}
+                  totalPercentage={totalPercentage}
+                  vat={vat}
+                  finalAmount={finalAmount}
+                  listPromotionApply={listPromotionApply}
+                  table_session_id={dataTable.session_id}
+                />
+                <div className="flex justify-end fixed bottom-1 right-8 z-[1] py-2"></div>
               </div>
             )
           ) : (

@@ -22,6 +22,10 @@ export type Reservation = {
 }
 
 export type ReservationCheckAssignTable = {
+  reservation_number_of_people: number
+  reservation_reserved_at: string
+  reservation_status: number
+  reservation_notes: string
   reservation_id: string
   customer_name: string
   session_id: string

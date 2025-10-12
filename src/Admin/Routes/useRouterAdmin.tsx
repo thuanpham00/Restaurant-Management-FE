@@ -5,6 +5,8 @@ import { path } from "src/Constants/path"
 import LayoutAuthAdmin from "../Layouts/LayoutAuthAdmin"
 import { rolesForApi } from "src/Helpers/role_permission"
 import { useAppStore } from "src/StateGlobal/zustand"
+import ManagePromotion from "../Pages/ManageFinancial/Pages/ManagePromotion"
+import ManageInvoice from "../Pages/ManageFinancial/Pages/ManageInvoice"
 
 const AdminLogin = lazy(() => import("../Pages/AdminLogin"))
 const ManageDashboard = lazy(() => import("../Pages/ManageDashboard"))
@@ -168,6 +170,22 @@ export default function useRouterAdmin() {
                   element: (
                     <Suspense>
                       <PayrollDetail />
+                    </Suspense>
+                  )
+                },
+                {
+                  path: path.AdminPromotions,
+                  element: (
+                    <Suspense>
+                      <ManagePromotion />
+                    </Suspense>
+                  )
+                },
+                {
+                  path: path.AdminInvoices,
+                  element: (
+                    <Suspense>
+                      <ManageInvoice />
                     </Suspense>
                   )
                 }

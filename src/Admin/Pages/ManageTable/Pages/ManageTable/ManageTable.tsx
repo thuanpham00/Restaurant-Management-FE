@@ -9,7 +9,7 @@ import { ErrorResponse, PaginatedResponse } from "src/Types/utils.type"
 import { Helmet } from "react-helmet-async"
 import "antd/dist/reset.css"
 import { createSearchParams, useNavigate, useSearchParams } from "react-router-dom"
-import { Filter, RotateCcw, Table } from "lucide-react"
+import { Filter, RotateCcw, Table2 } from "lucide-react"
 import { Fragment, useState } from "react"
 import { toast } from "react-toastify"
 import { isError422 } from "src/Helpers/utils"
@@ -179,7 +179,7 @@ export default function ManageTable() {
         </Form>
         <Button
           type="primary"
-          icon={<Table />}
+          icon={<Table2 />}
           onClick={() => setAddItem(true)}
           disabled={loading}
           className="whitespace-nowrap"
