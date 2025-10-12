@@ -25,7 +25,7 @@ export default function ManageInvoice() {
   )
 
   const { data, isFetching } = useQuery({
-    queryKey: ["listPromotion", queryConfig],
+    queryKey: ["listInvoice", queryConfig],
     queryFn: () => {
       const controller = new AbortController()
       setTimeout(() => controller.abort(), 10000)
