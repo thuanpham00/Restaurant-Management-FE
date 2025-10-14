@@ -40,6 +40,7 @@ import weekday from "dayjs/plugin/weekday"
 import localeData from "dayjs/plugin/localeData"
 import weekOfYear from "dayjs/plugin/weekOfYear"
 import weekYear from "dayjs/plugin/weekYear"
+import { isError400 } from "src/Helpers/utils"
 
 // Kích hoạt plugin
 dayjs.extend(customParseFormat)
@@ -87,6 +88,34 @@ export default function ManagePromotion() {
     setSearchParams(searchParams) // trigger re-render → useQuery tự refetch
   }
 
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => promotionAPI.delete(id),
+    onSuccess: () => {
+      toast.success("Xóa khuyến mãi thành công!", {
+        autoClose: 1500
+      })
+      queryClient.invalidateQueries({ queryKey: ["listPromotion"] })
+    },
+    onError: (error) => {
+      if (isError400<any>(error)) {
+        toast.error(error.response?.data?.message, {
+          autoClose: 1500
+        })
+      }
+    }
+  })
+
+  const handleDelete = (id: string) => {
+    Modal.confirm({
+      title: "Bạn có chắc muốn xóa?",
+      content: "Khuyến mãi sẽ bị xóa vĩnh viễn.",
+      okText: "Xóa",
+      okType: "danger",
+      cancelText: "Hủy",
+      onOk: () => deleteMutation.mutate(id)
+    })
+  }
+
   const columns: ColumnsType<Promotion> = [
     {
       title: "Mã khuyến mãi",
@@ -131,6 +160,12 @@ export default function ManagePromotion() {
       render: (value: number) => <span className="text-center block">{value}</span>
     },
     {
+      title: <div className="text-center">Lượt dùng</div>,
+      dataIndex: "used_count",
+      key: "used_count",
+      render: (value: number) => <span className="text-center block">{value}</span>
+    },
+    {
       title: "Trạng thái",
       dataIndex: "is_active",
       key: "is_active",
@@ -146,7 +181,7 @@ export default function ManagePromotion() {
           <Button type="link" onClick={() => handleEdit(record)}>
             Sửa
           </Button>
-          <Button danger type="link">
+          <Button danger type="link" onClick={() => handleDelete(record.id)}>
             Xóa
           </Button>
         </Space>

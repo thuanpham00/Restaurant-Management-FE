@@ -1,10 +1,10 @@
-import { keepPreviousData, useQuery, useQueryClient } from "@tanstack/react-query"
-import { Button, Empty, Pagination, Spin, Table } from "antd"
+import { keepPreviousData, useQuery } from "@tanstack/react-query"
+import { Empty, Pagination, Spin, Table, Tag } from "antd"
 import { ColumnsType } from "antd/es/table"
 import dayjs from "dayjs"
 import { isUndefined, omitBy } from "lodash"
 import { Helmet } from "react-helmet-async"
-import { useNavigate, useSearchParams } from "react-router-dom"
+import { Link, useSearchParams } from "react-router-dom"
 import { Fragment } from "react/jsx-runtime"
 import NavigateBack from "src/Admin/Components/NavigateBack"
 import { invoicePaymentAPI } from "src/Apis/Admin/invoicePayment.api"
@@ -13,8 +13,6 @@ import { Invoice } from "src/Types/invoicePayment.type"
 import { queryParamConfigInvoice } from "src/Types/queryParams.type"
 
 export default function ManageInvoice() {
-  const navigate = useNavigate()
-  const queryClient = useQueryClient()
   const queryParams: queryParamConfigInvoice = useQueryParams()
   const queryConfig: queryParamConfigInvoice = omitBy(
     {
@@ -87,7 +85,7 @@ export default function ManageInvoice() {
       dataIndex: "final_amount",
       key: "final_amount",
       render: (value: string) => (
-        <span className="font-semibold">
+        <span className="font-semibold text-red-500 text-center block">
           {Number(value).toLocaleString("vi-VN", { style: "currency", currency: "VND" })}
         </span>
       )
@@ -98,25 +96,31 @@ export default function ManageInvoice() {
       key: "status",
       render: (status: number) => {
         let text = ""
-        let color = ""
+        let color: string | undefined = ""
+
         switch (status) {
-          case 1:
-            text = "Chờ thanh toán"
+          case 0:
+            text = "Chưa thanh toán"
             color = "orange"
             break
+          case 1:
+            text = "Thanh toán trước 1 phần"
+            color = "blue"
+            break
           case 2:
-            text = "Đã thanh toán"
+            text = "Thanh toán đủ"
             color = "green"
             break
           case 3:
-            text = "Hủy"
+            text = "Đã hủy"
             color = "red"
             break
           default:
             text = "Không xác định"
-            color = "gray"
+            color = "default"
         }
-        return <span style={{ color }}>{text}</span>
+
+        return <Tag color={color}>{text}</Tag>
       }
     },
     {
@@ -136,7 +140,11 @@ export default function ManageInvoice() {
       key: "action",
       fixed: "right", // nếu muốn luôn hiển thị khi scroll ngang
       width: 120,
-      render: (_, record: Invoice) => <Button type="link">Xem chi tiết</Button>
+      render: (_, record: Invoice) => (
+        <Link to={`/admin/invoices/${record.id}`} className="text-blue-500 text-center block">
+          Xem chi tiết
+        </Link>
+      )
     }
   ]
 

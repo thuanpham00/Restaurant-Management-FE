@@ -3,13 +3,13 @@ import { Row, Spin, Pagination, Empty, Divider, Button, Modal, Form, InputNumber
 import omitBy from "lodash/omitBy"
 import isUndefined from "lodash/isUndefined"
 import useQueryParams from "src/Hook/useQueryParams"
-import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { diningTableAPI, tableSessionAPI } from "src/Apis/Admin"
 import { ErrorResponse, PaginatedResponse } from "src/Types/utils.type"
 import { Helmet } from "react-helmet-async"
 import "antd/dist/reset.css"
 import { createSearchParams, useNavigate, useSearchParams } from "react-router-dom"
-import { Filter, RotateCcw, Table2 } from "lucide-react"
+import { Filter, RotateCcw, Table2, TabletSmartphone } from "lucide-react"
 import { Fragment, useState } from "react"
 import { toast } from "react-toastify"
 import { isError422 } from "src/Helpers/utils"
@@ -42,13 +42,31 @@ export default function ManageTable() {
       setTimeout(() => controller.abort(), 10000)
       return tableSessionAPI.getListTableSession(queryConfig, controller.signal)
     },
-    retry: 0,
-    staleTime: 3 * 60 * 1000, // dưới 3 phút nó không gọi lại api
-    placeholderData: keepPreviousData
+    retry: 0
   })
 
   const paginated: PaginatedResponse<TableSession> | undefined = data?.data.data
   const listTableSession = paginated?.data || []
+
+  const { data: dataTableSessionActive } = useQuery({
+    queryKey: ["listTableSessionActive", queryConfig],
+    queryFn: () => {
+      const controller = new AbortController()
+      setTimeout(() => controller.abort(), 10000)
+      return tableSessionAPI.getListTableSession(
+        {
+          page: queryParams.page || "1",
+          per_page: "100"
+        },
+        controller.signal
+      )
+    },
+    retry: 0
+  })
+  const paginated2: PaginatedResponse<TableSession> | undefined = dataTableSessionActive?.data.data
+  const listTableSessionActive = paginated2?.data || []
+
+  const listTableSessionActiveData = listTableSessionActive.filter((item) => item.session_status === 1)
 
   const [searchParams, setSearchParams] = useSearchParams()
   const handlePaginationChange = (page: number, pageSize: number) => {
@@ -123,6 +141,8 @@ export default function ManageTable() {
     filterForm.resetFields()
   }
 
+  const [mergedTable, setMergedTable] = useState(false)
+
   return (
     <div>
       <Helmet>
@@ -149,7 +169,7 @@ export default function ManageTable() {
           </Form.Item>
 
           <Form.Item name="session_status">
-            <Select placeholder="Trạng thái bàn" allowClear className="w-48" dropdownStyle={{ width: 140 }}>
+            <Select placeholder="Trạng thái phiên bàn" allowClear className="w-48" dropdownStyle={{ width: 140 }}>
               <Select.Option value="empty">Trống</Select.Option>
               <Select.Option value="pending">Đặt trước</Select.Option>
               <Select.Option value="active">Đang phục vụ</Select.Option>
@@ -159,9 +179,9 @@ export default function ManageTable() {
           </Form.Item>
 
           <Form.Item name="is_active">
-            <Select placeholder="Bàn mở/tắt" allowClear className="w-32">
+            <Select placeholder="Trạng thái bàn" allowClear className="w-32">
               <Select.Option value="1">Mở</Select.Option>
-              <Select.Option value="0">Tắt</Select.Option>
+              <Select.Option value="0">Ngừng</Select.Option>
             </Select>
           </Form.Item>
 
@@ -188,28 +208,22 @@ export default function ManageTable() {
         </Button>
       </div>
 
-      <Modal
-        title="Thêm bàn mới"
-        closable={{ "aria-label": "Custom Close Button" }}
-        open={addItem === true}
-        onCancel={() => setAddItem(false)}
-        okText="Tạo"
-        onOk={() => addTableForm.submit()}
-      >
-        <Form form={addTableForm} layout="vertical" onFinish={handleAddDiningTable} initialValues={{ is_active: true }}>
-          <Form.Item label="Số bàn" name="table_number" rules={[{ required: true, message: "Vui lòng nhập số bàn!" }]}>
-            <InputNumber style={{ width: "100%" }} />
-          </Form.Item>
-
-          <Form.Item label="Sức chứa" name="capacity" rules={[{ required: true, message: "Vui lòng nhập sức chứa!" }]}>
-            <InputNumber style={{ width: "100%" }} />
-          </Form.Item>
-
-          <Form.Item label="Hoạt động" name="is_active" valuePropName="checked">
-            <Switch defaultChecked />
-          </Form.Item>
-        </Form>
-      </Modal>
+      <div className="flex justify-start mb-2">
+        <Button
+          type="default"
+          icon={<TabletSmartphone size={16} />}
+          onClick={() => setMergedTable(true)}
+          disabled={loading}
+          style={{
+            backgroundColor: "#ffc300",
+            borderColor: "#ffc300",
+            color: "#fff"
+          }}
+          className="whitespace-nowrap hover:opacity-90"
+        >
+          Gộp bàn
+        </Button>
+      </div>
 
       {isFetching ? (
         <div
@@ -253,6 +267,55 @@ export default function ManageTable() {
           </div>
         </>
       )}
+
+      <Modal
+        width={1300}
+        title="Gộp bàn"
+        closable={{ "aria-label": "Custom Close Button" }}
+        open={mergedTable === true}
+        onCancel={() => setMergedTable(false)}
+        footer={null}
+        style={{ top: 40 }}
+      >
+        <>
+          <Row
+            gutter={[16, 8]}
+            style={{
+              height: 450,
+              overflowY: "auto"
+            }}
+          >
+            {listTableSessionActiveData.map((table, index) => (
+              <Fragment key={table.dining_table_id}>
+                <TableSessionItem table={table} index={index} />
+              </Fragment>
+            ))}
+          </Row>
+        </>
+      </Modal>
+
+      <Modal
+        title="Thêm bàn mới"
+        closable={{ "aria-label": "Custom Close Button" }}
+        open={addItem === true}
+        onCancel={() => setAddItem(false)}
+        okText="Tạo"
+        onOk={() => addTableForm.submit()}
+      >
+        <Form form={addTableForm} layout="vertical" onFinish={handleAddDiningTable} initialValues={{ is_active: true }}>
+          <Form.Item label="Số bàn" name="table_number" rules={[{ required: true, message: "Vui lòng nhập số bàn!" }]}>
+            <InputNumber style={{ width: "100%" }} />
+          </Form.Item>
+
+          <Form.Item label="Sức chứa" name="capacity" rules={[{ required: true, message: "Vui lòng nhập sức chứa!" }]}>
+            <InputNumber style={{ width: "100%" }} />
+          </Form.Item>
+
+          <Form.Item label="Hoạt động" name="is_active" valuePropName="checked">
+            <Switch defaultChecked />
+          </Form.Item>
+        </Form>
+      </Modal>
     </div>
   )
 }

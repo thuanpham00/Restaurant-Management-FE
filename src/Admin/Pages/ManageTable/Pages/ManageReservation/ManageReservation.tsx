@@ -43,9 +43,7 @@ export default function ManageReservation() {
       setTimeout(() => controller.abort(), 10000)
       return reservationsAPI.getList(queryConfig, controller.signal)
     },
-    retry: 0,
-    staleTime: 3 * 60 * 1000,
-    placeholderData: keepPreviousData
+    retry: 0
   })
 
   const listReservation = data?.data.data

@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Button, Col, Modal, Radio, Tag } from "antd"
+import { Col, Modal, Radio, Tag } from "antd"
 import { useState } from "react"
 import { assets } from "src/Assets/assets"
 import { DiningTable } from "src/Types/diningTable.type"
@@ -98,26 +98,22 @@ export default function ArrangementTableItem({
             </p>
           </div>
 
-          {/* ✅ Lý do nếu bàn không khả dụng */}
           {!table.table_available && table.reason && (
             <div className="absolute bottom-[-26px] left-0 right-0 bg-black/70 text-white px-3 py-2 text-center text-xs rounded-t-md">
               <span className="font-medium">Lý do:</span> <span>{table.reason}</span>
             </div>
           )}
 
-          {/* Nút xem lịch */}
-          <Button
-            type="primary"
-            className="mt-2 text-xs"
+          <button
+            className="mt-2 text-xs p-2 bg-blue-500 hover:bg-blue-400 duration-200 rounded-md"
             onClick={(e) => {
               e.stopPropagation()
               setViewCalendar(true)
             }}
           >
             Xem lịch
-          </Button>
+          </button>
 
-          {/* Modal xem lịch */}
           <Modal
             width={1200}
             title={`Lịch đặt bàn ${table.table_number} - ${table.id} | Giờ hoạt động (10:00AM - 0:00PM)`}

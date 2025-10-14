@@ -7,6 +7,7 @@ import { rolesForApi } from "src/Helpers/role_permission"
 import { useAppStore } from "src/StateGlobal/zustand"
 import ManagePromotion from "../Pages/ManageFinancial/Pages/ManagePromotion"
 import ManageInvoice from "../Pages/ManageFinancial/Pages/ManageInvoice"
+import InvoiceDetail from "../Pages/ManageFinancial/Pages/InvoiceDetail"
 
 const AdminLogin = lazy(() => import("../Pages/AdminLogin"))
 const ManageDashboard = lazy(() => import("../Pages/ManageDashboard"))
@@ -186,6 +187,14 @@ export default function useRouterAdmin() {
                   element: (
                     <Suspense>
                       <ManageInvoice />
+                    </Suspense>
+                  )
+                },
+                {
+                  path: path.AdminInvoicesDetail,
+                  element: (
+                    <Suspense>
+                      <InvoiceDetail />
                     </Suspense>
                   )
                 }

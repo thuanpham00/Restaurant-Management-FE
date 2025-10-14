@@ -17,6 +17,7 @@ export const path = {
   AdminReservations: "/admin/reservations",
   AdminPromotions: "/admin/promotions",
   AdminInvoices: "/admin/invoices",
+  AdminInvoicesDetail: "/admin/invoices/:id",
 
   AdminCustomers: "/admin/customers",
   AdminStaff: "/admin/staff",

@@ -3,6 +3,7 @@ import Http from "src/Helpers/http"
 import { DiningTable } from "src/Types/diningTable.type"
 import { queryParamConfigTableSessions } from "src/Types/queryParams.type"
 import {
+  HistoryTableSession,
   HistoryTableSessionDetail,
   TableSession,
   TableSessionDetail,
@@ -18,21 +19,30 @@ export const tableSessionAPI = {
     })
   },
 
+  updateStatusTableSession: (idTableSession: string) => {
+    return Http.put<SuccessResponse<any>>(`/api/table-sessions/${idTableSession}`)
+  },
+
   createTableSessionTypeReservation: (body: {
     customer_id: string
     employee_id: string
     reservation_id: string
     dining_table_id: string
+    pre_order: string
   }) => {
     return Http.post<SuccessResponse<any>>(`/api/table-sessions/reservation`, body)
   },
 
   getDetailTableSessionByIdTable: (idDiningTable: string) => {
-    return Http.get<SuccessResponse<TableSessionDetail>>(`/api/table-sessions/${idDiningTable}`, {})
+    return Http.get<SuccessResponse<TableSessionDetail>>(`/api/table-sessions/${idDiningTable}`)
   },
 
   getDetailTableSessionOrderByIdTable: (idDiningTable: string) => {
     return Http.get<SuccessResponse<TableSessionOrder[]>>(`/api/table-sessions/${idDiningTable}/orders`)
+  },
+
+  getListPendingTableSessionByIdTable: (idDiningTable: string) => {
+    return Http.get<SuccessResponse<HistoryTableSession[]>>(`/api/table-sessions/${idDiningTable}/session-pending`)
   },
 
   getHistoryTableSessionDetailByIdTableAndIdTableSession: (idDiningTable: string, idTableSession: string) => {

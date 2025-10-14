@@ -99,7 +99,7 @@ export default function TableSessionItem({ table, index }: { table: TableSession
             className={`absolute top-4 right-4 px-3 py-1 rounded-full text-xs font-bold shadow-md
       ${table.is_active === 1 ? "bg-green-500 text-white" : "bg-red-500 text-white"}`}
           >
-            {table.is_active === 1 ? "Mở" : "Tắt"}
+            {table.is_active === 1 ? "Mở" : "Ngừng"}
           </div>
           <h2 className="mb-4 text-xl font-semibold text-shadow">Bàn {table.table_number}</h2>
 

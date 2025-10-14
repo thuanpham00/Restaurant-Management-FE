@@ -11,4 +11,5 @@ export type Promotion = {
   is_active: boolean
   created_at: null
   updated_at: null
+  used_count: number
 }

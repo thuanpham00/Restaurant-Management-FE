@@ -17,6 +17,7 @@ import weekday from "dayjs/plugin/weekday"
 import localeData from "dayjs/plugin/localeData"
 import weekOfYear from "dayjs/plugin/weekOfYear"
 import weekYear from "dayjs/plugin/weekYear"
+import { useNavigate } from "react-router-dom"
 
 // Kích hoạt plugin
 dayjs.extend(customParseFormat)
@@ -55,6 +56,7 @@ export default function ArrangementTable({
   arrangement: Reservation | null
   setArrangement: React.Dispatch<Reservation | null>
 }) {
+  const navigate = useNavigate()
   const queryClient = useQueryClient()
   const { employeeId } = useAppStore()
   const [selectedReservation, setSelectedReservation] = useState<SelectReservation | null>(null)
@@ -92,7 +94,7 @@ export default function ArrangementTable({
         number_of_people: arrangement?.number_of_people as number
       })
     }
-  }, [arrangement, selectedReservation])
+  }, [arrangement])
 
   const [selectedTableId, setSelectedTableId] = useState<string | null>(null)
 
@@ -101,18 +103,21 @@ export default function ArrangementTable({
       customer_id,
       employee_id,
       reservation_id,
-      dining_table_id
+      dining_table_id,
+      pre_order
     }: {
       customer_id: string
       employee_id: string
       reservation_id: string
       dining_table_id: string
+      pre_order: string
     }) =>
       tableSessionAPI.createTableSessionTypeReservation({
         customer_id,
         dining_table_id,
         employee_id,
-        reservation_id
+        reservation_id,
+        pre_order
       }),
 
     onSuccess: () => {
@@ -129,13 +134,36 @@ export default function ArrangementTable({
     }
   })
 
-  const handleCreateTableSession = () => {
-    createTableSessionMutation.mutate({
-      employee_id: employeeId as string,
-      customer_id: arrangement?.customer_id as string,
-      dining_table_id: selectedTableId as string,
-      reservation_id: arrangement?.id as string
-    })
+  const handleCreateTableSession = async (type: string) => {
+    if (type === "no_pre-order") {
+      createTableSessionMutation.mutate({
+        employee_id: employeeId as string,
+        customer_id: arrangement?.customer_id as string,
+        dining_table_id: selectedTableId as string,
+        reservation_id: arrangement?.id as string,
+        pre_order: "no"
+      })
+    } else if (type === "pre-order") {
+      const res = await createTableSessionMutation.mutateAsync({
+        employee_id: employeeId as string,
+        customer_id: arrangement?.customer_id as string,
+        dining_table_id: selectedTableId as string,
+        reservation_id: arrangement?.id as string,
+        pre_order: "yes"
+      })
+      const sessionId = res?.data?.data?.table_session?.id
+      const orderId = res?.data?.data?.order_id
+      if (sessionId) {
+        navigate(`/admin/tables/${selectedTableId}/session/${sessionId}`, {
+          state: {
+            idDiningTable: selectedTableId,
+            idTableSession: sessionId,
+            prepayment: "true",
+            orderId
+          }
+        })
+      }
+    }
   }
 
   // update reservation
@@ -223,7 +251,7 @@ export default function ArrangementTable({
                   layout="vertical"
                   initialValues={{
                     id: arrangement.id,
-                    reserved_at: arrangement?.reserved_at ? dayjs.utc(arrangement.reserved_at) : null,
+                    reserved_at: arrangement?.reserved_at ? dayjs(arrangement.reserved_at) : null,
                     number_of_people: arrangement?.number_of_people,
                     full_name: arrangement?.customer?.full_name,
                     phone: arrangement?.customer?.phone,
@@ -323,9 +351,22 @@ export default function ArrangementTable({
                       background: "#fffbe6"
                     }}
                   />
-                  <Button type="primary" disabled={selectedTableId === null} onClick={handleCreateTableSession}>
+                  <button
+                    className={`p-2 py-1 px-3 rounded-md text-white duration-150 
+    ${selectedTableId === null ? "bg-gray-400 cursor-not-allowed" : "bg-blue-500 hover:bg-blue-400"}`}
+                    disabled={selectedTableId === null}
+                    onClick={() => handleCreateTableSession("no_pre-order")}
+                  >
                     Xếp bàn
-                  </Button>
+                  </button>
+                  <button
+                    className={`p-2 py-1 px-3 rounded-md text-white duration-150 
+    ${selectedTableId === null ? "bg-gray-400 cursor-not-allowed" : "bg-orange-500 hover:bg-orange-400"}`}
+                    disabled={selectedTableId === null}
+                    onClick={() => handleCreateTableSession("pre-order")}
+                  >
+                    Xếp bàn & Đặt món
+                  </button>
                 </div>
               </div>
             )}
