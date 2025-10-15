@@ -19,7 +19,7 @@ type FormData = Pick<SchemaAuthType, "email" | "password"> // kiểu dữ liệu
 const formData = schemaAuth.pick(["email", "password"]) // validate ở client
 
 export default function AdminLogin() {
-  const { setIsAuthenticated, setAvatar, setNameUser, setRole, setUserId } = useAppStore()
+  const { setIsAuthenticated, setAvatar, setNameUser, setRole, setEmployeeId } = useAppStore()
   const {
     formState: { errors },
     setError,
@@ -44,7 +44,7 @@ export default function AdminLogin() {
         setAvatar(response.data.data.user.avatar)
         setNameUser(response.data.data.user.name)
         setRole(response.data.data.user.role.name)
-        setUserId(response.data.data.user.id)
+        setEmployeeId(response.data.data.user.employee_profile.id)
       },
       onError: (error) => {
         // lỗi từ server trả về

@@ -5,4 +5,7 @@ export type DiningTable = {
   id: string
   updated_at: string
   created_at: string
+
+  table_available?: string
+  reason?: string
 }

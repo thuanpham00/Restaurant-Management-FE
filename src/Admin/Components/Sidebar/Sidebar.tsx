@@ -50,7 +50,7 @@ interface MenuConfig {
 export default function Sidebar() {
   const location = useLocation()
   const navigate = useNavigate()
-  const { setIsAuthenticated, setAvatar, setNameUser, setRole, setUserId } = useAppStore()
+  const { setIsAuthenticated, setAvatar, setNameUser, setRole, setEmployeeId } = useAppStore()
 
   // Centralized menu configuration with meaningful keys
   const menuConfig: MenuConfig = {
@@ -273,7 +273,7 @@ export default function Sidebar() {
         setNameUser(null)
         setRole(null)
         setAvatar(null)
-        setUserId(null)
+        setEmployeeId(null)
 
         navigate(path.AdminLogin)
       }

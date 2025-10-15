@@ -9,6 +9,17 @@
   border: 1px solid #dedede;
 }
 
+.table-detail .ant-collapse .ant-collapse-item:first-child .ant-collapse-header {
+  border: 1px solid #dedede;
+  border-bottom-right-radius: 0px;
+  border-bottom-left-radius: 0px;
+}
+
+.table-detail .ant-collapse .ant-collapse-item .ant-collapse-header {
+  border: 1px solid #dedede;
+  border-top: 0px;
+}
+
 .table-detail .ant-collapse .ant-collapse-item:last-child .ant-collapse-header {
   border: 1px solid #dedede;
   border-bottom-left-radius: 8px;

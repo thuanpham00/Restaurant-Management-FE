@@ -30,5 +30,17 @@ export type queryParamConfigMenu = queryParamConfig & {
 }
 
 export type queryParamConfigReservation = queryParamConfig & {
+  customer_name?: string
+  customer_phone?: string
+  date_time?: string
+  reserved_at?: string
+}
+
+export type queryParamConfigPromotion = queryParamConfig & {
+  code?: string
+  desc?: string
+  discount_percent?: string
   is_active?: string
 }
+
+export type queryParamConfigInvoice = queryParamConfig & {}

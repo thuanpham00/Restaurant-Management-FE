@@ -1,179 +1,135 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import { Button, Modal } from "antd"
+import { NotebookTabs } from "lucide-react"
+import { useEffect, useRef, useState } from "react"
+import FullCalendar from "@fullcalendar/react"
+import timeGridPlugin from "@fullcalendar/timegrid"
+import interactionPlugin from "@fullcalendar/interaction"
 import { keepPreviousData, useQuery } from "@tanstack/react-query"
-import { Button, Modal, Spin, Table } from "antd"
-import { History, NotebookTabs } from "lucide-react"
-import { useState } from "react"
-import { Link } from "react-router-dom"
-import { tableSessionAPI } from "src/Apis/Admin"
-import { HistoryTableSession as HistoryTableSessionType } from "src/Types/tableSession.type"
-import { renderSessionStatus, renderSessionType } from "../../Pages/TableDetail/TableDetail"
+import { diningTableAPI } from "src/Apis"
+import { useNavigate } from "react-router-dom"
+import { toast } from "react-toastify"
 
-export default function HistoryTableSession({ idDiningTable }: { idDiningTable: string }) {
-  const [isModalOpen, setIsModalOpen] = useState(false)
-  const [pagination, setPagination] = useState({ current: 1, pageSize: 5 })
-  const [typeSession, setTypeSession] = useState("")
-  const showModal = (type_session: string) => {
-    setTypeSession(type_session)
-    setIsModalOpen(true)
-  }
+export default function HistoryTableSession({
+  idDiningTable,
+  tableNumber
+}: {
+  idDiningTable: string
+  tableNumber: number
+}) {
+  const calendarRef = useRef<any>(null)
+  const navigate = useNavigate()
+  const [viewCalendar, setViewCalendar] = useState(false)
 
-  const { data, isFetching } = useQuery({
-    queryKey: ["listHistoryTableSession", idDiningTable],
-    queryFn: () => {
-      const controller = new AbortController()
-      setTimeout(() => controller.abort(), 10000)
-      return tableSessionAPI.getListHistoryTableSessionByIdTable(idDiningTable)
-    },
-    retry: 0,
-    enabled: Boolean(isModalOpen),
-    staleTime: 3 * 60 * 1000,
-    placeholderData: keepPreviousData
-  })
-
-  const { data: dataListPendingTableSession, isFetching: isFetchingListPendingTableSession } = useQuery({
-    queryKey: ["listPendingTableSession", idDiningTable],
-    queryFn: () => {
-      const controller = new AbortController()
-      setTimeout(() => controller.abort(), 10000)
-      return tableSessionAPI.getListPendingTableSessionByIdTable(idDiningTable)
-    },
-    retry: 0,
-    enabled: Boolean(isModalOpen),
-    staleTime: 3 * 60 * 1000,
-    placeholderData: keepPreviousData
-  })
-
-  const listHistoryTableSession = (data?.data?.data || []) as HistoryTableSessionType[]
-  const listPendingTableSession = (dataListPendingTableSession?.data?.data || []) as HistoryTableSessionType[]
-
-  const columns = [
-    {
-      title: <div className="text-center">Mã phiên</div>,
-      dataIndex: "session_id",
-      key: "session_id",
-      render: (val: string) => <div className="text-center">{val}</div>
-    },
-    {
-      title: <div className="text-center">Số bàn</div>,
-      dataIndex: "table_number",
-      key: "table_number",
-      render: (val: string) => <div className="text-center">{val}</div>
-    },
-    {
-      title: "Loại phiên",
-      dataIndex: "session_type",
-      key: "session_type",
-      render: (val: number) => <div className="text-center">{renderSessionType(val)}</div>
-    },
-    {
-      title: <div className="text-center">Trạng thái phiên</div>,
-      dataIndex: "session_status",
-      key: "session_status",
-      render: (val: number) => <div className="text-center">{renderSessionStatus(val)}</div>
-    },
-    {
-      title: <div className="text-center">Bắt đầu</div>,
-      dataIndex: "started_at",
-      key: "started_at",
-      render: (val: string | null) => <div className="text-center">{val || "-"}</div>
-    },
-    {
-      title: <div className="text-center">Kết thúc</div>,
-      dataIndex: "ended_at",
-      key: "ended_at",
-      render: (val: string | null) => <div className="text-center">{val || "-"}</div>
-    },
-    {
-      title: <div className="text-center">Số người đặt</div>,
-      dataIndex: ["reservation", "number_of_people"],
-      key: "number_of_people",
-      render: (val: string) => <div className="text-center">{val}</div>
-    },
-    {
-      title: <div className="text-center">Tên người đặt</div>,
-      dataIndex: ["reservation", "customer_name"],
-      key: "customer_name",
-      render: (val: string) => <div className="text-center">{val}</div>
-    },
-    {
-      title: <div className="text-center">Hành động</div>,
-      key: "action",
-      render: (_: any, record: any) => (
-        <Link
-          to={`/admin/tables/${idDiningTable}/session/${record.session_id}`}
-          state={{
-            idDiningTable: idDiningTable,
-            idTableSession: record.session_id
-          }}
-          className="text-blue-500 text-center block"
-        >
-          Chi tiết
-        </Link>
-      )
+  useEffect(() => {
+    if (viewCalendar && calendarRef.current) {
+      setTimeout(() => {
+        calendarRef.current.getApi().updateSize()
+      }, 300) // đợi modal mở animation xong
     }
-  ]
+  }, [viewCalendar])
+
+  const { data } = useQuery({
+    queryKey: ["listReservationTableByIdTable", idDiningTable],
+    queryFn: () => {
+      const controller = new AbortController()
+      setTimeout(() => controller.abort(), 10000)
+      return diningTableAPI.getListReservationTableSessionByIdTable(idDiningTable)
+    },
+    retry: 0,
+    staleTime: 3 * 60 * 1000,
+    placeholderData: keepPreviousData,
+    enabled: Boolean(viewCalendar)
+  })
+
+  const listReservationFromTable = data?.data.data
+
+  const calendarEvents = listReservationFromTable?.map((r: any) => ({
+    title: `${r.customer_name || "Khách"} - ${r.number_of_people} người`,
+    start: r.reserved_at,
+    end: r.ended_at || r.reserved_at,
+    color:
+      r.table_session_status === 1
+        ? "#4CAF50" // Active
+        : r.table_session_status === 2
+          ? "#2196F3" // Completed
+          : r.table_session_status === 3
+            ? "#f44336" // Cancelled
+            : "#ff9800", // Pending
+    extendedProps: {
+      session_id: r.table_session_id,
+      status_table_session: r.table_session_status
+    }
+  }))
+
+  const handleEventClick = (info: any) => {
+    const event = info.event
+    if (event.extendedProps.status_table_session === 1) {
+      toast.info("Phiên đang phục vụ", { autoClose: 1500 })
+      setViewCalendar(false)
+    } else {
+      navigate(`/admin/tables/${idDiningTable}/session/${event.extendedProps.session_id}`, {
+        state: {
+          idDiningTable,
+          idTableSession: event.extendedProps.session_id
+        }
+      })
+    }
+  }
 
   return (
     <div className="flex gap-2">
-      <Button
-        type="primary"
-        icon={<History size={16} />}
-        style={{
-          backgroundColor: "#ef4444",
-          borderColor: "#ef4444",
-          width: "100%"
-        }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.backgroundColor = "#f87171"
-          e.currentTarget.style.borderColor = "#f87171"
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.backgroundColor = "#ef4444"
-          e.currentTarget.style.borderColor = "#ef4444"
-        }}
-        onClick={() => showModal("history")}
-      >
-        Lịch sử phiên bàn
-      </Button>
-
       <Button
         type="primary"
         icon={<NotebookTabs size={16} />}
         style={{
           width: "140px"
         }}
-        onClick={() => showModal("pending")}
+        onClick={() => setViewCalendar(true)}
       >
-        Phiên bàn chờ
+        Lịch đặt bàn
       </Button>
 
       <Modal
-        title="Lịch sử phiên bàn"
+        width={1200}
+        title={`Lịch đặt bàn ${tableNumber} - ${idDiningTable} | Giờ hoạt động (10:00AM - 0:00PM)`}
         closable={{ "aria-label": "Custom Close Button" }}
-        open={isModalOpen}
-        onCancel={() => setIsModalOpen(false)}
-        footer={false}
-        width={1300}
+        open={viewCalendar === true}
+        onCancel={() => setViewCalendar(false)}
+        footer={null}
+        style={{ top: 30 }}
       >
-        {isFetching || isFetchingListPendingTableSession ? (
-          <div className="flex justify-center items-center py-10">
-            <Spin size="large" tip="Đang tải dữ liệu...">
-              <div style={{ minHeight: 100, width: 300, marginTop: 10 }} />
-            </Spin>
-          </div>
-        ) : (
-          <Table
-            columns={columns}
-            dataSource={typeSession === "history" ? listHistoryTableSession : listPendingTableSession}
-            rowKey="session_id"
-            pagination={{
-              current: pagination.current,
-              pageSize: pagination.pageSize,
-              total: typeSession === "history" ? listHistoryTableSession.length : listPendingTableSession.length,
-              onChange: (page, pageSize) => setPagination({ current: page, pageSize })
-            }}
-          />
-        )}
+        <div className="flex items-center gap-3 mb-3">
+          <strong>Ghi chú:</strong>
+          <span className="flex items-center gap-2">
+            <div className="w-4 h-4 bg-[#2196F3]"></div> <div>Phiên hoàn thành</div>
+          </span>
+          <span className="flex items-center gap-2">
+            <div className="w-4 h-4 bg-[#4CAF50]"></div> <div>Phiên đang phục vụ</div>
+          </span>
+          <span className="flex items-center gap-2">
+            <div className="w-4 h-4 bg-[#ff9800]"></div> <div>Phiên chờ</div>
+          </span>
+          <span className="flex items-center gap-2">
+            <div className="w-4 h-4 bg-[#f44336]"></div> <div>Phiên đã hủy</div>
+          </span>
+        </div>
+
+        <FullCalendar
+          ref={calendarRef}
+          selectMirror={true} // thêm dòng này
+          plugins={[timeGridPlugin, interactionPlugin]}
+          initialView="timeGridWeek"
+          allDaySlot={false}
+          slotMinTime="08:00:00"
+          slotMaxTime="22:00:00"
+          selectable={true}
+          height={500}
+          scrollTime="07:00:00"
+          expandRows={true}
+          events={calendarEvents}
+          eventClick={handleEventClick}
+        />
       </Modal>
     </div>
   )

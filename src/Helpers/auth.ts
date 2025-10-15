@@ -30,12 +30,12 @@ export const getAvatarImageFromLS = () => {
   return localStorage.getItem("avatar") || ""
 }
 
-export const setUserIdToLS = (userId: string) => {
-  return localStorage.setItem("userId", userId)
+export const setEmployeeIdToLS = (employeeId: string) => {
+  return localStorage.setItem("employeeId", employeeId)
 }
 
-export const getUserIdFromLS = () => {
-  return localStorage.getItem("userId") || ""
+export const getEmployeeIdFromLS = () => {
+  return localStorage.getItem("employeeId") || ""
 }
 
 export const LocalStorageEventTarget = new EventTarget() // tạo ra 1 event target để lắng nghe sự kiện thay đổi LocalStorage
@@ -45,7 +45,7 @@ export const clearLS = () => {
   localStorage.removeItem("name_user")
   localStorage.removeItem("role")
   localStorage.removeItem("avatar")
-  localStorage.removeItem("userId")
+  localStorage.removeItem("employeeId")
   const ClearLSEvent = new Event("ClearLS")
   LocalStorageEventTarget.dispatchEvent(ClearLSEvent) // phát sự kiện
 }

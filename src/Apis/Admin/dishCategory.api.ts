@@ -5,27 +5,27 @@ import { PaginatedResponse, SuccessResponse } from "src/Types/utils.type"
 
 export const dishCategoryAPI = {
   getList: (params: queryParamConfigCategoryDish, signal: AbortSignal) => {
-    return Http.get<SuccessResponse<PaginatedResponse<CategoryDishes>>>(`/api/auth/dish-categories`, {
+    return Http.get<SuccessResponse<PaginatedResponse<CategoryDishes>>>(`/api/dish-categories`, {
       params,
       signal
     })
   },
 
   create: (data: { name: string; desc?: string }) => {
-    return Http.post(`/api/auth/dish-categories`, data)
+    return Http.post(`/api/dish-categories`, data)
   },
 
   update: (id: string, data: { name?: string; desc?: string }) => {
-    return Http.put(`/api/auth/dish-categories/${id}`, data)
+    return Http.put(`/api/dish-categories/${id}`, data)
   },
 
   delete: (id: string) => {
-    return Http.delete(`/api/auth/dish-categories/${id}`)
+    return Http.delete(`/api/dish-categories/${id}`)
   },
 
   getListNameCategory: (signal: AbortSignal) => {
     return Http.get<SuccessResponse<{ id: string; name: string }[]>>(
-      `/api/auth/dish-categories/get-name-list-dish-category`,
+      `/api/dish-categories/get-name-list-dish-category`,
       {
         signal
       }
