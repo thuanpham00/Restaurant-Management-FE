@@ -64,7 +64,7 @@ export default function Sidebar() {
     categoryDish: { name: "Thể loại món", icon: ClipboardList, path: path.AdminCategoryDish },
     dish: { name: "Danh sách món", icon: Ham, path: path.AdminDish },
     menu: { name: "Menu", icon: BookOpen, path: path.AdminMenu },
-    ingredients: { name: "Danh mục nguyên liệu", icon: ShoppingBasket, path: path.AdminIngredients },
+    ingredients: { name: "Nguyên liệu", icon: ShoppingBasket, path: path.AdminIngredients },
     suppliers: { name: "Nhà cung cấp", icon: Truck, path: path.AdminSuppliers },
     warehouseIn: { name: "Nhập kho", icon: FileInput, path: path.AdminWarehouseIn },
     warehouseOut: { name: "Xuất kho", icon: FileOutput, path: path.AdminWarehouseOut },

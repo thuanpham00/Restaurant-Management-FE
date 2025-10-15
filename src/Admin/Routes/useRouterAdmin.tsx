@@ -22,6 +22,11 @@ const ManageShift = lazy(() => import("../Pages/ManageShift"))
 const ManagePayroll = lazy(() => import("../Pages/ManagePayroll"))
 const PayrollDetail = lazy(() => import("../Pages/ManagePayroll/PayrollDetail"))
 const ManageReservation = lazy(() => import("../Pages/ManageTable/Pages/ManageReservation"))
+const ManageIngredient = lazy(() => import("../Pages/ManageIngredient"))
+const ManageSupplier = lazy(() => import("../Pages/ManageSupplier"))
+const ManageStockImport = lazy(() => import("../Pages/ManageStockImport"))
+const ManageStockExport = lazy(() => import("../Pages/ManageStockExport"))
+const ManageStockLoss = lazy(() => import("../Pages/ManageStockLoss"))
 const ManageRoles = lazy(() => import("../Pages/ManageRoles"))
 const ManagePermissionMatrix = lazy(() => import("../Pages/ManagePermissionMatrix"))
 
@@ -170,6 +175,46 @@ export default function useRouterAdmin() {
                   element: (
                     <Suspense>
                       <PayrollDetail />
+                    </Suspense>
+                  )
+                },
+                {
+                  path: path.AdminIngredients,
+                  element: (
+                    <Suspense>
+                      <ManageIngredient />
+                    </Suspense>
+                  )
+                },
+                {
+                  path: path.AdminSuppliers,
+                  element: (
+                    <Suspense>
+                      <ManageSupplier />
+                    </Suspense>
+                  )
+                },
+                {
+                  path: path.AdminWarehouseIn,
+                  element: (
+                    <Suspense>
+                      <ManageStockImport />
+                    </Suspense>
+                  )
+                },
+                {
+                  path: path.AdminWarehouseOut,
+                  element: (
+                    <Suspense>
+                      <ManageStockExport />
+                    </Suspense>
+                  )
+                },
+                {
+                  path: path.AdminInventoryLoss,
+                  element: (
+                    <Suspense>
+                      <ManageStockLoss />
                     </Suspense>
                   )
                 },
