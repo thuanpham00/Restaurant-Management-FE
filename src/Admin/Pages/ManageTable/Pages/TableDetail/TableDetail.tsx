@@ -46,6 +46,7 @@ import PaymentDetailModal from "../../Components/PaymentDetailModal"
 import PendingTableSessionSelector from "../../Components/PendingTableSessionSelector"
 import { invoicePaymentAPI } from "src/Apis/Admin/invoicePayment.api"
 import { isError422 } from "src/Helpers/utils"
+import { useAppStore } from "src/StateGlobal/zustand"
 
 const { Search } = Input
 const { Title } = Typography
@@ -152,8 +153,9 @@ const renderOrderStatus = (status: number) => {
 const orderItemStatusOptions = [
   { label: "Đã gọi món", value: 0 },
   { label: "Đang chế biến", value: 1 },
-  { label: "Đã phục vụ", value: 2 },
-  { label: "Đã Hủy", value: 3 }
+  { label: "Đã chế biến", value: 2 },
+  { label: "Đã phục vụ", value: 3 },
+  { label: "Đã Hủy", value: 4 }
 ]
 
 export const statusText: Record<number, string> = {
@@ -173,6 +175,7 @@ export const statusColor: Record<number, "default" | "success" | "warning" | "er
 const { Panel } = Collapse
 
 export default function TableDetail() {
+  const { employeeId } = useAppStore()
   const queryClient = useQueryClient()
 
   const { state } = useLocation()
@@ -280,8 +283,11 @@ export default function TableDetail() {
   }
 
   const updateListOrderItemMutation = useMutation({
-    mutationFn: (item: Record<string, { status: number; quantity: number; notes: string }>) => {
-      return orderItemsAPI.updateListOrderItem(item)
+    mutationFn: (body: {
+      items: Record<string, { status: number; quantity: number; notes: string }>
+      invoice_id?: string
+    }) => {
+      return orderItemsAPI.updateListOrderItem(body.items, body.invoice_id)
     },
     onSuccess: () => {
       toast.success("Cập nhật order thành công!", {
@@ -319,7 +325,23 @@ export default function TableDetail() {
   })
 
   const handleUpdateOrderItemList = () => {
-    updateListOrderItemMutation.mutate(updateOrderItemList)
+    if (detailInvoice) {
+      updateListOrderItemMutation.mutate(
+        {
+          items: updateOrderItemList,
+          invoice_id: detailInvoice.id
+        },
+        {
+          onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["detailDetailInvoice", dataTableSessionDetail?.session_id] })
+          }
+        }
+      )
+    } else {
+      updateListOrderItemMutation.mutate({
+        items: updateOrderItemList
+      })
+    }
   }
 
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -569,6 +591,33 @@ export default function TableDetail() {
     return total
   }, [dataTableSessionOrder?.total_amount, totalPercentage, vat])
 
+  const createTableSessionMutation = useMutation({
+    mutationFn: ({ employee_id, dining_table_id }: { employee_id: string; dining_table_id: string }) =>
+      tableSessionAPI.createTableSessionTypeOffline({
+        dining_table_id,
+        employee_id
+      }),
+
+    onSuccess: () => {
+      toast.success("Tạo phiên bàn offline thành công", {
+        autoClose: 1500
+      })
+      queryClient.invalidateQueries({ queryKey: ["listPendingTableSession", idDiningTable] })
+    },
+    onError: (error: any) => {
+      toast.error(error?.response?.data?.message || "Cập nhật thất bại ❌", {
+        autoClose: 1500
+      })
+    }
+  })
+
+  const handleCreateTableSession = async () => {
+    createTableSessionMutation.mutate({
+      employee_id: employeeId as string,
+      dining_table_id: idDiningTable as string
+    })
+  }
+
   return (
     <div className="table-detail">
       <Helmet>
@@ -595,7 +644,6 @@ export default function TableDetail() {
               type="primary"
               icon={<HandCoins />}
               onClick={() => {
-                console.log(dataTableSessionOrder?.items.length)
                 if (dataTableSessionOrder?.items) {
                   setShowInvoice(true)
                 } else {
@@ -640,6 +688,7 @@ export default function TableDetail() {
                 e.currentTarget.style.backgroundColor = "#f56a00"
                 e.currentTarget.style.borderColor = "#f56a00"
               }}
+              onClick={handleCreateTableSession}
             >
               Tạo phiên bàn mới (Offline)
             </Button>
@@ -1091,7 +1140,7 @@ export default function TableDetail() {
                   >
                     <Table
                       bordered
-                      dataSource={dataTableSessionOrder?.items}
+                      dataSource={dataTableSessionOrder?.items.filter((item) => item.item_status !== 4)}
                       columns={[
                         {
                           title: "Món ăn",

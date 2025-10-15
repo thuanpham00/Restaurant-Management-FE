@@ -21,9 +21,17 @@ export const orderItemsAPI = {
     return Http.post<SuccessResponse<any>>(`/api/order-items/add-order`, body)
   },
 
-  updateListOrderItem: (items: Record<string, { status: number; quantity: number; notes: string }>) => {
+  updateListOrderItem: (
+    items: Record<string, { status: number; quantity: number; notes: string }>,
+    invoice_id?: string
+  ) => {
     return Http.put<SuccessResponse<HistoryTableSessionDetail>>(`/api/order-items/update-order`, {
-      items
+      items,
+      invoice_id
     })
+  },
+
+  delete: (orderItemId: string, orderId: string) => {
+    return Http.delete(`/api/order-items/${orderItemId}?order_id=${orderId}`)
   }
 }

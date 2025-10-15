@@ -44,7 +44,7 @@ export default function AdminLogin() {
         setAvatar(response.data.data.user.avatar)
         setNameUser(response.data.data.user.name)
         setRole(response.data.data.user.role.name)
-        setEmployeeId(response.data.data.user.role.id)
+        setEmployeeId(response.data.data.user.employee_profile.id)
       },
       onError: (error) => {
         // lỗi từ server trả về

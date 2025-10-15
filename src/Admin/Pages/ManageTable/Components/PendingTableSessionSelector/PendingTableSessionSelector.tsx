@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query"
-import { Button, Card, List, Modal, Spin } from "antd"
-import { Clock } from "lucide-react"
+import { Button, Card, List, Modal, Spin, Tag } from "antd"
+import { CalendarDays, Clock, Monitor } from "lucide-react"
 import { Link } from "react-router-dom"
 import { toast } from "react-toastify"
 import { Fragment } from "react/jsx-runtime"
@@ -69,55 +69,109 @@ export default function PendingTableSessionSelector({
             <List
               grid={{ gutter: 16, column: 3 }}
               dataSource={listPendingTableSession}
-              renderItem={(session) => (
-                <List.Item key={session.session_id}>
-                  <Card
-                    title={`Bàn ${session.table_number} - Phiên ${session.session_id}`}
-                    extra={<Clock size={16} className="text-gray-500" />}
-                    // onClick={() => onSelectSession(session.session_id)}
-                    className="cursor-pointer"
-                  >
-                    <p>Số người: {session.reservation?.number_of_people || "N/A"}</p>
-                    <p>Khách: {session.reservation?.customer_name || "Khách vãng lai"}</p>
-                    <p>
-                      Ngày đặt:{" "}
-                      {session.reservation?.reserved_at
-                        ? new Date(session.reservation.reserved_at).toLocaleString()
-                        : "N/A"}
-                    </p>
-                    <div className="flex items-center justify-end gap-2 mt-2">
-                      <Link
-                        to={`/admin/tables/${idDiningTable}/session/${session.session_id}`}
-                        state={{
-                          idDiningTable,
-                          idTableSession: session.session_id
-                        }}
-                        style={{ padding: 0, color: "#ef233c", display: "block" }}
-                      >
-                        Chi tiết
-                      </Link>
-                      <Button
-                        type="primary"
-                        style={{
-                          backgroundColor: "#38b000", // xanh lá tươi
-                          borderColor: "#38b000"
-                        }}
-                        onClick={() => handleServeClick(session.session_id)}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.backgroundColor = "#70d444"
-                          e.currentTarget.style.borderColor = "#70d444"
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.backgroundColor = "#38b000"
-                          e.currentTarget.style.borderColor = "#38b000"
-                        }}
-                      >
-                        Phục vụ
-                      </Button>
-                    </div>
-                  </Card>
-                </List.Item>
-              )}
+              renderItem={(session) => {
+                // 🟩 Xác định kiểu phiên bàn
+                let sessionTypeTag = <Tag color="default">Không xác định</Tag>
+
+                if (session.session_type === 0) {
+                  sessionTypeTag = (
+                    <Tag
+                      color="blue"
+                      icon={<Monitor size={14} />}
+                      style={{
+                        border: "1px solid #0d6efd",
+                        background: "rgba(13, 110, 253, 0.1)",
+                        color: "#0d6efd",
+                        fontWeight: 500,
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 4,
+                        padding: "2px 8px",
+                        borderRadius: 8
+                      }}
+                    >
+                      Offline
+                    </Tag>
+                  )
+                } else if (session.session_type === 2) {
+                  sessionTypeTag = (
+                    <Tag
+                      color="orange"
+                      icon={<CalendarDays size={14} />}
+                      style={{
+                        fontWeight: 500,
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 4,
+                        padding: "2px 8px",
+                        borderRadius: 8
+                      }}
+                    >
+                      Đặt trước
+                    </Tag>
+                  )
+                }
+
+                return (
+                  <List.Item key={session.session_id}>
+                    <Card
+                      title={
+                        <div className="flex items-center justify-between">
+                          <span>
+                            Bàn {session.table_number} - Phiên {session.session_id}
+                          </span>
+                        </div>
+                      }
+                      extra={<Clock size={16} className="text-gray-500" />}
+                      className="cursor-pointer"
+                    >
+                      <div className="flex items-center gap-4">
+                        <span>Loại phiên: </span>
+                        {sessionTypeTag}
+                      </div>
+                      <p>Số người: {session.reservation?.number_of_people || "N/A"}</p>
+                      <p>Khách: {session.reservation?.customer_name || "Khách vãng lai"}</p>
+                      <p>
+                        Ngày đặt:{" "}
+                        {session.reservation?.reserved_at
+                          ? new Date(session.reservation.reserved_at).toLocaleString()
+                          : "N/A"}
+                      </p>
+
+                      <div className="flex items-center justify-end gap-2 mt-2">
+                        <Link
+                          to={`/admin/tables/${idDiningTable}/session/${session.session_id}`}
+                          state={{
+                            idDiningTable,
+                            idTableSession: session.session_id
+                          }}
+                          style={{ padding: 0, color: "#ef233c", display: "block" }}
+                        >
+                          Chi tiết
+                        </Link>
+                        <Button
+                          type="primary"
+                          style={{
+                            backgroundColor: "#38b000",
+                            borderColor: "#38b000"
+                          }}
+                          onClick={() => handleServeClick(session.session_id)}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.backgroundColor = "#70d444"
+                            e.currentTarget.style.borderColor = "#70d444"
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.backgroundColor = "#38b000"
+                            e.currentTarget.style.borderColor = "#38b000"
+                          }}
+                        >
+                          Phục vụ
+                        </Button>
+                      </div>
+                    </Card>
+                  </List.Item>
+                )
+              }}
             />
           )}
         </Fragment>

@@ -20,6 +20,7 @@ import { omit } from "lodash"
 import NavigateBack from "src/Admin/Components/NavigateBack"
 import TableSessionItem from "../../Components/TableSessionItem"
 import { TableSession } from "src/Types/tableSession.type"
+import MergeIntoTable from "../../Components/MergeIntoTable"
 
 export default function ManageTable() {
   const navigate = useNavigate()
@@ -268,31 +269,11 @@ export default function ManageTable() {
         </>
       )}
 
-      <Modal
-        width={1300}
-        title="Gộp bàn"
-        closable={{ "aria-label": "Custom Close Button" }}
-        open={mergedTable === true}
-        onCancel={() => setMergedTable(false)}
-        footer={null}
-        style={{ top: 40 }}
-      >
-        <>
-          <Row
-            gutter={[16, 8]}
-            style={{
-              height: 450,
-              overflowY: "auto"
-            }}
-          >
-            {listTableSessionActiveData.map((table, index) => (
-              <Fragment key={table.dining_table_id}>
-                <TableSessionItem table={table} index={index} />
-              </Fragment>
-            ))}
-          </Row>
-        </>
-      </Modal>
+      <MergeIntoTable
+        listTableSessionActiveData={listTableSessionActiveData}
+        mergedTable={mergedTable}
+        setMergedTable={setMergedTable}
+      />
 
       <Modal
         title="Thêm bàn mới"

@@ -121,8 +121,8 @@ export default function HistoryTableSession({
           plugins={[timeGridPlugin, interactionPlugin]}
           initialView="timeGridWeek"
           allDaySlot={false}
-          slotMinTime="10:00:00"
-          slotMaxTime="24:00:00"
+          slotMinTime="08:00:00"
+          slotMaxTime="22:00:00"
           selectable={true}
           height={500}
           scrollTime="07:00:00"

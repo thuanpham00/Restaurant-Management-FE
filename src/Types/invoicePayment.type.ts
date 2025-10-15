@@ -18,6 +18,7 @@ export type InvoicePaymentPayload = {
 }
 
 export type InvoicePaymentUpdatePayload = {
+  table_session_id: string
   amount: number
   method: number
   status_payment: number

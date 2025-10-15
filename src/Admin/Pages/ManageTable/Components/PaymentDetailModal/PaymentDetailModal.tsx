@@ -64,6 +64,7 @@ const PaymentDetailModal = ({
   const handleInvoicePayment = () => {
     if (detailInvoice) {
       const payload: InvoicePaymentUpdatePayload = {
+        table_session_id: table_session_id,
         amount: Number(detailInvoice.final_amount) - Number(detailInvoice?.payments[0].amount), // lấy tổng tiền hóa đơn - tiền đã thanh toán lần đầu
         method: paymentMethod,
         status_payment: 1,

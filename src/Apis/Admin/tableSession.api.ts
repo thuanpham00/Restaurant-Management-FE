@@ -33,6 +33,10 @@ export const tableSessionAPI = {
     return Http.post<SuccessResponse<any>>(`/api/table-sessions/reservation`, body)
   },
 
+  createTableSessionTypeOffline: (body: { employee_id: string; dining_table_id: string }) => {
+    return Http.post<SuccessResponse<any>>(`/api/table-sessions/offline`, body)
+  },
+
   getDetailTableSessionByIdTable: (idDiningTable: string) => {
     return Http.get<SuccessResponse<TableSessionDetail>>(`/api/table-sessions/${idDiningTable}`)
   },

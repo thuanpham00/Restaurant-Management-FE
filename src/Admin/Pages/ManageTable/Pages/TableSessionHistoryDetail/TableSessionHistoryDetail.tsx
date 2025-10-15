@@ -29,7 +29,7 @@ import { Helmet } from "react-helmet-async"
 import NavigateBack from "src/Admin/Components/NavigateBack"
 import { assets } from "src/Assets/assets"
 import { renderSessionStatus, renderSessionType, statusColor, statusText } from "../TableDetail/TableDetail"
-import { ChefHat, HandCoins } from "lucide-react"
+import { ChefHat, HandCoins, Trash } from "lucide-react"
 import { Fragment, useEffect, useMemo, useState } from "react"
 import { toast } from "react-toastify"
 import PromotionForm from "../../Components/PromotionForm"
@@ -68,7 +68,7 @@ export default function TableSessionHistoryDetail() {
     enabled: Boolean(idDiningTable) && Boolean(idTableSession)
   })
   const dataHistoryTableSessionDetail = data?.data?.data as HistoryTableSessionDetail
-
+  console.log(dataHistoryTableSessionDetail)
   const { data: dataDetailInvoice, isError: isErrorInvoice } = useQuery({
     queryKey: ["detailDetailInvoice", idTableSession],
     queryFn: () => {
@@ -80,6 +80,17 @@ export default function TableSessionHistoryDetail() {
     enabled: Boolean(idDiningTable) && Boolean(idTableSession)
   })
   const detailInvoice = dataDetailInvoice?.data.data
+  console.log(detailInvoice)
+  const deleteMenuMutation = useMutation({
+    mutationFn: (body: { idOrder: string; idOrderItem: string }) =>
+      orderItemsAPI.delete(body.idOrderItem, body.idOrder),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["detailTableSession", idDiningTable, idTableSession] })
+      toast.success("Xóa order thành công!", {
+        autoClose: 1500
+      })
+    }
+  })
 
   const orderColumns: ColumnsType<any> = [
     {
@@ -134,6 +145,26 @@ export default function TableSessionHistoryDetail() {
       title: "Ghi chú",
       dataIndex: "notes",
       key: "notes"
+    },
+    {
+      title: "Thao tác",
+      render: (_: any, item: any) => (
+        <div className="flex items-center justify-center">
+          <Button
+            type="primary"
+            danger
+            disabled={detailInvoice !== undefined}
+            onClick={() => {
+              deleteMenuMutation.mutate({
+                idOrderItem: item.order_item_id,
+                idOrder: dataHistoryTableSessionDetail.orders[0].order_id
+              })
+            }}
+          >
+            <Trash size={14} />
+          </Button>
+        </div>
+      )
     }
   ]
 
@@ -424,7 +455,7 @@ export default function TableSessionHistoryDetail() {
           </Descriptions>
 
           {/* Thông tin reservation */}
-          {dataHistoryTableSessionDetail.reservation && (
+          {dataHistoryTableSessionDetail.session_type === 2 && dataHistoryTableSessionDetail.reservation && (
             <Descriptions
               title="Thông tin đặt trước"
               bordered
@@ -485,7 +516,7 @@ export default function TableSessionHistoryDetail() {
               <div className="mt-2 overflow-x-auto">
                 <Table
                   rowKey="order_item_id"
-                  dataSource={order.items}
+                  dataSource={order.items.filter((item) => item.status !== 4)}
                   columns={orderColumns}
                   pagination={false}
                   bordered
