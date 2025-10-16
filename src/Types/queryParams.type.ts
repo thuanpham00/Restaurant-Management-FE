@@ -43,4 +43,8 @@ export type queryParamConfigPromotion = queryParamConfig & {
   is_active?: string
 }
 
-export type queryParamConfigInvoice = queryParamConfig & {}
+export type queryParamConfigInvoice = queryParamConfig & {
+  table_session_id?: string
+  status?: string
+  customer_phone?: string
+}

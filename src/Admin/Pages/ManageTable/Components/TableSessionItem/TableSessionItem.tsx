@@ -10,13 +10,13 @@ export default function TableSessionItem({
   table,
   index,
   type_show,
-  mergeTableSessionSelected,
-  setMergeTableSessionSelected
+  mergeTableSessionSelected = [],
+  setMergeTableSessionSelected = () => {}
 }: {
   table: TableSession
   index: number
-  mergeTableSessionSelected: any[]
-  setMergeTableSessionSelected: React.Dispatch<React.SetStateAction<any[]>>
+  mergeTableSessionSelected?: any[]
+  setMergeTableSessionSelected?: React.Dispatch<React.SetStateAction<any[]>>
   type_show?: string
 }) {
   const getStatusTag = (table: TableSession) => {

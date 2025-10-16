@@ -1,5 +1,5 @@
 import { keepPreviousData, useQuery } from "@tanstack/react-query"
-import { Empty, Pagination, Spin, Table, Tag } from "antd"
+import { Empty, Pagination, Space, Spin, Table, Tag, Typography } from "antd"
 import { ColumnsType } from "antd/es/table"
 import dayjs from "dayjs"
 import { isUndefined, omitBy } from "lodash"
@@ -11,6 +11,9 @@ import { invoicePaymentAPI } from "src/Apis/Admin/invoicePayment.api"
 import useQueryParams from "src/Hook/useQueryParams"
 import { Invoice } from "src/Types/invoicePayment.type"
 import { queryParamConfigInvoice } from "src/Types/queryParams.type"
+import { GitBranch, Merge } from "lucide-react"
+
+const { Text } = Typography
 
 export default function ManageInvoice() {
   const queryParams: queryParamConfigInvoice = useQueryParams()
@@ -89,6 +92,48 @@ export default function ManageInvoice() {
           {Number(value).toLocaleString("vi-VN", { style: "currency", currency: "VND" })}
         </span>
       )
+    },
+    {
+      title: "Loại & Quan hệ",
+      key: "type_relationship",
+      width: 200,
+      render: (_: unknown, record: Invoice) => {
+        if (!record.operation_type) {
+          return <Tag color="default">Bình thường</Tag>
+        }
+
+        if (record.operation_type === "split_invoice") {
+          return (
+            <Space direction="vertical" size="small" style={{ width: "100%" }}>
+              <Tag color="purple" icon={<GitBranch size={12} />}>
+                Đã tách
+              </Tag>
+              {record.split_percentage && (
+                <Text type="secondary" style={{ fontSize: 12 }}>
+                  {record.split_percentage}% từ{" "}
+                  {record.parent_invoice_id && (
+                    <Link to={`/admin/manage-invoice/${record.parent_invoice_id}`} className="text-blue-500">
+                      #{record.parent_invoice_id}
+                    </Link>
+                  )}
+                </Text>
+              )}
+            </Space>
+          )
+        }
+
+        if (record.operation_type === "merge_invoice") {
+          return (
+            <Space direction="vertical" size="small" style={{ width: "100%" }}>
+              <Tag color="cyan" icon={<Merge size={12} />}>
+                Đã gộp
+              </Tag>
+            </Space>
+          )
+        }
+
+        return <Tag>{record.operation_type}</Tag>
+      }
     },
     {
       title: "Trạng thái",

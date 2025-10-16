@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { Modal, Descriptions, Space, Button, Radio } from "antd"
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import { toast } from "react-toastify"
 import { invoicePaymentAPI } from "src/Apis/Admin/invoicePayment.api"
 import { useAppStore } from "src/StateGlobal/zustand"
@@ -49,6 +49,20 @@ const PaymentDetailModal = ({
   const { employeeId } = useAppStore()
   const [paymentMethod, setPaymentMethod] = useState<number>(0) // 0 = Cash, 1 = Bank Transfer
 
+  // ✅ Tính tổng số tiền đã thanh toán
+  const totalPaid = useMemo(() => {
+    if (!detailInvoice?.payments) return 0
+    return detailInvoice.payments
+      .filter((p) => p.status === 1) // Status 1 = Completed
+      .reduce((sum, p) => sum + Number(p.amount), 0)
+  }, [detailInvoice?.payments])
+
+  // ✅ Tính số tiền còn lại phải thanh toán
+  const remainingAmount = useMemo(() => {
+    if (!detailInvoice) return 0
+    return Number(detailInvoice.final_amount) - totalPaid
+  }, [detailInvoice, totalPaid])
+
   const useCreateInvoicePayment = useMutation({
     mutationFn: (payload: InvoicePaymentPayload) => {
       return invoicePaymentAPI.create(payload)
@@ -65,7 +79,7 @@ const PaymentDetailModal = ({
     if (detailInvoice) {
       const payload: InvoicePaymentUpdatePayload = {
         table_session_id: table_session_id,
-        amount: Number(detailInvoice.final_amount) - Number(detailInvoice?.payments[0].amount), // lấy tổng tiền hóa đơn - tiền đã thanh toán lần đầu
+        amount: remainingAmount, 
         method: paymentMethod,
         status_payment: 1,
         employee_id: employeeId as string
@@ -85,6 +99,15 @@ const PaymentDetailModal = ({
             }
             queryClient.invalidateQueries({
               queryKey: ["detailTableSession", idDiningTable]
+            })
+            queryClient.invalidateQueries({
+              queryKey: ["detailTableSessionOrder", table_session_id]
+            })
+            queryClient.invalidateQueries({
+              queryKey: ["listInvoicesForTableSession", table_session_id]
+            })
+            queryClient.invalidateQueries({
+              queryKey: ["invoiceDetail", detailInvoice.id]
             })
           },
           onError: (err: any) => {
@@ -119,7 +142,13 @@ const PaymentDetailModal = ({
             queryKey: ["detailTableSession", idDiningTable]
           })
           queryClient.invalidateQueries({
+            queryKey: ["detailTableSessionOrder", table_session_id]
+          })
+          queryClient.invalidateQueries({
             queryKey: ["detailDetailInvoice", table_session_id]
+          })
+          queryClient.invalidateQueries({
+            queryKey: ["listInvoicesForTableSession", table_session_id]
           })
           queryClient.invalidateQueries({
             queryKey: ["listReservationTableByIdTable", idDiningTable]
@@ -149,13 +178,14 @@ const PaymentDetailModal = ({
           <Descriptions.Item label="Tổng tiền" contentStyle={{ color: "red", fontWeight: 500 }}>
             {Number(detailInvoice.final_amount).toLocaleString("vi-VN")} đ
           </Descriptions.Item>
-          <Descriptions.Item label="Đã thanh toán">
-            {Number(detailInvoice?.payments[0].amount).toLocaleString("vi-VN")} đ
+          <Descriptions.Item label="Hoàn tất thanh toán">
+            <span className="text-green-600 font-semibold">
+              {totalPaid.toLocaleString("vi-VN")} đ
+            </span>
           </Descriptions.Item>
           <Descriptions.Item label="Còn lại">
             <span className="text-red-600 font-semibold text-base">
-              {(Number(detailInvoice.final_amount) - Number(detailInvoice?.payments[0].amount)).toLocaleString("vi-VN")}{" "}
-              đ
+              {remainingAmount.toLocaleString("vi-VN")} đ
             </span>
           </Descriptions.Item>
 

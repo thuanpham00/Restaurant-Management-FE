@@ -1,15 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import {
-  Badge,
   Button,
-  Card,
   Checkbox,
   Col,
   Collapse,
   DatePicker,
   Descriptions,
-  Divider,
   Form,
   Image,
   Input,
@@ -17,7 +14,6 @@ import {
   Modal,
   Row,
   Select,
-  Space,
   Spin,
   Table,
   Tag,
@@ -38,15 +34,20 @@ import {
 import dayjs from "dayjs"
 import InfoTable from "../../Components/InfoTable"
 import HistoryTableSession from "../../Components/HistoryTableSession/HistoryTableSession"
-import { ChefHat, CookingPot, HandCoins, Plus } from "lucide-react"
+import { ChefHat, CookingPot, HandCoins, Plus, Split } from "lucide-react"
 import { toast } from "react-toastify"
 import { ColumnsType } from "antd/es/table"
-import PromotionForm from "../../Components/PromotionForm"
-import PaymentDetailModal from "../../Components/PaymentDetailModal"
 import PendingTableSessionSelector from "../../Components/PendingTableSessionSelector"
+import SplitTableModal from "../../Components/SplitTableModal"
+import { SplitInvoiceModal } from "../../Components/SplitInvoiceModal"
+import { InvoiceListSummary } from "src/Admin/Pages/ManageTable/Components/InvoiceListSummary"
+import { InvoiceDetailModal } from "src/Admin/Pages/ManageTable/Components/InvoiceDetailModal"
+import CreateInvoiceModal from "../../Components/CreateInvoiceModal"
 import { invoicePaymentAPI } from "src/Apis/Admin/invoicePayment.api"
 import { isError422 } from "src/Helpers/utils"
 import { useAppStore } from "src/StateGlobal/zustand"
+import { useRealtimeQuery } from "src/Hook/useRealtimeQuery"
+import type { Invoice } from "src/Types/invoicePayment.type"
 
 const { Search } = Input
 const { Title } = Typography
@@ -184,65 +185,118 @@ export default function TableDetail() {
   const nameTable = state?.tableName
   const idDiningTable = dataTable.dining_table_id
 
-  const { data, isFetching, isError, error } = useQuery({
-    queryKey: ["detailTableSession", idDiningTable],
-    queryFn: () => {
+  // ✅ Query 1: Detail Table Session - Always fresh, no cache
+  const { data, isFetching, isError, error } = useRealtimeQuery(
+    ["detailTableSession", idDiningTable],
+    () => {
       const controller = new AbortController()
       setTimeout(() => controller.abort(), 10000)
       return tableSessionAPI.getDetailTableSessionByIdTable(idDiningTable)
     },
-    retry: 0,
-    enabled: Boolean(idDiningTable)
-  })
+    {
+      enabled: Boolean(idDiningTable)
+    }
+  )
 
   const dataTableSessionDetail = data?.data?.data as TableSessionDetail
 
-  const { data: dataTableSessionOrderRes, isFetching: isFetchingDataTableSessionOrder } = useQuery({
-    queryKey: ["detailTableSessionOrder", dataTableSessionDetail?.session_id],
-    queryFn: () => {
+  // ✅ Query 2: Table Session Order - Auto refetch every 15 seconds
+  const { data: dataTableSessionOrderRes, isFetching: isFetchingDataTableSessionOrder } = useRealtimeQuery(
+    ["detailTableSessionOrder", dataTableSessionDetail?.session_id],
+    () => {
       const controller = new AbortController()
       setTimeout(() => controller.abort(), 10000)
       return tableSessionAPI.getDetailTableSessionOrderByIdTable(dataTableSessionDetail?.session_id)
     },
-    retry: 0,
-    staleTime: 3 * 60 * 1000,
-    placeholderData: keepPreviousData,
-    enabled: Boolean(dataTableSessionDetail)
-  })
+    {
+      enabled: Boolean(dataTableSessionDetail),
+      refetchInterval: 15000 // Auto refetch every 15 seconds for order status updates
+    }
+  )
 
   const dataTableSessionOrder = dataTableSessionOrderRes?.data?.data[0] as TableSessionOrder
 
   const [hasSessionPending, setHasSessionPending] = useState(true)
   const [listTablePending, setListTablePending] = useState<HistoryTableSessionType[]>([])
 
+  // ✅ Query 3: Pending Sessions - Fresh data when needed
   const {
     data: dataListPendingTableSession,
     isFetching: isFetchingListPendingTableSession,
     isError: isErrorPendingTable
-  } = useQuery({
-    queryKey: ["listPendingTableSession", idDiningTable],
-    queryFn: () => {
+  } = useRealtimeQuery(
+    ["listPendingTableSession", idDiningTable],
+    () => {
       const controller = new AbortController()
       setTimeout(() => controller.abort(), 10000)
       return tableSessionAPI.getListPendingTableSessionByIdTable(idDiningTable)
     },
-    retry: 0,
-    enabled: !hasSessionPending // chỉ chạy khi hasSessionPending = false
-  })
+    {
+      enabled: !hasSessionPending // chỉ chạy khi hasSessionPending = false
+    }
+  )
 
-  const { data: dataDetailInvoice, isError: isErrorInvoice } = useQuery({
-    queryKey: ["detailDetailInvoice", dataTableSessionDetail?.session_id],
-    queryFn: () => {
+  // ✅ Query 4: List Invoices for Table Session - Auto refetch every 20 seconds
+  const { data: dataListInvoices } = useRealtimeQuery(
+    ["listInvoicesForTableSession", dataTableSessionDetail?.session_id],
+    () => {
       const controller = new AbortController()
       setTimeout(() => controller.abort(), 10000)
-      return invoicePaymentAPI.getDetailInvoiceFromIdTableSession(dataTableSessionDetail?.session_id)
+      return invoicePaymentAPI.getList(
+        {
+          page: "1",
+          per_page: "50",
+          table_session_id: dataTableSessionDetail?.session_id
+        },
+        controller.signal
+      )
     },
-    retry: 0,
-    staleTime: 3 * 60 * 1000,
-    enabled: Boolean(idDiningTable) && Boolean(dataTableSessionDetail?.session_id)
-  })
+    {
+      enabled: Boolean(idDiningTable) && Boolean(dataTableSessionDetail?.session_id),
+      refetchInterval: 20000 // Auto refetch every 20 seconds for payment updates
+    }
+  )
 
-  const detailInvoice = dataDetailInvoice?.data.data
+  const invoiceList = dataListInvoices?.data?.data?.data || []
+  const detailInvoice = invoiceList[0] || null // For backward compatibility
+
+  // ✅ Calculate overall payment status across all invoices
+  const paymentStatus = useMemo(() => {
+    if (invoiceList.length === 0) {
+      return {
+        hasInvoices: false,
+        totalInvoices: 0,
+        unpaidCount: 0,
+        partialPaidCount: 0,
+        paidCount: 0,
+        allPaid: false,
+        hasPendingPayments: false
+      }
+    }
+
+    let unpaidCount = 0
+    let partialPaidCount = 0
+    let paidCount = 0
+
+    invoiceList.forEach((invoice) => {
+      if (invoice.status === 0) unpaidCount++
+      else if (invoice.status === 1) partialPaidCount++
+      else if (invoice.status === 2) paidCount++
+    })
+
+    const allPaid = paidCount === invoiceList.length && invoiceList.length > 0
+    const hasPendingPayments = unpaidCount > 0 || partialPaidCount > 0
+
+    return {
+      hasInvoices: true,
+      totalInvoices: invoiceList.length,
+      unpaidCount,
+      partialPaidCount,
+      paidCount,
+      allPaid,
+      hasPendingPayments
+    }
+  }, [invoiceList])
 
   useEffect(() => {
     if (isError) {
@@ -252,6 +306,16 @@ export default function TableDetail() {
       }
     }
   }, [isError, error, idDiningTable])
+
+  // ✅ Cleanup: Remove queries from cache when unmount to ensure fresh data on next visit
+  useEffect(() => {
+    return () => {
+      queryClient.removeQueries({ queryKey: ["detailTableSession"], exact: false })
+      queryClient.removeQueries({ queryKey: ["detailTableSessionOrder"], exact: false })
+      queryClient.removeQueries({ queryKey: ["detailDetailInvoice"], exact: false })
+      queryClient.removeQueries({ queryKey: ["listPendingTableSession"], exact: false })
+    }
+  }, [queryClient])
 
   useEffect(() => {
     if (isErrorPendingTable) {
@@ -345,8 +409,11 @@ export default function TableDetail() {
   }
 
   const [isModalOpen, setIsModalOpen] = useState(false)
-  const [showInvoice, setShowInvoice] = useState(false)
-  const [showPaymentModal, setShowPaymentModal] = useState(false)
+  const [showSplitTableModal, setShowSplitTableModal] = useState(false)
+  const [showSplitInvoiceModal, setShowSplitInvoiceModal] = useState(false)
+  const [selectedInvoiceForDetail, setSelectedInvoiceForDetail] = useState<Invoice | null>(null)
+  const [showInvoiceDetailModal, setShowInvoiceDetailModal] = useState(false)
+  const [showCreateInvoiceModal, setShowCreateInvoiceModal] = useState(false)
 
   const { data: listDishMenuInActiveData, isLoading: isLoadingDishes } = useQuery({
     queryKey: ["ListDishInMenuActive", dataTableSessionDetail?.session_id],
@@ -572,24 +639,36 @@ export default function TableDetail() {
     setIsModalOpen(false)
   }
 
-  const [vat, setVat] = useState<number>(10) // default VAT 1%
-  const [totalPercentage, setTotalPercentage] = useState<number>(0)
-  const [listPromotionApply, setListPromotionApply] = useState<
-    { promotion_id: string; discount_value: number }[] | null
-  >(null)
+  // ✅ Mutation to complete table session when all invoices are paid
+  const completeTableSessionMutation = useMutation({
+    mutationFn: (sessionId: string) => 
+      tableSessionAPI.updateStatusTableSession(sessionId),
+    onSuccess: () => {
+      toast.success("Phiên bàn đã hoàn tất! Tất cả hóa đơn đã được thanh toán.", {
+        autoClose: 2000
+      })
+      queryClient.invalidateQueries({ queryKey: ["detailTableSession", idDiningTable] })
+      queryClient.invalidateQueries({ queryKey: ["detailTableSessionOrder", dataTableSessionDetail?.session_id] })
+      queryClient.invalidateQueries({ queryKey: ["listInvoicesForTableSession", dataTableSessionDetail?.session_id] })
+    },
+    onError: (error: any) => {
+      toast.error(error?.response?.data?.message || "Không thể hoàn tất phiên bàn", {
+        autoClose: 1500
+      })
+    }
+  })
 
-  const [formPayment] = Form.useForm()
-
-  const finalAmount = useMemo(() => {
-    const subtotal = Number(dataTableSessionOrder?.total_amount ?? 0) // Tạm tính
-    const discountPercent = Number(totalPercentage ?? 0) // Giảm giá %
-    const vatPercent = vat ?? 0 // VAT %
-
-    const discounted = subtotal * (1 - discountPercent / 100)
-    const total = discounted * (1 + vatPercent / 100)
-
-    return total
-  }, [dataTableSessionOrder?.total_amount, totalPercentage, vat])
+  // ✅ Auto-check and complete session when all invoices are paid
+  useEffect(() => {
+    if (
+      paymentStatus.allPaid && 
+      dataTableSessionDetail?.session_status === 1 && // Only if session is "Đang phục vụ"
+      !completeTableSessionMutation.isPending
+    ) {
+      // All invoices paid, complete the session
+      completeTableSessionMutation.mutate(dataTableSessionDetail.session_id)
+    }
+  }, [paymentStatus.allPaid, dataTableSessionDetail?.session_status, dataTableSessionDetail?.session_id])
 
   const createTableSessionMutation = useMutation({
     mutationFn: ({ employee_id, dining_table_id }: { employee_id: string; dining_table_id: string }) =>
@@ -639,36 +718,90 @@ export default function TableDetail() {
         </h1>
         <div className="flex justify-end gap-2 mb-2">
           {hasSessionPending && (
-            <Button
-              className="py-4 shadow-md"
-              type="primary"
-              icon={<HandCoins />}
-              onClick={() => {
-                if (dataTableSessionOrder?.items) {
-                  setShowInvoice(true)
-                } else {
-                  toast.error("Vui lòng order món trước khi thanh toán", {
-                    autoClose: 1500
-                  })
+            <>
+              <Button
+                className="py-4 shadow-md"
+                type="default"
+                icon={<Split />}
+                onClick={() => setShowSplitTableModal(true)}
+                disabled={
+                  !dataTableSessionOrder?.items || 
+                  dataTableSessionOrder.items.length < 2 ||
+                  paymentStatus.allPaid || // ✅ Disable khi tất cả hóa đơn đã thanh toán
+                  invoiceList.length === 0 // ✅ Disable khi chưa có hóa đơn
                 }
-              }}
-              style={{
-                backgroundColor: "#f56a00", // đỏ cam
-                borderColor: "#f56a00",
-                width: "100%",
-                transition: "background-color 0.2s ease, border-color 0.2s ease"
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = "#ff7a45" // hover nhạt hơn
-                e.currentTarget.style.borderColor = "#ff7a45"
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = "#f56a00"
-                e.currentTarget.style.borderColor = "#f56a00"
-              }}
-            >
-              Thanh toán
-            </Button>
+                style={{
+                  backgroundColor: "#52c41a",
+                  borderColor: "#52c41a",
+                  color: "#fff"
+                }}
+              >
+                Tách bàn
+              </Button>
+              <Button
+                className="py-4 shadow-md"
+                type="primary"
+                icon={<HandCoins />}
+                onClick={() => {
+                  // ✅ Check if there are items ordered
+                  if (!dataTableSessionOrder?.items || dataTableSessionOrder.items.length === 0) {
+                    toast.error("Vui lòng order món trước khi tạo hóa đơn", {
+                      autoClose: 1500
+                    })
+                    return
+                  }
+
+                  // ✅ NEW LOGIC: Check if invoices exist
+                  if (invoiceList.length === 0) {
+                    // No invoices → Open CreateInvoiceModal
+                    setShowCreateInvoiceModal(true)
+                  } else {
+                    // Has invoices → Check payment status
+                    if (paymentStatus.allPaid) {
+                      toast.success("Tất cả hóa đơn đã được thanh toán đầy đủ!", {
+                        autoClose: 1500
+                      })
+                      return
+                    }
+
+                    // Find first unpaid or partial paid invoice
+                    const unpaidInvoice = invoiceList.find(inv => inv.status !== 2)
+                    if (unpaidInvoice) {
+                      setSelectedInvoiceForDetail(unpaidInvoice)
+                      setShowInvoiceDetailModal(true)
+                    }
+                  }
+                }}
+                disabled={paymentStatus.allPaid && invoiceList.length > 0} // Disable only when all paid
+                style={{
+                  backgroundColor: paymentStatus.allPaid && invoiceList.length > 0 ? "#95de64" : "#f56a00",
+                  borderColor: paymentStatus.allPaid && invoiceList.length > 0 ? "#95de64" : "#f56a00",
+                  width: "100%",
+                  transition: "background-color 0.2s ease, border-color 0.2s ease"
+                }}
+                onMouseEnter={(e) => {
+                  if (!paymentStatus.allPaid || invoiceList.length === 0) {
+                    e.currentTarget.style.backgroundColor = "#ff7a45"
+                    e.currentTarget.style.borderColor = "#ff7a45"
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (!paymentStatus.allPaid || invoiceList.length === 0) {
+                    e.currentTarget.style.backgroundColor = "#f56a00"
+                    e.currentTarget.style.borderColor = "#f56a00"
+                  }
+                }}
+              >
+                {invoiceList.length === 0 
+                  ? "Tạo hóa đơn"
+                  : paymentStatus.allPaid 
+                    ? "✓ Đã thanh toán" 
+                    : paymentStatus.hasPendingPayments 
+                      ? `Thanh toán (${paymentStatus.unpaidCount + paymentStatus.partialPaidCount}/${paymentStatus.totalInvoices} HĐ)`
+                      : "Thanh toán"
+                }
+              </Button>
+            </>
           )}
           {!hasSessionPending && (
             <Button
@@ -976,7 +1109,6 @@ export default function TableDetail() {
                             type="primary"
                             icon={<ChefHat />}
                             onClick={() => setIsModalOpen(true)}
-                            disabled={showInvoice}
                           >
                             Thêm Order
                           </Button>
@@ -984,7 +1116,6 @@ export default function TableDetail() {
                             className="mt-2 py-4"
                             type="primary"
                             icon={<CookingPot />}
-                            disabled={showInvoice}
                             onClick={handleUpdateOrderItemList}
                           >
                             Cập nhật order
@@ -998,286 +1129,38 @@ export default function TableDetail() {
                     key="invoiceInfo"
                     header={
                       <h2 className="text-lg font-semibold text-gray-700">
-                        Hóa đơn <span className="text-red-500">#{detailInvoice?.id}</span>
+                        Hóa đơn ({invoiceList.length})
                       </h2>
                     }
                   >
-                    <div className=" bg-white shadow rounded-lg space-y-2">
-                      <div className="flex justify-between items-center bg-blue-50 p-2 border-b border-gray-200">
-                        <div className="text-lg font-semibold text-blue-700">Trạng thái</div>
-                        {isErrorInvoice ? (
-                          <Tag className="font-semibold text-lg" color={"orange"}>
-                            {"Chưa thanh toán"}
-                          </Tag>
-                        ) : (
-                          <Tag
-                            className="font-semibold text-lg"
-                            color={
-                              detailInvoice?.status === 0
-                                ? "orange"
-                                : detailInvoice?.status === 1
-                                  ? "green"
-                                  : detailInvoice?.status === 2
-                                    ? "blue"
-                                    : "red"
-                            }
-                          >
-                            {detailInvoice?.status === 0
-                              ? "Chưa thanh toán"
-                              : detailInvoice?.status === 1
-                                ? "Thanh toán trước 1 phần"
-                                : detailInvoice?.status === 2
-                                  ? "Thanh toán đủ"
-                                  : "Đã hủy"}
-                          </Tag>
-                        )}
-                      </div>
-
-                      <Descriptions column={1} bordered size="small" style={{ padding: 8 }}>
-                        <Descriptions.Item label="Tổng tiền">
-                          {Number(detailInvoice?.total_amount ?? 0).toLocaleString("vi-VN")} đ
-                        </Descriptions.Item>
-                        <Descriptions.Item label="Giảm giá">
-                          {Number(detailInvoice?.discount ?? 0).toLocaleString("vi-VN")} %
-                        </Descriptions.Item>
-                        <Descriptions.Item label="Thuế VAT">{Number(detailInvoice?.tax ?? 0)} %</Descriptions.Item>
-                        <Descriptions.Item label="Thành tiền">
-                          <b>{Number(detailInvoice?.final_amount ?? 0).toLocaleString("vi-VN")} đ</b>
-                        </Descriptions.Item>
-                      </Descriptions>
-
-                      <div>
-                        <h3 className="text-lg font-semibold text-gray-700 mb-2 p-2 pt-0">Lịch sử thanh toán</h3>
-                        <Table
-                          style={{
-                            padding: 8
-                          }}
-                          rowKey="id"
-                          size="small"
-                          bordered
-                          pagination={false}
-                          dataSource={detailInvoice?.payments || []}
-                          columns={[
-                            {
-                              title: "Thời gian",
-                              dataIndex: "paid_at",
-                              key: "paid_at",
-                              render: (text: string) => new Date(text).toLocaleString()
-                            },
-                            {
-                              title: "Số tiền",
-                              dataIndex: "amount",
-                              key: "amount",
-                              render: (text: number) => Number(text).toLocaleString("vi-VN") + " đ"
-                            },
-                            {
-                              title: "Phương thức",
-                              dataIndex: "method",
-                              key: "method",
-                              render: (method: number) =>
-                                method === 0 ? "Tiền mặt" : method === 1 ? "Chuyển khoản" : "Khác"
-                            },
-                            {
-                              title: "Trạng thái",
-                              dataIndex: "status",
-                              key: "status",
-                              render: (status: number) => (
-                                <Tag
-                                  color={
-                                    status === 0 ? "orange" : status === 1 ? "green" : status === 2 ? "red" : "gray"
-                                  }
-                                >
-                                  {status === 0
-                                    ? "Chưa thanh toán"
-                                    : status === 1
-                                      ? "Hoàn thành"
-                                      : status === 2
-                                        ? "Thất bại"
-                                        : "Đã hoàn tiền"}
-                                </Tag>
-                              )
-                            },
-                            {
-                              title: "Nhân viên",
-                              dataIndex: ["employee", "full_name"],
-                              key: "employee"
-                            }
-                          ]}
-                          rowClassName={(_, index) =>
-                            index % 2 === 0
-                              ? "bg-[#f9f9f9] hover:bg-blue-50 transition-colors"
-                              : "bg-white hover:bg-blue-50 transition-colors"
-                          }
-                        />
-                      </div>
+                    <div style={{ padding: 16 }}>
+                      <InvoiceListSummary
+                        invoices={invoiceList}
+                        onViewDetail={(invoice) => {
+                          setSelectedInvoiceForDetail(invoice)
+                          setShowInvoiceDetailModal(true)
+                        }}
+                      />
                     </div>
                   </Panel>
                 </Collapse>
 
-                <Modal
-                  title={`Hóa đơn của phiên bàn ${dataTableSessionDetail?.session_id ?? ""}`}
-                  open={showInvoice}
-                  onCancel={() => setShowInvoice(false)}
-                  footer={null}
-                  width={1000}
-                  style={{ top: 50 }}
-                  styles={{
-                    body: {
-                      height: 500,
-                      overflowY: "auto"
-                    }
+                {/* Invoice Detail Modal */}
+                <InvoiceDetailModal
+                  open={showInvoiceDetailModal}
+                  onClose={() => {
+                    setShowInvoiceDetailModal(false)
+                    setSelectedInvoiceForDetail(null)
                   }}
-                >
-                  <Card
-                    title={`Bàn ${nameTable}`}
-                    extra={
-                      <Badge
-                        status={detailInvoice ? statusColor[1] : statusColor[0]}
-                        text={detailInvoice ? statusText[1] : statusText[0]}
-                      />
-                    }
-                    bordered={true}
-                  >
-                    <Table
-                      bordered
-                      dataSource={dataTableSessionOrder?.items.filter((item) => item.item_status !== 4)}
-                      columns={[
-                        {
-                          title: "Món ăn",
-                          dataIndex: ["dish", "dish_name"],
-                          key: "dish_name",
-                          render: (_: any, record: any) => (
-                            <div className="flex items-center gap-2">
-                              {record.dish.image ? (
-                                <Image
-                                  src={record.dish.image}
-                                  alt={record.dish.dish_name}
-                                  className="rounded-md object-cover"
-                                  width={64}
-                                  height={64}
-                                />
-                              ) : (
-                                <Image
-                                  src={assets.rectangles.Burger}
-                                  alt={record.dish.dish_name}
-                                  className="w-12 h-12 rounded-md object-cover"
-                                  width={64}
-                                  height={64}
-                                />
-                              )}
-                              <div>
-                                <p className="font-medium">{record.dish.dish_name}</p>
-                                <p className="text-xs text-gray-500">{record.dish.category_name}</p>
-                              </div>
-                            </div>
-                          )
-                        },
-                        {
-                          title: "Số lượng",
-                          dataIndex: "quantity",
-                          key: "quantity",
-                          align: "center",
-                          render: (val: number) => <div className="text-center">{val}</div>
-                        },
-                        {
-                          title: "Đơn giá",
-                          dataIndex: "item_price",
-                          key: "item_price",
-                          render: (val: string) => `${Number(val).toLocaleString("vi-VN")} đ`,
-                          align: "right"
-                        },
-                        {
-                          title: "Thành tiền",
-                          dataIndex: "total_price",
-                          key: "total_price",
-                          render: (val: string) => `${Number(val).toLocaleString("vi-VN")} đ`,
-                          align: "right"
-                        },
-                        {
-                          title: <div className="text-right">Ghi chú</div>,
-                          dataIndex: "notes",
-                          key: "notes",
-                          render: (val: string) => <div className="text-right">{val}</div>
-                        }
-                      ]}
-                      pagination={false}
-                    />
-
-                    {!detailInvoice && (
-                      <PromotionForm
-                        setTotalPercentage={setTotalPercentage}
-                        setListPromotionApply={setListPromotionApply}
-                      />
-                    )}
-
-                    <Divider />
-
-                    <Form
-                      form={formPayment}
-                      layout="vertical"
-                      onValuesChange={(changedValue) => {
-                        if (changedValue.vat !== undefined) setVat(changedValue.vat)
-                      }}
-                      initialValues={{
-                        vat: 10
-                      }}
-                    >
-                      {detailInvoice ? (
-                        <Descriptions column={1} bordered size="small" layout="horizontal">
-                          <Descriptions.Item label="Tổng tiền">
-                            <b>{Number(detailInvoice.final_amount).toLocaleString("vi-VN")} đ</b>
-                          </Descriptions.Item>
-                          <Descriptions.Item label="Đã thanh toán">
-                            {Number(detailInvoice?.payments[0].amount).toLocaleString("vi-VN")} đ
-                          </Descriptions.Item>
-                          <Descriptions.Item label="Còn lại">
-                            <span className="text-red-600 font-semibold text-base">
-                              {(
-                                Number(detailInvoice.final_amount) - Number(detailInvoice?.payments[0].amount)
-                              ).toLocaleString("vi-VN")}{" "}
-                              đ
-                            </span>
-                          </Descriptions.Item>
-                        </Descriptions>
-                      ) : (
-                        <Descriptions column={1} bordered size="small" layout="horizontal">
-                          <Descriptions.Item label="Tạm tính">
-                            {Number(dataTableSessionOrder?.total_amount).toLocaleString("vi-VN")} đ
-                          </Descriptions.Item>
-                          <Descriptions.Item label="Giảm giá">{totalPercentage} %</Descriptions.Item>
-                          <Descriptions.Item label="Thuế VAT">
-                            <Form.Item name="vat" noStyle>
-                              <InputNumber min={0} max={100} formatter={(value) => `${value} %`} />
-                            </Form.Item>
-                          </Descriptions.Item>
-                          <Descriptions.Item label="Tổng tiền">
-                            <b>{finalAmount.toLocaleString("vi-VN")} đ</b>
-                          </Descriptions.Item>
-                        </Descriptions>
-                      )}
-
-                      <Space className="mt-4">
-                        <Button type="primary" onClick={() => setShowPaymentModal(true)}>
-                          Tiến hành thanh toán
-                        </Button>
-                      </Space>
-                    </Form>
-                  </Card>
-                </Modal>
-
-                <PaymentDetailModal
-                  open={showPaymentModal}
-                  onClosePayment={() => setShowPaymentModal(false)}
-                  onCloseInvoice={() => setShowInvoice(false)}
-                  totalAmount={Number(dataTableSessionOrder?.total_amount) || 0}
-                  totalPercentage={totalPercentage}
-                  vat={vat}
-                  finalAmount={finalAmount}
-                  listPromotionApply={listPromotionApply}
-                  table_session_id={dataTableSessionDetail?.session_id}
-                  setHasSessionPending={setHasSessionPending}
-                  detailInvoice={detailInvoice} // đã thanh toán
+                  invoiceId={selectedInvoiceForDetail?.id || null}
+                  tableSessionId={dataTableSessionDetail?.session_id || ''}
                   idDiningTable={idDiningTable}
+                  setHasSessionPending={setHasSessionPending}
+                  onSplitInvoice={(invoice) => {
+                    // ✅ Mở SplitInvoiceModal khi user click "Tách hóa đơn"
+                    setSelectedInvoiceForDetail(invoice as any)
+                    setShowSplitInvoiceModal(true)
+                  }}
                 />
               </div>
             )
@@ -1372,6 +1255,42 @@ export default function TableDetail() {
             </Fragment>
           )}
         </Modal>
+
+        {/* Modal tách bàn */}
+        <SplitTableModal
+          visible={showSplitTableModal}
+          onClose={() => setShowSplitTableModal(false)}
+          sourceSessionId={dataTableSessionDetail?.session_id || ""}
+          sourceDiningTableId={idDiningTable}
+          dataTableSessionOrder={dataTableSessionOrder}
+          detailInvoice={detailInvoice as any}
+          employeeId={employeeId || ""}
+          sourceTableNumber={dataTable?.table_number || 0}
+        />
+
+        {/* Modal tách hóa đơn - Will be opened from InvoiceDetailModal */}
+        {selectedInvoiceForDetail && (
+          <SplitInvoiceModal
+            visible={showSplitInvoiceModal}
+            onCancel={() => setShowSplitInvoiceModal(false)}
+            invoice={selectedInvoiceForDetail as any} // TODO: Fetch full InvoiceDetail
+            employeeId={employeeId || ""}
+            onSuccess={() => {
+              // ✅ Đóng cả InvoiceDetailModal khi tách thành công
+              setShowInvoiceDetailModal(false)
+              setSelectedInvoiceForDetail(null)
+            }}
+          />
+        )}
+
+        {/* Modal tạo hóa đơn mới */}
+        <CreateInvoiceModal
+          open={showCreateInvoiceModal}
+          onClose={() => setShowCreateInvoiceModal(false)}
+          totalAmount={Number(dataTableSessionOrder?.total_amount || 0)}
+          tableSessionId={dataTableSessionDetail?.session_id || ""}
+          idDiningTable={idDiningTable}
+        />
       </Row>
     </div>
   )

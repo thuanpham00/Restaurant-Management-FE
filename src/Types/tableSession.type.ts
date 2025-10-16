@@ -126,3 +126,52 @@ export type HistoryTableSessionDetail = {
     }[]
   }[]
 }
+
+export type SplitTableRequest = {
+  source_session_id: string
+  order_items: Array<{
+    order_item_id: string
+    quantity_to_transfer: number
+  }>
+  target_session_id?: string
+  target_dining_table_id?: string
+  note?: string
+  employee_id: string
+}
+
+export type SplitTableResponse = {
+  source_session: {
+    id: string
+    type: number
+    status: number
+    parent_session_id: string | null
+    merged_into_session_id: string | null
+    started_at: string
+    ended_at: string | null
+    customer_id: string | null
+    employee_id: string | null
+    created_at: string
+    updated_at: string
+  }
+  target_session: {
+    id: string
+    type: number
+    status: number
+    parent_session_id: string | null
+    merged_into_session_id: string | null
+    started_at: string
+    ended_at: string | null
+    customer_id: string | null
+    employee_id: string | null
+    created_at: string
+    updated_at: string
+    table_number?: number
+  }
+  source_invoice: any | null
+  target_invoice: any | null
+  summary: {
+    transferred_amount: number
+    items_transferred: number
+    source_remaining: number | null
+  }
+}

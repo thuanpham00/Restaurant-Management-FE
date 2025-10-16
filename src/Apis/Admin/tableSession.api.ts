@@ -7,7 +7,9 @@ import {
   HistoryTableSessionDetail,
   TableSession,
   TableSessionDetail,
-  TableSessionOrder
+  TableSessionOrder,
+  SplitTableRequest,
+  SplitTableResponse
 } from "src/Types/tableSession.type"
 import { PaginatedResponse, SuccessResponse } from "src/Types/utils.type"
 
@@ -62,5 +64,9 @@ export const tableSessionAPI = {
         number_of_people
       }
     })
+  },
+
+  splitTable: (body: SplitTableRequest) => {
+    return Http.post<SuccessResponse<SplitTableResponse>>(`/api/table-sessions/split-table`, body)
   }
 }

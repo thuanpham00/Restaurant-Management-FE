@@ -15,6 +15,7 @@ export type InvoicePaymentPayload = {
   method: number
   status_payment: number
   paymentBefore?: number
+  isDraft: boolean
 }
 
 export type InvoicePaymentUpdatePayload = {
@@ -33,6 +34,15 @@ export type Invoice = {
   tax: string
   final_amount: string
   status: number
+  operation_type: string | null // "split_invoice" | "merge_invoice" | null
+  source_invoice_ids: string | null
+  split_percentage: string | null
+  transferred_item_ids: string | null
+  operation_notes: string | null
+  operation_at: string | null
+  operation_by: string | null
+  parent_invoice_id: string | null
+  merged_invoice_id: string | null
   created_at: string
   updated_at: string
 }
@@ -45,6 +55,15 @@ export type InvoiceDetail = {
   tax: string
   final_amount: string
   status: number
+  operation_type: string | null // "split_invoice" | "merge_invoice" | null
+  source_invoice_ids: string | null
+  split_percentage: string | null
+  transferred_item_ids: string | null
+  operation_notes: string | null
+  operation_at: string | null
+  operation_by: string | null
+  parent_invoice_id: string | null
+  merged_invoice_id: string | null
   created_at: string
   updated_at: string
   payments: {
@@ -75,4 +94,26 @@ export type InvoiceDetail = {
       contract_label: string
     }
   }[]
+}
+
+// Split Invoice Types
+export type SplitInvoiceRequest = {
+  invoice_id: string
+  splits: {
+    percentage: number
+    note: string
+  }[]
+  employee_id: string
+}
+
+export type SplitInvoiceResponse = {
+  parent_invoice: Invoice
+  child_invoices: Invoice[]
+  summary: {
+    original_remaining: number
+    split_count: number
+    total_split_percentage: number
+    parent_remaining_percentage: number
+    verification: string
+  }
 }

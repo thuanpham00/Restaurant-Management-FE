@@ -3,11 +3,12 @@ import { Row, Spin, Pagination, Empty, Divider, Button, Modal, Form, InputNumber
 import omitBy from "lodash/omitBy"
 import isUndefined from "lodash/isUndefined"
 import useQueryParams from "src/Hook/useQueryParams"
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { diningTableAPI, tableSessionAPI } from "src/Apis/Admin"
 import { ErrorResponse, PaginatedResponse } from "src/Types/utils.type"
 import { Helmet } from "react-helmet-async"
 import "antd/dist/reset.css"
+import { useRealtimeQuery } from "src/Hook/useRealtimeQuery"
 import { createSearchParams, useNavigate, useSearchParams } from "react-router-dom"
 import { Filter, RotateCcw, Table2, TabletSmartphone } from "lucide-react"
 import { Fragment, useState } from "react"
@@ -36,34 +37,37 @@ export default function ManageTable() {
     isUndefined
   )
 
-  const { data, isFetching, isError } = useQuery({
-    queryKey: ["listTableSession", queryConfig],
-    queryFn: () => {
+  // ✅ Query danh sách bàn - Auto refetch every 30 seconds + always fresh on mount
+  const { data, isFetching, isError } = useRealtimeQuery(
+    ["listTableSession", queryConfig],
+    () => {
       const controller = new AbortController()
       setTimeout(() => controller.abort(), 10000)
       return tableSessionAPI.getListTableSession(queryConfig, controller.signal)
     },
-    retry: 0
-  })
+    {
+      refetchInterval: 30000 // Auto refetch every 30 seconds for table status updates
+    }
+  )
 
   const paginated: PaginatedResponse<TableSession> | undefined = data?.data.data
   const listTableSession = paginated?.data || []
 
-  const { data: dataTableSessionActive } = useQuery({
-    queryKey: ["listTableSessionActive", queryConfig],
-    queryFn: () => {
+  // ✅ Query bàn active - Fresh data when needed (for merge table feature)
+  const { data: dataTableSessionActive } = useRealtimeQuery(
+    ["listTableSessionActive"],
+    () => {
       const controller = new AbortController()
       setTimeout(() => controller.abort(), 10000)
       return tableSessionAPI.getListTableSession(
         {
-          page: queryParams.page || "1",
+          page: "1",
           per_page: "100"
         },
         controller.signal
       )
-    },
-    retry: 0
-  })
+    }
+  )
   const paginated2: PaginatedResponse<TableSession> | undefined = dataTableSessionActive?.data.data
   const listTableSessionActive = paginated2?.data || []
 

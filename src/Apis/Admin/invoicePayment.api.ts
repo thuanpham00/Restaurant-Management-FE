@@ -4,7 +4,9 @@ import {
   Invoice,
   InvoiceDetail,
   InvoicePaymentPayload,
-  InvoicePaymentUpdatePayload
+  InvoicePaymentUpdatePayload,
+  SplitInvoiceRequest,
+  SplitInvoiceResponse
 } from "src/Types/invoicePayment.type"
 import { queryParamConfigInvoice } from "src/Types/queryParams.type"
 import { PaginatedResponse, SuccessResponse } from "src/Types/utils.type"
@@ -31,5 +33,9 @@ export const invoicePaymentAPI = {
 
   update: (idInvoice: string, payload: InvoicePaymentUpdatePayload) => {
     return Http.put(`/api/invoices/${idInvoice}`, payload)
+  },
+
+  splitInvoice: (body: SplitInvoiceRequest) => {
+    return Http.post<SuccessResponse<SplitInvoiceResponse>>("/api/table-sessions/split-invoice", body)
   }
 }
