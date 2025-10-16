@@ -1,0 +1,57 @@
+.permission-matrix-collapse .ant-collapse-header {
+  padding: 12px 16px !important;
+  background-color: #f0f9ff !important;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.permission-matrix-collapse .ant-collapse-content-box {
+  padding: 0 !important;
+}
+
+.permission-matrix-collapse .ant-collapse-item {
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.permission-matrix-collapse .ant-collapse-item:last-child {
+  border-bottom: none;
+}
+
+/* Sticky header for table inside collapse */
+.permission-matrix-collapse table thead {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+}
+
+/* Sticky left column */
+.permission-matrix-collapse table th:first-child,
+.permission-matrix-collapse table td:first-child {
+  position: sticky;
+  left: 0;
+  z-index: 10;
+  background-color: white;
+}
+
+.permission-matrix-collapse table thead th:first-child {
+  z-index: 30;
+  background-color: #f9fafb;
+}
+
+/* Hover effect */
+.permission-matrix-collapse table tbody tr:hover td {
+  background-color: #f9fafb;
+}
+
+.permission-matrix-collapse table tbody tr:hover td:first-child {
+  background-color: #f3f4f6;
+}
+
+/* Cursor help for tooltip */
+.cursor-help {
+  cursor: help;
+}
+
+.cursor-help:hover {
+  color: #1890ff;
+  transition: color 0.2s ease;
+}

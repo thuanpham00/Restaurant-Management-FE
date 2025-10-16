@@ -22,7 +22,7 @@ export default function ManagePayroll() {
   ]
 
   return (
-    <div className="p-6">
+    <div>
       <Helmet>
         <title>Quản lý Bảng tính lương</title>
       </Helmet>
@@ -32,13 +32,7 @@ export default function ManagePayroll() {
       </div>
 
       <div className="bg-white rounded-lg shadow">
-        <Tabs
-          activeKey={activeTab}
-          onChange={setActiveTab}
-          items={items}
-          size="large"
-          className="px-4"
-        />
+        <Tabs activeKey={activeTab} onChange={setActiveTab} items={items} size="large" className="px-4" />
       </div>
     </div>
   )

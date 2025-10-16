@@ -1,5 +1,6 @@
 export type Statistics = {
-  restaurants: number
-  new_dishes: number
-  years_experience: number
+  total_customers: number
+  total_orders: number
+  total_reservations: number
+  active_table_sessions: number
 }

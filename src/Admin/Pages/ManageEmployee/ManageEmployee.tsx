@@ -25,7 +25,7 @@ import { toast } from "react-toastify"
 import dayjs from "dayjs"
 
 import NavigateBack from "src/Admin/Components/NavigateBack"
-import { employeesAPI } from "src/Apis/Admin"
+import { employeesAPI, rolesAPI } from "src/Apis/Admin"
 import { path } from "src/Constants/path"
 import { cleanObject } from "src/Helpers/common"
 import useQueryParams from "src/Hook/useQueryParams"
@@ -78,7 +78,8 @@ export default function ManageEmployee() {
           contract_type: queryConfig.contract_type,
           gender: queryConfig.gender,
           hire_date_from: queryConfig.hire_date_from,
-          hire_date_to: queryConfig.hire_date_to
+          hire_date_to: queryConfig.hire_date_to,
+          role_id: queryConfig.role_id
         },
         isUndefined
       )
@@ -91,6 +92,22 @@ export default function ManageEmployee() {
 
   const paginated = data?.data?.data as PaginatedResponse<Employee>
   const listEmployees = paginated?.data || []
+
+  // Get roles for select
+  const { data: rolesData } = useQuery({
+    queryKey: ["roles-select"],
+    queryFn: () => {
+      const controller = new AbortController()
+      return rolesAPI.getList({ per_page: "99" }, controller.signal)
+    },
+    staleTime: 5 * 60 * 1000
+  })
+
+  const roleOptions =
+    (rolesData?.data?.data as any)?.data?.map((role: any) => ({
+      label: role.name,
+      value: role.id
+    })) || []
 
   // ========== MUTATIONS ==========
   const createMutation = useMutation({
@@ -279,12 +296,14 @@ export default function ManageEmployee() {
       page: "1",
       per_page: queryConfig.per_page || "15",
       full_name: values.full_name,
-      is_active: values.is_active?.toString(),
+      is_active: values.is_active === true ? 1 : values.is_active === false ? 0 : undefined,
       contract_type: values.contract_type?.toString(),
       gender: values.gender,
       hire_date_from: values.hire_date_range?.[0] ? dayjs(values.hire_date_range[0]).format("YYYY-MM-DD") : undefined,
-      hire_date_to: values.hire_date_range?.[1] ? dayjs(values.hire_date_range[1]).format("YYYY-MM-DD") : undefined
+      hire_date_to: values.hire_date_range?.[1] ? dayjs(values.hire_date_range[1]).format("YYYY-MM-DD") : undefined,
+      role_id: values.role_id
     })
+
     navigate({
       pathname: path.AdminStaff,
       search: createSearchParams(params).toString()
@@ -319,6 +338,15 @@ export default function ManageEmployee() {
       key: "email"
     },
     {
+      title: "Vai trò",
+      dataIndex: ["user", "role", "name"],
+      key: "role",
+      render: (_: any, record: Employee) => {
+        const roleName = record.user?.role?.name
+        return roleName ? <Tag color="purple">{roleName}</Tag> : <i className="text-gray-400">Chưa có</i>
+      }
+    },
+    {
       title: "Số điện thoại",
       dataIndex: "phone",
       key: "phone",
@@ -337,6 +365,7 @@ export default function ManageEmployee() {
       title: "Lương cơ bản",
       dataIndex: "base_salary",
       key: "base_salary",
+      width: 120,
       render: (salary: string) => <span className="font-medium">{parseFloat(salary).toLocaleString("vi-VN")} đ</span>
     },
     {
@@ -350,7 +379,6 @@ export default function ManageEmployee() {
     {
       title: "Hành động",
       key: "action",
-      width: 200,
       render: (_: any, record: Employee) => (
         <div className="flex gap-2">
           <Button
@@ -380,7 +408,7 @@ export default function ManageEmployee() {
 
   // ========== RENDER ==========
   return (
-    <div className="p-6">
+    <div>
       <Helmet>
         <title>Quản lý Nhân viên</title>
       </Helmet>
@@ -425,6 +453,24 @@ export default function ManageEmployee() {
                   {option.label}
                 </Option>
               ))}
+            </Select>
+          </Form.Item>
+
+          <Form.Item name="role_id" className="mb-0">
+            <Select
+              placeholder="Vai trò"
+              allowClear
+              showSearch
+              optionFilterProp="label"
+              dropdownStyle={{ width: "auto" }}
+            >
+              {roleOptions
+                .filter((role: { label: string; value: string }) => role.label !== "Customer")
+                .map((role: { label: string; value: string }) => (
+                  <Option key={role.value} value={role.value} label={role.label}>
+                    {role.label}
+                  </Option>
+                ))}
             </Select>
           </Form.Item>
 
@@ -617,7 +663,13 @@ export default function ManageEmployee() {
           </div>
 
           <Form.Item name="role_id" label="Vai trò" rules={[{ required: true, message: "Vui lòng chọn vai trò!" }]}>
-            <Input placeholder="Nhập role ID" />
+            <Select placeholder="Chọn vai trò" showSearch optionFilterProp="label">
+              {roleOptions.map((role: { label: string; value: string }) => (
+                <Option key={role.value} value={role.value}>
+                  {role.label}
+                </Option>
+              ))}
+            </Select>
           </Form.Item>
 
           <Form.Item name="is_active" label="Trạng thái" valuePropName="checked" initialValue={true}>

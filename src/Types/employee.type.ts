@@ -24,6 +24,11 @@ export type Employee = {
     created_at: string
     updated_at: string
     status_label: string
+    role?: {
+      id: string
+      name: string
+      description: string
+    }
   }
 }
 
@@ -70,4 +75,5 @@ export type queryParamConfigEmployee = {
   gender?: string
   hire_date_from?: string
   hire_date_to?: string
+  role_id?: string
 }

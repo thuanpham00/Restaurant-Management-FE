@@ -22,7 +22,7 @@ import {
 } from "antd"
 import { ColumnsType } from "antd/es/table"
 import { useLocation } from "react-router-dom"
-import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { HistoryTableSessionDetail, TableSessionOrder } from "src/Types/tableSession.type"
 import { menusAPI, orderItemsAPI, tableSessionAPI } from "src/Apis/Admin"
 import { Helmet } from "react-helmet-async"
@@ -63,12 +63,13 @@ export default function TableSessionHistoryDetail() {
       return tableSessionAPI.getHistoryTableSessionDetailByIdTableAndIdTableSession(idDiningTable, idTableSession)
     },
     retry: 0,
-    staleTime: 3 * 60 * 1000,
-    placeholderData: keepPreviousData,
     enabled: Boolean(idDiningTable) && Boolean(idTableSession)
   })
+
   const dataHistoryTableSessionDetail = data?.data?.data as HistoryTableSessionDetail
+
   console.log(dataHistoryTableSessionDetail)
+
   const { data: dataDetailInvoice, isError: isErrorInvoice } = useQuery({
     queryKey: ["detailDetailInvoice", idTableSession],
     queryFn: () => {
@@ -79,8 +80,8 @@ export default function TableSessionHistoryDetail() {
     retry: 0,
     enabled: Boolean(idDiningTable) && Boolean(idTableSession)
   })
+
   const detailInvoice = dataDetailInvoice?.data.data
-  console.log(detailInvoice)
   const deleteMenuMutation = useMutation({
     mutationFn: (body: { idOrder: string; idOrderItem: string }) =>
       orderItemsAPI.delete(body.idOrderItem, body.idOrder),
@@ -386,8 +387,6 @@ export default function TableSessionHistoryDetail() {
       return tableSessionAPI.getDetailTableSessionOrderByIdTable(idTableSession)
     },
     retry: 0,
-    staleTime: 3 * 60 * 1000,
-    placeholderData: keepPreviousData,
     enabled: Boolean(showInvoice)
   })
 
@@ -430,7 +429,7 @@ export default function TableSessionHistoryDetail() {
       </h1>
 
       <Row gutter={12} style={{ overflow: "hidden" }}>
-        <Col span={12} className="space-y-4">
+        <Col span={11} className="space-y-4">
           <Descriptions
             title="Thông tin phiên bàn"
             bordered
@@ -490,14 +489,7 @@ export default function TableSessionHistoryDetail() {
           )}
         </Col>
 
-        <Col
-          span={12}
-          style={{
-            height: 500,
-            overflowY: "auto",
-            overflowX: "hidden"
-          }}
-        >
+        <Col span={13}>
           {dataHistoryTableSessionDetail.orders.map((order, idx) => (
             <Card
               key={idx}
@@ -569,115 +561,112 @@ export default function TableSessionHistoryDetail() {
                     </Button>
                   </div>
                 )}
-
-                <div className="py-4 px-0 bg-white shadow rounded-lg space-y-6">
-                  {/* 1. Thông tin tổng quan hóa đơn */}
-                  <div className="flex justify-between items-center bg-blue-50 p-2 border-b border-gray-200">
-                    <div className="text-lg font-semibold text-blue-700">Hóa đơn: {detailInvoice?.id}</div>
-                    {isErrorInvoice ? (
-                      <Tag className="font-semibold text-lg" color={"orange"}>
-                        {"Chưa thanh toán"}
-                      </Tag>
-                    ) : (
-                      <Tag
-                        className="font-semibold text-lg"
-                        color={
-                          detailInvoice?.status === 0
-                            ? "orange"
-                            : detailInvoice?.status === 1
-                              ? "green"
-                              : detailInvoice?.status === 2
-                                ? "blue"
-                                : "red"
-                        }
-                      >
-                        {detailInvoice?.status === 0
-                          ? "Chưa thanh toán"
-                          : detailInvoice?.status === 1
-                            ? "Thanh toán trước 1 phần"
-                            : detailInvoice?.status === 2
-                              ? "Thanh toán đủ"
-                              : "Đã hủy"}
-                      </Tag>
-                    )}
-                  </div>
-
-                  <Descriptions column={1} bordered size="small">
-                    <Descriptions.Item label="Tổng tiền">
-                      {Number(detailInvoice?.total_amount ?? 0).toLocaleString("vi-VN")} đ
-                    </Descriptions.Item>
-                    <Descriptions.Item label="Giảm giá">
-                      {Number(detailInvoice?.discount ?? 0).toLocaleString("vi-VN")} %
-                    </Descriptions.Item>
-                    <Descriptions.Item label="Thuế VAT">{Number(detailInvoice?.tax ?? 0)} %</Descriptions.Item>
-                    <Descriptions.Item label="Thành tiền">
-                      <b>{Number(detailInvoice?.final_amount ?? 0).toLocaleString("vi-VN")} đ</b>
-                    </Descriptions.Item>
-                  </Descriptions>
-
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-700 mb-2 p-2 pt-0">Lịch sử thanh toán</h3>
-                    <Table
-                      rowKey="id"
-                      size="small"
-                      bordered
-                      pagination={false}
-                      dataSource={detailInvoice?.payments || []}
-                      columns={[
-                        {
-                          title: "Thời gian",
-                          dataIndex: "paid_at",
-                          key: "paid_at",
-                          render: (text: string) => new Date(text).toLocaleString()
-                        },
-                        {
-                          title: "Số tiền",
-                          dataIndex: "amount",
-                          key: "amount",
-                          render: (text: number) => Number(text).toLocaleString("vi-VN") + " đ"
-                        },
-                        {
-                          title: "Phương thức",
-                          dataIndex: "method",
-                          key: "method",
-                          render: (method: number) =>
-                            method === 0 ? "Tiền mặt" : method === 1 ? "Chuyển khoản" : "Khác"
-                        },
-                        {
-                          title: "Trạng thái",
-                          dataIndex: "status",
-                          key: "status",
-                          render: (status: number) => (
-                            <Tag
-                              color={status === 0 ? "orange" : status === 1 ? "green" : status === 2 ? "red" : "gray"}
-                            >
-                              {status === 0
-                                ? "Chưa thanh toán"
-                                : status === 1
-                                  ? "Hoàn thành"
-                                  : status === 2
-                                    ? "Thất bại"
-                                    : "Đã hoàn tiền"}
-                            </Tag>
-                          )
-                        },
-                        {
-                          title: "Nhân viên",
-                          dataIndex: ["employee", "full_name"],
-                          key: "employee"
-                        }
-                      ]}
-                      rowClassName={(_, index) =>
-                        index % 2 === 0
-                          ? "bg-[#f9f9f9] hover:bg-blue-50 transition-colors"
-                          : "bg-white hover:bg-blue-50 transition-colors"
-                      }
-                    />
-                  </div>
-                </div>
               </div>
             </Card>
           ))}
+
+          <div className="py-4 px-0 bg-white shadow rounded-lg space-y-6">
+            {/* 1. Thông tin tổng quan hóa đơn */}
+            <div className="flex justify-between items-center bg-blue-50 p-2 border-b border-gray-200">
+              <div className="text-lg font-semibold text-blue-700">Hóa đơn: {detailInvoice?.id}</div>
+              {isErrorInvoice ? (
+                <Tag className="font-semibold text-lg" color={"orange"}>
+                  {"Chưa thanh toán"}
+                </Tag>
+              ) : (
+                <Tag
+                  className="font-semibold text-lg"
+                  color={
+                    detailInvoice?.status === 0
+                      ? "orange"
+                      : detailInvoice?.status === 1
+                        ? "green"
+                        : detailInvoice?.status === 2
+                          ? "blue"
+                          : "red"
+                  }
+                >
+                  {detailInvoice?.status === 0
+                    ? "Chưa thanh toán"
+                    : detailInvoice?.status === 1
+                      ? "Thanh toán trước 1 phần"
+                      : detailInvoice?.status === 2
+                        ? "Thanh toán đủ"
+                        : "Đã hủy"}
+                </Tag>
+              )}
+            </div>
+
+            <Descriptions column={1} bordered size="small">
+              <Descriptions.Item label="Tổng tiền">
+                {Number(detailInvoice?.total_amount ?? 0).toLocaleString("vi-VN")} đ
+              </Descriptions.Item>
+              <Descriptions.Item label="Giảm giá">
+                {Number(detailInvoice?.discount ?? 0).toLocaleString("vi-VN")} %
+              </Descriptions.Item>
+              <Descriptions.Item label="Thuế VAT">{Number(detailInvoice?.tax ?? 0)} %</Descriptions.Item>
+              <Descriptions.Item label="Thành tiền">
+                <b>{Number(detailInvoice?.final_amount ?? 0).toLocaleString("vi-VN")} đ</b>
+              </Descriptions.Item>
+            </Descriptions>
+
+            <div>
+              <h3 className="text-lg font-semibold text-gray-700 mb-2 p-2 pt-0">Lịch sử thanh toán</h3>
+              <Table
+                rowKey="id"
+                size="small"
+                bordered
+                pagination={false}
+                dataSource={detailInvoice?.payments || []}
+                columns={[
+                  {
+                    title: "Thời gian",
+                    dataIndex: "paid_at",
+                    key: "paid_at",
+                    render: (text: string) => new Date(text).toLocaleString()
+                  },
+                  {
+                    title: "Số tiền",
+                    dataIndex: "amount",
+                    key: "amount",
+                    render: (text: number) => Number(text).toLocaleString("vi-VN") + " đ"
+                  },
+                  {
+                    title: "Phương thức",
+                    dataIndex: "method",
+                    key: "method",
+                    render: (method: number) => (method === 0 ? "Tiền mặt" : method === 1 ? "Chuyển khoản" : "Khác")
+                  },
+                  {
+                    title: "Trạng thái",
+                    dataIndex: "status",
+                    key: "status",
+                    render: (status: number) => (
+                      <Tag color={status === 0 ? "orange" : status === 1 ? "green" : status === 2 ? "red" : "gray"}>
+                        {status === 0
+                          ? "Chưa thanh toán"
+                          : status === 1
+                            ? "Hoàn thành"
+                            : status === 2
+                              ? "Thất bại"
+                              : "Đã hoàn tiền"}
+                      </Tag>
+                    )
+                  },
+                  {
+                    title: "Nhân viên",
+                    dataIndex: ["employee", "full_name"],
+                    key: "employee"
+                  }
+                ]}
+                rowClassName={(_, index) =>
+                  index % 2 === 0
+                    ? "bg-[#f9f9f9] hover:bg-blue-50 transition-colors"
+                    : "bg-white hover:bg-blue-50 transition-colors"
+                }
+              />
+            </div>
+          </div>
         </Col>
       </Row>
 

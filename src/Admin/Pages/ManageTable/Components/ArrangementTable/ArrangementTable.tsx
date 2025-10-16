@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { Alert, Button, Col, DatePicker, Descriptions, Empty, Form, Input, Modal, Row, Spin, Tag } from "antd"
 import dayjs from "dayjs"
 import { Fragment, useEffect, useState } from "react"
@@ -76,8 +76,6 @@ export default function ArrangementTable({
       )
     },
     retry: 0,
-    staleTime: 3 * 60 * 1000,
-    placeholderData: keepPreviousData,
     enabled: Boolean(selectedReservation)
   })
 

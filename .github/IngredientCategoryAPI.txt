@@ -1,0 +1,685 @@
+"/api/ingredient-categories": {
+            "get": {
+                "tags": [
+                    "Ingredient Categories"
+                ],
+                "summary": "Lấy danh sách danh mục nguyên liệu",
+                "description": "Trả về danh sách danh mục nguyên liệu có phân trang và tìm kiếm",
+                "operationId": "c93731bb84957fc0f810ed45415bca26",
+                "parameters": [
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "description": "Số trang",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "Số bản ghi mỗi trang",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "description": "Tìm kiếm theo tên",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "is_active",
+                        "in": "query",
+                        "description": "Lọc theo trạng thái",
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Danh sách danh mục lấy thành công"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Ingredient Categories"
+                ],
+                "summary": "Tạo danh mục nguyên liệu mới",
+                "description": "Tạo một danh mục nguyên liệu mới trong hệ thống",
+                "operationId": "ba4ebb5f0ab5afbf2b9f4d1708893171",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "Rau củ"
+                                    },
+                                    "is_active": {
+                                        "type": "boolean",
+                                        "example": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Tạo danh mục thành công"
+                    },
+                    "422": {
+                        "description": "Lỗi validation"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/ingredient-categories/{id}": {
+            "get": {
+                "tags": [
+                    "Ingredient Categories"
+                ],
+                "summary": "Lấy chi tiết danh mục nguyên liệu",
+                "description": "Trả về thông tin chi tiết của một danh mục nguyên liệu",
+                "operationId": "a5526945af48475161dd2ab4e9ebdbc6",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID danh mục",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Lấy thông tin danh mục thành công"
+                    },
+                    "404": {
+                        "description": "Không tìm thấy danh mục"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Ingredient Categories"
+                ],
+                "summary": "Cập nhật danh mục nguyên liệu",
+                "description": "Cập nhật thông tin danh mục nguyên liệu theo ID",
+                "operationId": "5cb498d0160cd6f8a6e92aff1a201f93",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID danh mục",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "Rau củ quả"
+                                    },
+                                    "is_active": {
+                                        "type": "boolean",
+                                        "example": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Cập nhật danh mục thành công"
+                    },
+                    "404": {
+                        "description": "Không tìm thấy danh mục"
+                    },
+                    "422": {
+                        "description": "Lỗi validation"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Ingredient Categories"
+                ],
+                "summary": "Xóa danh mục nguyên liệu",
+                "description": "Xóa danh mục nguyên liệu theo ID (chỉ xóa nếu không có nguyên liệu nào thuộc danh mục này)",
+                "operationId": "64fe82a6256ec85f47c13fb971732e47",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID danh mục",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Xóa danh mục thành công"
+                    },
+                    "400": {
+                        "description": "Không thể xóa do có ràng buộc"
+                    },
+                    "404": {
+                        "description": "Không tìm thấy danh mục"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+
+{
+  "status": "success",
+  "message": "Lấy danh sách danh mục nguyên liệu thành công",
+  "data": {
+    "current_page": 1,
+    "data": [
+      {
+        "id": "ICA0BWMOXW",
+        "name": "Gạo & Mì",
+        "is_active": true,
+        "created_at": "2025-10-14T17:33:03.000000Z",
+        "updated_at": "2025-10-14T17:33:03.000000Z",
+        "ingredients_count": 3,
+        "ingredients": [
+          {
+            "id": "INGN1T98H2",
+            "ingredient_category_id": "ICA0BWMOXW",
+            "name": "Bột mì",
+            "unit": "kg",
+            "current_stock": "0.00",
+            "min_stock": "30.00",
+            "max_stock": "100.00",
+            "is_active": true,
+            "created_at": "2025-10-14T17:33:03.000000Z",
+            "updated_at": "2025-10-14T17:33:03.000000Z"
+          },
+          {
+            "id": "INGROL8Q5L",
+            "ingredient_category_id": "ICA0BWMOXW",
+            "name": "Mì Ý",
+            "unit": "kg",
+            "current_stock": "30.00",
+            "min_stock": "20.00",
+            "max_stock": "80.00",
+            "is_active": true,
+            "created_at": "2025-10-14T17:33:03.000000Z",
+            "updated_at": "2025-10-14T17:33:03.000000Z"
+          },
+          {
+            "id": "INGXJEXGUP",
+            "ingredient_category_id": "ICA0BWMOXW",
+            "name": "Gạo",
+            "unit": "kg",
+            "current_stock": "70.00",
+            "min_stock": "50.00",
+            "max_stock": "200.00",
+            "is_active": true,
+            "created_at": "2025-10-14T17:33:03.000000Z",
+            "updated_at": "2025-10-14T17:33:03.000000Z"
+          }
+        ]
+      },
+      {
+        "id": "ICA0CWJKBV",
+        "name": "Gia vị & Nước chấm",
+        "is_active": true,
+        "created_at": "2025-10-14T17:33:03.000000Z",
+        "updated_at": "2025-10-14T17:33:03.000000Z",
+        "ingredients_count": 7,
+        "ingredients": [
+          {
+            "id": "INGCLDZZVN",
+            "ingredient_category_id": "ICA0CWJKBV",
+            "name": "Nước mắm",
+            "unit": "lít",
+            "current_stock": "25.00",
+            "min_stock": "10.00",
+            "max_stock": "40.00",
+            "is_active": true,
+            "created_at": "2025-10-14T17:33:03.000000Z",
+            "updated_at": "2025-10-14T17:33:03.000000Z"
+          },
+          {
+            "id": "INGOABLMMU",
+            "ingredient_category_id": "ICA0CWJKBV",
+            "name": "Nước tương",
+            "unit": "lít",
+            "current_stock": "25.00",
+            "min_stock": "10.00",
+            "max_stock": "40.00",
+            "is_active": true,
+            "created_at": "2025-10-14T17:33:03.000000Z",
+            "updated_at": "2025-10-14T17:33:03.000000Z"
+          },
+          {
+            "id": "INGODYOE7A",
+            "ingredient_category_id": "ICA0CWJKBV",
+            "name": "Muối",
+            "unit": "kg",
+            "current_stock": "20.00",
+            "min_stock": "10.00",
+            "max_stock": "40.00",
+            "is_active": true,
+            "created_at": "2025-10-14T17:33:03.000000Z",
+            "updated_at": "2025-10-14T17:33:03.000000Z"
+          },
+          {
+            "id": "INGQZWB1BL",
+            "ingredient_category_id": "ICA0CWJKBV",
+            "name": "Dầu ăn",
+            "unit": "lít",
+            "current_stock": "40.00",
+            "min_stock": "15.00",
+            "max_stock": "60.00",
+            "is_active": true,
+            "created_at": "2025-10-14T17:33:03.000000Z",
+            "updated_at": "2025-10-14T17:33:03.000000Z"
+          },
+          {
+            "id": "INGRYR2GC5",
+            "ingredient_category_id": "ICA0CWJKBV",
+            "name": "Tiêu đen",
+            "unit": "kg",
+            "current_stock": "8.00",
+            "min_stock": "2.00",
+            "max_stock": "10.00",
+            "is_active": true,
+            "created_at": "2025-10-14T17:33:03.000000Z",
+            "updated_at": "2025-10-14T17:33:03.000000Z"
+          },
+          {
+            "id": "INGSGER5IM",
+            "ingredient_category_id": "ICA0CWJKBV",
+            "name": "Đường",
+            "unit": "kg",
+            "current_stock": "40.00",
+            "min_stock": "15.00",
+            "max_stock": "60.00",
+            "is_active": true,
+            "created_at": "2025-10-14T17:33:03.000000Z",
+            "updated_at": "2025-10-14T17:33:03.000000Z"
+          },
+          {
+            "id": "INGWHW9NQN",
+            "ingredient_category_id": "ICA0CWJKBV",
+            "name": "Dầu ô liu",
+            "unit": "lít",
+            "current_stock": "20.00",
+            "min_stock": "8.00",
+            "max_stock": "30.00",
+            "is_active": true,
+            "created_at": "2025-10-14T17:33:03.000000Z",
+            "updated_at": "2025-10-14T17:33:03.000000Z"
+          }
+        ]
+      },
+      {
+        "id": "ICADKNSGK0",
+        "name": "Sữa & Trứng",
+        "is_active": true,
+        "created_at": "2025-10-14T17:33:03.000000Z",
+        "updated_at": "2025-10-14T17:33:03.000000Z",
+        "ingredients_count": 4,
+        "ingredients": [
+          {
+            "id": "ING4XY9ZTL",
+            "ingredient_category_id": "ICADKNSGK0",
+            "name": "Bơ",
+            "unit": "kg",
+            "current_stock": "15.00",
+            "min_stock": "5.00",
+            "max_stock": "20.00",
+            "is_active": true,
+            "created_at": "2025-10-14T17:33:03.000000Z",
+            "updated_at": "2025-10-14T17:33:03.000000Z"
+          },
+          {
+            "id": "INGCLAGZX0",
+            "ingredient_category_id": "ICADKNSGK0",
+            "name": "Trứng gà",
+            "unit": "chục",
+            "current_stock": "57.00",
+            "min_stock": "30.00",
+            "max_stock": "100.00",
+            "is_active": true,
+            "created_at": "2025-10-14T17:33:03.000000Z",
+            "updated_at": "2025-10-14T17:33:03.000000Z"
+          },
+          {
+            "id": "INGDYPUH8N",
+            "ingredient_category_id": "ICADKNSGK0",
+            "name": "Phô mai",
+            "unit": "kg",
+            "current_stock": "20.00",
+            "min_stock": "8.00",
+            "max_stock": "30.00",
+            "is_active": true,
+            "created_at": "2025-10-14T17:33:03.000000Z",
+            "updated_at": "2025-10-14T17:33:03.000000Z"
+          },
+          {
+            "id": "INGMBWSJ2I",
+            "ingredient_category_id": "ICADKNSGK0",
+            "name": "Sữa tươi",
+            "unit": "lít",
+            "current_stock": "30.00",
+            "min_stock": "20.00",
+            "max_stock": "80.00",
+            "is_active": true,
+            "created_at": "2025-10-14T17:33:03.000000Z",
+            "updated_at": "2025-10-14T17:33:03.000000Z"
+          }
+        ]
+      },
+      {
+        "id": "ICAEFGQ56K",
+        "name": "Rau củ & Thảo mộc",
+        "is_active": true,
+        "created_at": "2025-10-14T17:33:03.000000Z",
+        "updated_at": "2025-10-14T17:33:03.000000Z",
+        "ingredients_count": 8,
+        "ingredients": [
+          {
+            "id": "ING1AD6ESL",
+            "ingredient_category_id": "ICAEFGQ56K",
+            "name": "Húng quế",
+            "unit": "kg",
+            "current_stock": "4.00",
+            "min_stock": "2.00",
+            "max_stock": "8.00",
+            "is_active": true,
+            "created_at": "2025-10-14T17:33:03.000000Z",
+            "updated_at": "2025-10-14T17:33:03.000000Z"
+          },
+          {
+            "id": "ING3VCSW2D",
+            "ingredient_category_id": "ICAEFGQ56K",
+            "name": "Xà lách",
+            "unit": "kg",
+            "current_stock": "0.00",
+            "min_stock": "5.00",
+            "max_stock": "20.00",
+            "is_active": true,
+            "created_at": "2025-10-14T17:33:03.000000Z",
+            "updated_at": "2025-10-14T17:33:03.000000Z"
+          },
+          {
+            "id": "ING6JHGJJ2",
+            "ingredient_category_id": "ICAEFGQ56K",
+            "name": "Rau mùi",
+            "unit": "kg",
+            "current_stock": "5.00",
+            "min_stock": "2.00",
+            "max_stock": "10.00",
+            "is_active": true,
+            "created_at": "2025-10-14T17:33:03.000000Z",
+            "updated_at": "2025-10-14T17:33:03.000000Z"
+          },
+          {
+            "id": "INGCQV7VUN",
+            "ingredient_category_id": "ICAEFGQ56K",
+            "name": "Tỏi",
+            "unit": "kg",
+            "current_stock": "15.00",
+            "min_stock": "5.00",
+            "max_stock": "20.00",
+            "is_active": true,
+            "created_at": "2025-10-14T17:33:03.000000Z",
+            "updated_at": "2025-10-14T17:33:03.000000Z"
+          },
+          {
+            "id": "INGEOIZXWY",
+            "ingredient_category_id": "ICAEFGQ56K",
+            "name": "Ớt chuông",
+            "unit": "kg",
+            "current_stock": "0.00",
+            "min_stock": "8.00",
+            "max_stock": "30.00",
+            "is_active": true,
+            "created_at": "2025-10-14T17:33:03.000000Z",
+            "updated_at": "2025-10-14T17:33:03.000000Z"
+          },
+          {
+            "id": "INGJSPNPS9",
+            "ingredient_category_id": "ICAEFGQ56K",
+            "name": "Cà chua",
+            "unit": "kg",
+            "current_stock": "18.00",
+            "min_stock": "10.00",
+            "max_stock": "50.00",
+            "is_active": true,
+            "created_at": "2025-10-14T17:33:03.000000Z",
+            "updated_at": "2025-10-14T17:33:03.000000Z"
+          },
+          {
+            "id": "INGR4MBC6J",
+            "ingredient_category_id": "ICAEFGQ56K",
+            "name": "Cà rốt",
+            "unit": "kg",
+            "current_stock": "15.00",
+            "min_stock": "10.00",
+            "max_stock": "40.00",
+            "is_active": true,
+            "created_at": "2025-10-14T17:33:03.000000Z",
+            "updated_at": "2025-10-14T17:33:03.000000Z"
+          },
+          {
+            "id": "INGUVV9POI",
+            "ingredient_category_id": "ICAEFGQ56K",
+            "name": "Hành tây",
+            "unit": "kg",
+            "current_stock": "28.00",
+            "min_stock": "15.00",
+            "max_stock": "60.00",
+            "is_active": true,
+            "created_at": "2025-10-14T17:33:03.000000Z",
+            "updated_at": "2025-10-14T17:33:03.000000Z"
+          }
+        ]
+      },
+      {
+        "id": "ICAOKEJTB8",
+        "name": "Đồ uống",
+        "is_active": true,
+        "created_at": "2025-10-14T17:33:03.000000Z",
+        "updated_at": "2025-10-14T17:33:03.000000Z",
+        "ingredients_count": 3,
+        "ingredients": [
+          {
+            "id": "INGDUGD5PA",
+            "ingredient_category_id": "ICAOKEJTB8",
+            "name": "Nước cam ép",
+            "unit": "lít",
+            "current_stock": "50.00",
+            "min_stock": "20.00",
+            "max_stock": "80.00",
+            "is_active": true,
+            "created_at": "2025-10-14T17:33:03.000000Z",
+            "updated_at": "2025-10-14T17:33:03.000000Z"
+          },
+          {
+            "id": "INGFCFG0NY",
+            "ingredient_category_id": "ICAOKEJTB8",
+            "name": "Lá trà",
+            "unit": "kg",
+            "current_stock": "15.00",
+            "min_stock": "5.00",
+            "max_stock": "20.00",
+            "is_active": true,
+            "created_at": "2025-10-14T17:33:03.000000Z",
+            "updated_at": "2025-10-14T17:33:03.000000Z"
+          },
+          {
+            "id": "INGFHKCPMP",
+            "ingredient_category_id": "ICAOKEJTB8",
+            "name": "Hạt cà phê",
+            "unit": "kg",
+            "current_stock": "25.00",
+            "min_stock": "10.00",
+            "max_stock": "40.00",
+            "is_active": true,
+            "created_at": "2025-10-14T17:33:03.000000Z",
+            "updated_at": "2025-10-14T17:33:03.000000Z"
+          }
+        ]
+      },
+      {
+        "id": "ICAYRG5CK6",
+        "name": "Thịt & Hải sản",
+        "is_active": true,
+        "created_at": "2025-10-14T17:33:03.000000Z",
+        "updated_at": "2025-10-14T17:33:03.000000Z",
+        "ingredients_count": 5,
+        "ingredients": [
+          {
+            "id": "INGCLU29S0",
+            "ingredient_category_id": "ICAYRG5CK6",
+            "name": "Tôm sú",
+            "unit": "kg",
+            "current_stock": "20.00",
+            "min_stock": "12.00",
+            "max_stock": "50.00",
+            "is_active": true,
+            "created_at": "2025-10-14T17:33:03.000000Z",
+            "updated_at": "2025-10-14T17:33:03.000000Z"
+          },
+          {
+            "id": "INGGJ1ZQVV",
+            "ingredient_category_id": "ICAYRG5CK6",
+            "name": "Ức gà",
+            "unit": "kg",
+            "current_stock": "15.00",
+            "min_stock": "20.00",
+            "max_stock": "80.00",
+            "is_active": true,
+            "created_at": "2025-10-14T17:33:03.000000Z",
+            "updated_at": "2025-10-14T17:33:03.000000Z"
+          },
+          {
+            "id": "INGH7ZEVYS",
+            "ingredient_category_id": "ICAYRG5CK6",
+            "name": "Thịt bò thăn",
+            "unit": "kg",
+            "current_stock": "28.00",
+            "min_stock": "15.00",
+            "max_stock": "60.00",
+            "is_active": true,
+            "created_at": "2025-10-14T17:33:03.000000Z",
+            "updated_at": "2025-10-14T17:33:03.000000Z"
+          },
+          {
+            "id": "INGK2PJDZF",
+            "ingredient_category_id": "ICAYRG5CK6",
+            "name": "Phi lê cá hồi",
+            "unit": "kg",
+            "current_stock": "18.00",
+            "min_stock": "10.00",
+            "max_stock": "40.00",
+            "is_active": true,
+            "created_at": "2025-10-14T17:33:03.000000Z",
+            "updated_at": "2025-10-14T17:33:03.000000Z"
+          },
+          {
+            "id": "INGXNNNWPJ",
+            "ingredient_category_id": "ICAYRG5CK6",
+            "name": "Thịt vai heo",
+            "unit": "kg",
+            "current_stock": "40.00",
+            "min_stock": "15.00",
+            "max_stock": "60.00",
+            "is_active": true,
+            "created_at": "2025-10-14T17:33:03.000000Z",
+            "updated_at": "2025-10-14T17:33:03.000000Z"
+          }
+        ]
+      }
+    ],
+    "first_page_url": "http://localhost:8000/api/ingredient-categories?page=1",
+    "from": 1,
+    "last_page": 1,
+    "last_page_url": "http://localhost:8000/api/ingredient-categories?page=1",
+    "links": [
+      {
+        "url": null,
+        "label": "&laquo; Previous",
+        "page": null,
+        "active": false
+      },
+      {
+        "url": "http://localhost:8000/api/ingredient-categories?page=1",
+        "label": "1",
+        "page": 1,
+        "active": true
+      },
+      {
+        "url": null,
+        "label": "Next &raquo;",
+        "page": null,
+        "active": false
+      }
+    ],
+    "next_page_url": null,
+    "path": "http://localhost:8000/api/ingredient-categories",
+    "per_page": 15,
+    "prev_page_url": null,
+    "to": 6,
+    "total": 6
+  }
+}

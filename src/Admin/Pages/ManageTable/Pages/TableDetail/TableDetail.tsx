@@ -174,6 +174,7 @@ export const statusColor: Record<number, "default" | "success" | "warning" | "er
 }
 
 const { Panel } = Collapse
+type TableSessionOrderMerged = TableSessionOrder & { items: TableSessionOrder["items"]; total_amount: string }
 
 export default function TableDetail() {
   const { employeeId } = useAppStore()
@@ -214,7 +215,31 @@ export default function TableDetail() {
     }
   )
 
-  const dataTableSessionOrder = dataTableSessionOrderRes?.data?.data[0] as TableSessionOrder
+  const dataTableSessionOrderMerged: TableSessionOrderMerged | undefined = (() => {
+    const orders = dataTableSessionOrderRes?.data?.data as TableSessionOrder[] | undefined
+    if (!orders || orders.length === 0) return undefined
+
+    if (orders.length === 1) return orders[0] // chỉ 1 order, giữ nguyên
+
+    // Nhiều order -> gộp items
+    const mergedItems = orders.flatMap((order) => order.items)
+
+    // Cộng tổng total_amount
+    const totalAmountSum = orders.reduce((sum, order) => sum + Number(order.total_amount), 0)
+
+    // Lấy thông tin chung từ order đầu tiên (ngoại trừ items và total_amount)
+    const { order_id, table_session_id, order_status } = orders[0]
+
+    return {
+      order_id,
+      table_session_id,
+      order_status,
+      items: mergedItems,
+      total_amount: totalAmountSum.toString()
+    }
+  })()
+
+  const dataTableSessionOrder = dataTableSessionOrderMerged
 
   const [hasSessionPending, setHasSessionPending] = useState(true)
   const [listTablePending, setListTablePending] = useState<HistoryTableSessionType[]>([])
@@ -370,7 +395,9 @@ export default function TableDetail() {
             })
           })
           Object.keys(errors).forEach((key) => {
-            const item = dataTableSessionOrder.items.find((item) => item.order_item_id === key)
+            const item = (dataTableSessionOrder as TableSessionOrderMerged).items.find(
+              (item) => item.order_item_id === key
+            )
 
             if (!item) return // nếu không tìm thấy, skip
 
@@ -717,6 +744,12 @@ export default function TableDetail() {
           )}
         </h1>
         <div className="flex justify-end gap-2 mb-2">
+          <InfoTable
+            dataTable={dataTable}
+            form={updateTableForm}
+            dataTableSessionDetail={dataTableSessionDetail}
+            dataTableSessionOrder={dataTableSessionOrder as TableSessionOrderMerged}
+          />
           {hasSessionPending && (
             <>
               <Button
@@ -832,18 +865,10 @@ export default function TableDetail() {
       </div>
 
       <Row gutter={24} style={{ overflow: "hidden" }}>
-        <Col span={6}>
-          <InfoTable
-            dataTable={dataTable}
-            form={updateTableForm}
-            dataTableSessionDetail={dataTableSessionDetail}
-            dataTableSessionOrder={dataTableSessionOrder}
-          />
-        </Col>
         <Col
-          span={18}
+          span={24}
           style={{
-            height: 500,
+            height: "calc(100vh - 200px)",
             overflowY: "auto",
             overflowX: "hidden"
           }}
@@ -986,7 +1011,7 @@ export default function TableDetail() {
                           }}
                         >
                           <Descriptions.Item label="Trạng thái đơn" span={2}>
-                            {renderOrderStatus(dataTableSessionOrder?.order_status)}
+                            {renderOrderStatus((dataTableSessionOrder as TableSessionOrderMerged)?.order_status)}
                           </Descriptions.Item>
                           <Descriptions.Item label="Tổng tiền" span={2}>
                             <span className="text-red-500 font-semibold">
@@ -997,15 +1022,18 @@ export default function TableDetail() {
 
                         <h3 className="text-md font-semibold my-4 text-gray-700">Danh sách món ăn</h3>
                         <Table
+                          scroll={{ x: "max-content" }} // 👈 quan trọng
                           bordered
                           rowKey="order_item_id"
                           pagination={false}
+                          rowHoverable={false} // ⬅️ Tắt hover mặc định
                           dataSource={dataTableSessionOrder?.items}
                           columns={[
                             {
                               title: "Món ăn",
                               dataIndex: ["dish", "dish_name"],
                               key: "dish_name",
+                              fixed: "left",
                               render: (_: any, record: any) => (
                                 <div className="flex items-center gap-2">
                                   {record.dish.image ? (
@@ -1094,13 +1122,21 @@ export default function TableDetail() {
                                   }}
                                 />
                               )
+                            },
+                            {
+                              title: "Thời gian tạo",
+                              dataIndex: "created_at",
+                              key: "created_at",
+                              align: "center",
+                              render: (val: string) => <div>{val}</div>
                             }
                           ]}
-                          rowClassName={(_, index) =>
-                            index % 2 === 0
-                              ? "bg-[#f2f2f2] hover:bg-blue-50 transition-colors"
-                              : "bg-white hover:bg-blue-50 transition-colors"
-                          }
+                          rowClassName={(record, index) => {
+                            if (record.item_status === 4) {
+                              return "bg-red-200 text-red-700 font-medium"
+                            }
+                            return index % 2 === 0 ? "bg-[#f2f2f2]" : "bg-white"
+                          }}
                         />
 
                         <div className="mt-2 flex justify-end gap-2">

@@ -1,3 +1,5 @@
+import { Permission } from "./permissions.type"
+
 export type Role = {
   id: string
   name: string
@@ -5,6 +7,18 @@ export type Role = {
   is_active: boolean
   created_at: string
   updated_at: string
+  permissions?: Permission[]
+}
+
+export type RoleWithUsers = Role & {
+  users?: User[]
+}
+
+export type queryParamConfigRole = {
+  page?: string
+  per_page?: string
+  name?: string
+  is_active?: string
 }
 
 export type Employee = {

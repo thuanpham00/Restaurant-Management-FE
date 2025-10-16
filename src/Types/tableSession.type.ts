@@ -8,6 +8,8 @@ export type TableSession = {
   session_status: number | null
   started_at: string | null
   ended_at: string | null
+  parent_session_id: string | null
+  merged_into_session_id: string | null
 }
 
 export type TableSessionDetail = {

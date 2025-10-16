@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Checkbox, Col, Tag } from "antd"
+import { Checkbox, Tag } from "antd"
 import { Link } from "react-router-dom"
+import { Fragment } from "react/jsx-runtime"
 import { assets } from "src/Assets/assets"
 import { path } from "src/Constants/path"
 import { TableSessionStatus, TableSessionType } from "src/Types/product.type"
@@ -11,13 +12,17 @@ export default function TableSessionItem({
   index,
   type_show,
   mergeTableSessionSelected = [],
-  setMergeTableSessionSelected = () => {}
+  setMergeTableSessionSelected = () => {},
+  mainTableId,
+  subTables
 }: {
   table: TableSession
   index: number
   mergeTableSessionSelected?: any[]
   setMergeTableSessionSelected?: React.Dispatch<React.SetStateAction<any[]>>
   type_show?: string
+  mainTableId?: string | number | null
+  subTables?: any[]
 }) {
   const getStatusTag = (table: TableSession) => {
     if (!table.session_id)
@@ -50,6 +55,12 @@ export default function TableSessionItem({
         return (
           <Tag color="red" className="text-[14px] font-semibold">
             Hủy
+          </Tag>
+        )
+      case TableSessionStatus.Merged:
+        return (
+          <Tag color="red" className="text-[14px] font-semibold">
+            Gộp bàn
           </Tag>
         )
       default:
@@ -107,9 +118,11 @@ export default function TableSessionItem({
         {type_show === "merge_table" && (
           <Checkbox
             className="absolute top-2 right-2"
-            checked={mergeTableSessionSelected.some((item) => item === table.session_id)}
+            checked={(mergeTableSessionSelected as any[]).some((item) => item === table.session_id)}
             onChange={() => {
-              setMergeTableSessionSelected((prev) => [...prev, table.session_id])
+              if (setMergeTableSessionSelected) {
+                setMergeTableSessionSelected((prev) => [...prev, table.session_id])
+              }
             }}
           />
         )}
@@ -125,7 +138,18 @@ export default function TableSessionItem({
           </div>
         )}
 
-        <h2 className="mb-4 text-xl text-left font-semibold text-shadow">Bàn {table.table_number}</h2>
+        <div className="flex items-center gap-2 mb-4">
+          <h2 className="text-xl text-left font-semibold text-shadow mb-0">Bàn {table.table_number}</h2>
+          {mainTableId && subTables && (
+            <>
+              {table.dining_table_id === mainTableId ? (
+                <Tag color="blue">Bàn chính</Tag>
+              ) : subTables.includes(table.dining_table_id) ? (
+                <Tag color="gold">Bàn phụ</Tag>
+              ) : null}
+            </>
+          )}
+        </div>
 
         <div className="flex flex-col justify-start items-start gap-1">
           <p>
@@ -160,21 +184,37 @@ export default function TableSessionItem({
   )
 
   return (
-    <Col xs={24} sm={12} md={8} lg={6} xl={6}>
+    <Fragment>
       {type_show === "merge_table" ? (
         <button
-          className={`block w-full rounded-xl overflow-hidden cursor-pointer transition duration-300 hover:shadow-lg ${mergeTableSessionSelected?.some((item) => item === table.session_id) ? " border-green-500 shadow-[0_0_14px_#22c55e]" : "border-transparent"}`}
+          className={`block relative w-full rounded-xl overflow-hidden cursor-pointer transition duration-300 hover:shadow-lg ${mergeTableSessionSelected?.some((item) => item === table.session_id) ? " border-green-500 shadow-[0_0_14px_#22c55e]" : "border-transparent"}`}
           onClick={() => {
-            const findTableSession = mergeTableSessionSelected.find((item) => item === table.session_id)
+            const findTableSession = (mergeTableSessionSelected as any[]).find((item) => item === table.session_id)
             if (findTableSession) {
-              setMergeTableSessionSelected((prev) => prev.filter((item) => item !== table.session_id))
+              setMergeTableSessionSelected?.((prev) => prev.filter((item) => item !== table.session_id))
             } else {
-              setMergeTableSessionSelected((prev) => [...prev, table.session_id])
+              setMergeTableSessionSelected?.((prev) => [...prev, table.session_id])
             }
           }}
         >
           <CardContent />
+
+          {mergeTableSessionSelected?.includes(table.session_id) && (
+            <span
+              className={`absolute top-10 right-2 px-2 py-1 text-xs font-semibold rounded ${
+                mergeTableSessionSelected[0] === table.session_id
+                  ? "bg-blue-500 text-white"
+                  : "bg-emerald-500 text-white"
+              }`}
+            >
+              {mergeTableSessionSelected[0] === table.session_id ? "Bàn chính" : "Bàn phụ"}
+            </span>
+          )}
         </button>
+      ) : mainTableId ? (
+        <div>
+          <CardContent />
+        </div>
       ) : (
         <Link
           to={`${path.AdminTables}/${table.dining_table_id}`}
@@ -183,6 +223,6 @@ export default function TableSessionItem({
           <CardContent />
         </Link>
       )}
-    </Col>
+    </Fragment>
   )
 }

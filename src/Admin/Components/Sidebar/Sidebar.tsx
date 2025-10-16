@@ -8,7 +8,6 @@ import {
   Clock,
   Calculator,
   BookOpen,
-  List,
   ShoppingBasket,
   Truck,
   FileInput,
@@ -18,14 +17,14 @@ import {
   DollarSign,
   Tag,
   BarChart3,
-  Star,
   UserCog,
   Shield,
-  ShieldCheck,
   Info,
   LogOut,
   Ham,
-  UserCircle
+  UserCircle,
+  Grid,
+  LucideIcon
 } from "lucide-react"
 import { path } from "src/Constants/path"
 import SidebarItem from "../SidebarItem"
@@ -37,53 +36,76 @@ import { useMutation } from "@tanstack/react-query"
 import { authAPI } from "src/Apis/Admin"
 import { useAppStore } from "src/StateGlobal/zustand"
 
+// Define menu item structure
+interface MenuItem {
+  name: string
+  icon: LucideIcon
+  path: string
+}
+
+interface MenuConfig {
+  [key: string]: MenuItem
+}
+
 export default function Sidebar() {
   const location = useLocation()
   const navigate = useNavigate()
   const { setIsAuthenticated, setAvatar, setNameUser, setRole, setEmployeeId } = useAppStore()
 
-  const sideBarList = [
-    { name: "Thống kê", icon: LayoutDashboard, path: path.AdminDashboard },
-    { name: "Danh sách bàn", icon: UtensilsCrossed, path: path.AdminTables },
-    { name: "Đặt bàn", icon: CalendarPlus, path: path.AdminReservations },
-    { name: "Khách hàng", icon: UserCircle, path: path.AdminCustomers },
-    { name: "Nhân viên", icon: Users, path: path.AdminStaff },
-    { name: "Ca làm việc", icon: Clock, path: path.AdminShifts },
-    { name: "Bảng tính lương", icon: Calculator, path: path.AdminPayroll },
-    { name: "Thể loại món", icon: ClipboardList, path: path.AdminCategoryDish },
-    { name: "Menu", icon: BookOpen, path: path.AdminMenu },
-    { name: "Danh mục nguyên liệu", icon: ShoppingBasket, path: path.AdminIngredients },
-    { name: "Nhà cung cấp", icon: Truck, path: path.AdminSuppliers },
-    { name: "Đơn nhập hàng", icon: List, path: path.AdminPurchaseOrders },
-    { name: "Nhập kho", icon: FileInput, path: path.AdminWarehouseIn },
-    { name: "Xuất kho", icon: FileOutput, path: path.AdminWarehouseOut },
-    { name: "Hao hụt kiểm kê", icon: Scale, path: path.AdminInventoryLoss },
-    { name: "Quản lý hóa đơn", icon: Receipt, path: path.AdminInvoices },
-    { name: "Quản lý chi phí", icon: DollarSign, path: path.AdminExpenses },
-    { name: "Quản lý khuyến mãi", icon: Tag, path: path.AdminPromotions },
-    { name: "Báo cáo doanh thu lợi nhuận", icon: BarChart3, path: path.AdminReports },
-    { name: "Quản lý đánh giá", icon: Star, path: path.AdminReviews },
-    { name: "Quản lý người dùng", icon: UserCog, path: path.AdminUsers },
-    { name: "Quản lý vai trò", icon: Shield, path: path.AdminRoles },
-    { name: "Quản lý quyền hệ thống", icon: ShieldCheck, path: path.AdminPermissions },
+  // Centralized menu configuration with meaningful keys
+  const menuConfig: MenuConfig = {
+    dashboard: { name: "Thống kê", icon: LayoutDashboard, path: path.AdminDashboard },
+    tables: { name: "Danh sách bàn", icon: UtensilsCrossed, path: path.AdminTables },
+    reservations: { name: "Đặt bàn", icon: CalendarPlus, path: path.AdminReservations },
+    customers: { name: "Khách hàng", icon: UserCircle, path: path.AdminCustomers },
+    staff: { name: "Nhân viên", icon: Users, path: path.AdminStaff },
+    shifts: { name: "Ca làm việc", icon: Clock, path: path.AdminShifts },
+    payroll: { name: "Bảng tính lương", icon: Calculator, path: path.AdminPayroll },
+    categoryDish: { name: "Thể loại món", icon: ClipboardList, path: path.AdminCategoryDish },
+    dish: { name: "Danh sách món", icon: Ham, path: path.AdminDish },
+    menu: { name: "Menu", icon: BookOpen, path: path.AdminMenu },
+    ingredients: { name: "Nguyên liệu", icon: ShoppingBasket, path: path.AdminIngredients },
+    suppliers: { name: "Nhà cung cấp", icon: Truck, path: path.AdminSuppliers },
+    warehouseIn: { name: "Nhập kho", icon: FileInput, path: path.AdminWarehouseIn },
+    warehouseOut: { name: "Xuất kho", icon: FileOutput, path: path.AdminWarehouseOut },
+    inventoryLoss: { name: "Hao hụt kiểm kê", icon: Scale, path: path.AdminInventoryLoss },
+    invoices: { name: "Quản lý hóa đơn", icon: Receipt, path: path.AdminInvoices },
+    expenses: { name: "Quản lý chi phí", icon: DollarSign, path: path.AdminExpenses },
+    promotions: { name: "Quản lý khuyến mãi", icon: Tag, path: path.AdminPromotions },
+    reports: { name: "Báo cáo doanh thu lợi nhuận", icon: BarChart3, path: path.AdminReports },
+    users: { name: "Quản lý người dùng", icon: UserCog, path: path.AdminUsers },
+    roles: { name: "Quản lý vai trò", icon: Shield, path: path.AdminRoles },
+    permissionMatrix: { name: "Ma trận phân quyền", icon: Grid, path: path.AdminPermissionMatrix }
+  }
 
-    { name: "Danh sách món", icon: Ham, path: path.AdminDish }
-  ]
-
-  const checkActive = (path: string): boolean => {
-    return location.pathname === path || location.pathname.startsWith(path + "/")
+  const checkActive = (itemPath: string): boolean => {
+    return location.pathname === itemPath || location.pathname.startsWith(itemPath + "/")
   }
 
   const getSelectedKey = (): string => {
-    const activeItem = sideBarList.find(
+    const activeItem = Object.values(menuConfig).find(
       (item) => location.pathname === item.path || location.pathname.startsWith(item.path + "/")
     )
     return activeItem ? activeItem.path : location.pathname
   }
 
+  // Helper function to create sidebar item
+  const createSidebarItem = (menuKey: keyof MenuConfig) => {
+    const item = menuConfig[menuKey]
+    return (
+      <SidebarItem
+        className={`${checkActive(item.path) ? "text-[14px] text-white font-semibold" : "text-[14px] text-white font-normal hover:text-[#495057] duration-200 ease-in"}`}
+        classNameWrapper="flex items-center gap-2 cursor-pointer"
+        icon={React.createElement(item.icon, { color: "white" })}
+        nameSideBar={item.name}
+        path={item.path}
+      />
+    )
+  }
+
   const items: MenuProps["items"] = [
     {
-      key: path.AdminDashboard, // key trùng pathname
+      key: path.AdminDashboard,
       label: (
         <Link to={path.AdminDashboard} className="font-semibold text-[15px]">
           Thống kê hệ thống
@@ -99,31 +121,11 @@ export default function Sidebar() {
       children: [
         {
           key: path.AdminTables,
-          label: (
-            <SidebarItem
-              className={`${checkActive(sideBarList[1].path) ? "text-[14px] text-white font-semibold" : "text-[14px] text-white font-normal hover:text-[#495057] duration-200 ease-in"}`}
-              classNameWrapper={`flex items-center gap-2 cursor-pointer`}
-              icon={React.createElement(sideBarList[1].icon, {
-                color: checkActive(sideBarList[1].path) ? "white" : "white"
-              })}
-              nameSideBar={sideBarList[1].name}
-              path={sideBarList[1].path}
-            />
-          )
+          label: createSidebarItem("tables")
         },
         {
           key: path.AdminReservations,
-          label: (
-            <SidebarItem
-              className={`${checkActive(sideBarList[2].path) ? "text-[14px] text-white font-semibold" : "text-[14px] text-white font-normal hover:text-[#495057] duration-200 ease-in"}`}
-              classNameWrapper={`flex items-center gap-2 cursor-pointer`}
-              icon={React.createElement(sideBarList[2].icon, {
-                color: checkActive(sideBarList[2].path) ? "white" : "white"
-              })}
-              nameSideBar={sideBarList[2].name}
-              path={sideBarList[2].path}
-            />
-          )
+          label: createSidebarItem("reservations")
         }
       ]
     },
@@ -146,46 +148,16 @@ export default function Sidebar() {
       label: <div className="font-semibold text-[15px] text-white">Quản lý Nhân sự</div>,
       children: [
         {
-          key: "4",
-          label: (
-            <SidebarItem
-              className={`${checkActive(sideBarList[4].path) ? "text-[14px] text-white font-semibold" : "text-[14px] text-white font-normal hover:text-[#495057] duration-200 ease-in"}`}
-              classNameWrapper={`flex items-center gap-2 cursor-pointer`}
-              icon={React.createElement(sideBarList[4].icon, {
-                color: checkActive(sideBarList[4].path) ? "white" : "white"
-              })}
-              nameSideBar={sideBarList[4].name}
-              path={sideBarList[4].path}
-            />
-          )
+          key: path.AdminStaff,
+          label: createSidebarItem("staff")
         },
         {
-          key: "5",
-          label: (
-            <SidebarItem
-              className={`${checkActive(sideBarList[5].path) ? "text-[14px] text-white font-semibold" : "text-[14px] text-white font-normal hover:text-[#495057] duration-200 ease-in"}`}
-              classNameWrapper={`flex items-center gap-2 cursor-pointer`}
-              icon={React.createElement(sideBarList[5].icon, {
-                color: checkActive(sideBarList[5].path) ? "white" : "white"
-              })}
-              nameSideBar={sideBarList[5].name}
-              path={sideBarList[5].path}
-            />
-          )
+          key: path.AdminShifts,
+          label: createSidebarItem("shifts")
         },
         {
-          key: "6",
-          label: (
-            <SidebarItem
-              className={`${checkActive(sideBarList[6].path) ? "text-[14px] text-white font-semibold" : "text-[14px] text-white font-normal hover:text-[#495057] duration-200 ease-in"}`}
-              classNameWrapper={`flex items-center gap-2 cursor-pointer`}
-              icon={React.createElement(sideBarList[6].icon, {
-                color: checkActive(sideBarList[6].path) ? "white" : "white"
-              })}
-              nameSideBar={sideBarList[6].name}
-              path={sideBarList[6].path}
-            />
-          )
+          key: path.AdminPayroll,
+          label: createSidebarItem("payroll")
         }
       ]
     },
@@ -198,45 +170,15 @@ export default function Sidebar() {
       children: [
         {
           key: path.AdminCategoryDish,
-          label: (
-            <SidebarItem
-              className={`${checkActive(sideBarList[7].path) ? "text-[14px] text-white font-semibold" : "text-[14px] text-white font-normal hover:text-[#495057] duration-200 ease-in"}`}
-              classNameWrapper={`flex items-center gap-2 cursor-pointer`}
-              icon={React.createElement(sideBarList[7].icon, {
-                color: checkActive(sideBarList[7].path) ? "white" : "white"
-              })}
-              nameSideBar={sideBarList[7].name}
-              path={sideBarList[7].path}
-            />
-          )
+          label: createSidebarItem("categoryDish")
         },
         {
           key: path.AdminDish,
-          label: (
-            <SidebarItem
-              className={`${checkActive(sideBarList[23].path) ? "text-[14px] text-white font-semibold" : "text-[14px] text-white font-normal hover:text-[#495057] duration-200 ease-in"}`}
-              classNameWrapper={`flex items-center gap-2 cursor-pointer`}
-              icon={React.createElement(sideBarList[23].icon, {
-                color: checkActive(sideBarList[23].path) ? "white" : "white"
-              })}
-              nameSideBar={sideBarList[23].name}
-              path={sideBarList[23].path}
-            />
-          )
+          label: createSidebarItem("dish")
         },
         {
           key: path.AdminMenu,
-          label: (
-            <SidebarItem
-              className={`${checkActive(sideBarList[8].path) ? "text-[14px] text-white font-semibold" : "text-[14px] text-white font-normal hover:text-[#495057] duration-200 ease-in"}`}
-              classNameWrapper={`flex items-center gap-2 cursor-pointer`}
-              icon={React.createElement(sideBarList[8].icon, {
-                color: checkActive(sideBarList[8].path) ? "white" : "white"
-              })}
-              nameSideBar={sideBarList[8].name}
-              path={sideBarList[8].path}
-            />
-          )
+          label: createSidebarItem("menu")
         }
       ]
     },
@@ -248,88 +190,24 @@ export default function Sidebar() {
       label: <div className="font-semibold text-[15px] text-white">Quản lý Nguyên liệu & kho</div>,
       children: [
         {
-          key: "9",
-          label: (
-            <SidebarItem
-              className={`${checkActive(sideBarList[9].path) ? "text-[14px] text-white font-semibold" : "text-[14px] text-white font-normal hover:text-[#495057] duration-200 ease-in"}`}
-              classNameWrapper={`flex items-center gap-2 cursor-pointer`}
-              icon={React.createElement(sideBarList[9].icon, {
-                color: checkActive(sideBarList[9].path) ? "white" : "white"
-              })}
-              nameSideBar={sideBarList[9].name}
-              path={sideBarList[9].path}
-            />
-          )
+          key: path.AdminIngredients,
+          label: createSidebarItem("ingredients")
         },
         {
-          key: "10",
-          label: (
-            <SidebarItem
-              className={`${checkActive(sideBarList[10].path) ? "text-[14px] text-white font-semibold" : "text-[14px] text-white font-normal hover:text-[#495057] duration-200 ease-in"}`}
-              classNameWrapper={`flex items-center gap-2 cursor-pointer`}
-              icon={React.createElement(sideBarList[10].icon, {
-                color: checkActive(sideBarList[10].path) ? "white" : "white"
-              })}
-              nameSideBar={sideBarList[10].name}
-              path={sideBarList[10].path}
-            />
-          )
+          key: path.AdminSuppliers,
+          label: createSidebarItem("suppliers")
         },
         {
-          key: "111",
-          label: (
-            <SidebarItem
-              className={`${checkActive(sideBarList[10].path) ? "text-[14px] text-white font-semibold" : "text-[14px] text-white font-normal hover:text-[#495057] duration-200 ease-in"}`}
-              classNameWrapper={`flex items-center gap-2 cursor-pointer`}
-              icon={React.createElement(sideBarList[10].icon, {
-                color: checkActive(sideBarList[10].path) ? "white" : "white"
-              })}
-              nameSideBar={sideBarList[10].name}
-              path={sideBarList[10].path}
-            />
-          )
+          key: path.AdminWarehouseIn,
+          label: createSidebarItem("warehouseIn")
         },
         {
-          key: "11",
-          label: (
-            <SidebarItem
-              className={`${checkActive(sideBarList[11].path) ? "text-[14px] text-white font-semibold" : "text-[14px] text-white font-normal hover:text-[#495057] duration-200 ease-in"}`}
-              classNameWrapper={`flex items-center gap-2 cursor-pointer`}
-              icon={React.createElement(sideBarList[11].icon, {
-                color: checkActive(sideBarList[11].path) ? "white" : "white"
-              })}
-              nameSideBar={sideBarList[11].name}
-              path={sideBarList[11].path}
-            />
-          )
+          key: path.AdminWarehouseOut,
+          label: createSidebarItem("warehouseOut")
         },
         {
-          key: "12",
-          label: (
-            <SidebarItem
-              className={`${checkActive(sideBarList[12].path) ? "text-[14px] text-white font-semibold" : "text-[14px] text-white font-normal hover:text-[#495057] duration-200 ease-in"}`}
-              classNameWrapper={`flex items-center gap-2 cursor-pointer`}
-              icon={React.createElement(sideBarList[12].icon, {
-                color: checkActive(sideBarList[12].path) ? "white" : "white"
-              })}
-              nameSideBar={sideBarList[12].name}
-              path={sideBarList[12].path}
-            />
-          )
-        },
-        {
-          key: "13",
-          label: (
-            <SidebarItem
-              className={`${checkActive(sideBarList[13].path) ? "text-[14px] text-white font-semibold" : "text-[14px] text-white font-normal hover:text-[#495057] duration-200 ease-in"}`}
-              classNameWrapper={`flex items-center gap-2 cursor-pointer`}
-              icon={React.createElement(sideBarList[13].icon, {
-                color: checkActive(sideBarList[13].path) ? "white" : "white"
-              })}
-              nameSideBar={sideBarList[13].name}
-              path={sideBarList[13].path}
-            />
-          )
+          key: path.AdminInventoryLoss,
+          label: createSidebarItem("inventoryLoss")
         }
       ]
     },
@@ -342,96 +220,19 @@ export default function Sidebar() {
       children: [
         {
           key: path.AdminInvoices,
-          label: (
-            <SidebarItem
-              className={`${checkActive(sideBarList[15].path) ? "text-[14px] text-white font-semibold" : "text-[14px] text-white font-normal hover:text-[#495057] duration-200 ease-in"}`}
-              classNameWrapper={`flex items-center gap-2 cursor-pointer`}
-              icon={React.createElement(sideBarList[15].icon, {
-                color: checkActive(sideBarList[15].path) ? "white" : "white"
-              })}
-              nameSideBar={sideBarList[15].name}
-              path={sideBarList[15].path}
-            />
-          )
+          label: createSidebarItem("invoices")
+        },
+        {
+          key: path.AdminExpenses,
+          label: createSidebarItem("expenses")
         },
         {
           key: path.AdminPromotions,
-          label: (
-            <SidebarItem
-              className={`${checkActive(sideBarList[17].path) ? "text-[14px] text-white font-semibold" : "text-[14px] text-white font-normal hover:text-[#495057] duration-200 ease-in"}`}
-              classNameWrapper={`flex items-center gap-2 cursor-pointer`}
-              icon={React.createElement(sideBarList[17].icon, {
-                color: checkActive(sideBarList[17].path) ? "white" : "white"
-              })}
-              nameSideBar={sideBarList[17].name}
-              path={sideBarList[17].path}
-            />
-          )
+          label: createSidebarItem("promotions")
         },
         {
-          key: "14",
-          label: (
-            <SidebarItem
-              className={`${checkActive(sideBarList[14].path) ? "text-[14px] text-white font-semibold" : "text-[14px] text-white font-normal hover:text-[#495057] duration-200 ease-in"}`}
-              classNameWrapper={`flex items-center gap-2 cursor-pointer`}
-              icon={React.createElement(sideBarList[14].icon, {
-                color: checkActive(sideBarList[14].path) ? "white" : "white"
-              })}
-              nameSideBar={sideBarList[14].name}
-              path={sideBarList[14].path}
-            />
-          )
-        },
-        {
-          key: "16",
-          label: (
-            <SidebarItem
-              className={`${checkActive(sideBarList[16].path) ? "text-[14px] text-white font-semibold" : "text-[14px] text-white font-normal hover:text-[#495057] duration-200 ease-in"}`}
-              classNameWrapper={`flex items-center gap-2 cursor-pointer`}
-              icon={React.createElement(sideBarList[16].icon, {
-                color: checkActive(sideBarList[16].path) ? "white" : "white"
-              })}
-              nameSideBar={sideBarList[16].name}
-              path={sideBarList[16].path}
-            />
-          )
-        }
-      ]
-    },
-    {
-      type: "divider"
-    },
-    {
-      key: "sub6",
-      label: <div className="font-semibold text-[15px] text-white">Quản lý Đánh giá & thông báo</div>,
-      children: [
-        {
-          key: "18",
-          label: (
-            <SidebarItem
-              className={`${checkActive(sideBarList[2].path) ? "text-[14px] text-white font-semibold" : "text-[14px] text-white font-normal hover:text-[#495057] duration-200 ease-in"}`}
-              classNameWrapper={`flex items-center gap-2 cursor-pointer`}
-              icon={React.createElement(sideBarList[2].icon, {
-                color: checkActive(sideBarList[2].path) ? "white" : "white"
-              })}
-              nameSideBar={sideBarList[2].name}
-              path={sideBarList[2].path}
-            />
-          )
-        },
-        {
-          key: "19",
-          label: (
-            <SidebarItem
-              className={`${checkActive(sideBarList[9].path) ? "text-[14px] text-white font-semibold" : "text-[14px] text-white font-normal hover:text-[#495057] duration-200 ease-in"}`}
-              classNameWrapper={`flex items-center gap-2 cursor-pointer`}
-              icon={React.createElement(sideBarList[9].icon, {
-                color: checkActive(sideBarList[9].path) ? "white" : "white"
-              })}
-              nameSideBar={sideBarList[9].name}
-              path={sideBarList[9].path}
-            />
-          )
+          key: path.AdminReports,
+          label: createSidebarItem("reports")
         }
       ]
     },
@@ -440,72 +241,19 @@ export default function Sidebar() {
     },
     {
       key: "sub7",
-      label: <div className="font-semibold text-[15px] text-white">Quản lý Đánh giá</div>,
+      label: <div className="font-semibold text-[15px] text-white">Cấu hình & Bảo mật</div>,
       children: [
         {
-          key: "20",
-          label: (
-            <SidebarItem
-              className={`${checkActive(sideBarList[18].path) ? "text-[14px] text-white font-semibold" : "text-[14px] text-white font-normal hover:text-[#495057] duration-200 ease-in"}`}
-              classNameWrapper={`flex items-center gap-2 cursor-pointer`}
-              icon={React.createElement(sideBarList[18].icon, {
-                color: checkActive(sideBarList[18].path) ? "white" : "white"
-              })}
-              nameSideBar={sideBarList[18].name}
-              path={sideBarList[18].path}
-            />
-          )
-        }
-      ]
-    },
-    {
-      type: "divider"
-    },
-    {
-      key: "sub8",
-      label: <div className="font-semibold text-[15px] text-white">Cấu hình & bảo mật</div>,
-      children: [
-        {
-          key: "21",
-          label: (
-            <SidebarItem
-              className={`${checkActive(sideBarList[19].path) ? "text-[14px] text-white font-semibold" : "text-[14px] text-white font-normal hover:text-[#495057] duration-200 ease-in"}`}
-              classNameWrapper={`flex items-center gap-2 cursor-pointer`}
-              icon={React.createElement(sideBarList[19].icon, {
-                color: checkActive(sideBarList[19].path) ? "white" : "white"
-              })}
-              nameSideBar={sideBarList[19].name}
-              path={sideBarList[19].path}
-            />
-          )
+          key: path.AdminUsers,
+          label: createSidebarItem("users")
         },
         {
-          key: "22",
-          label: (
-            <SidebarItem
-              className={`${checkActive(sideBarList[20].path) ? "text-[14px] text-white font-semibold" : "text-[14px] text-white font-normal hover:text-[#495057] duration-200 ease-in"}`}
-              classNameWrapper={`flex items-center gap-2 cursor-pointer`}
-              icon={React.createElement(sideBarList[20].icon, {
-                color: checkActive(sideBarList[20].path) ? "white" : "white"
-              })}
-              nameSideBar={sideBarList[20].name}
-              path={sideBarList[20].path}
-            />
-          )
+          key: path.AdminRoles,
+          label: createSidebarItem("roles")
         },
         {
-          key: "23",
-          label: (
-            <SidebarItem
-              className={`${checkActive(sideBarList[21].path) ? "text-[14px] text-white font-semibold" : "text-[14px] text-white font-normal hover:text-[#495057] duration-200 ease-in"}`}
-              classNameWrapper={`flex items-center gap-2 cursor-pointer`}
-              icon={React.createElement(sideBarList[21].icon, {
-                color: checkActive(sideBarList[21].path) ? "white" : "white"
-              })}
-              nameSideBar={sideBarList[21].name}
-              path={sideBarList[21].path}
-            />
-          )
+          key: path.AdminPermissionMatrix,
+          label: createSidebarItem("permissionMatrix")
         }
       ]
     }

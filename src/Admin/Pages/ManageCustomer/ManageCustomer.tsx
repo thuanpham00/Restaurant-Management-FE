@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { Button, Form, Input, Modal, Select, Spin, Table, Tag, Descriptions, Badge } from "antd"
 import { isUndefined, omitBy } from "lodash"
@@ -6,15 +8,13 @@ import { Fragment, useState, useEffect } from "react"
 import { Helmet } from "react-helmet-async"
 import { createSearchParams, useNavigate, useSearchParams } from "react-router-dom"
 import { toast } from "react-toastify"
-
 import NavigateBack from "src/Admin/Components/NavigateBack"
 import { customersAPI } from "src/Apis/Admin"
 import { path } from "src/Constants/path"
 import { cleanObject } from "src/Helpers/common"
 import useQueryParams from "src/Hook/useQueryParams"
-import { queryParamConfigCustomer } from "src/Types/customers.type"
+import { queryParamConfigCustomer, Customer } from "src/Types/customers.type"
 import { PaginatedResponse } from "src/Types/utils.type"
-import { Customer } from "src/Types/customers.type"
 
 const { Option } = Select
 
@@ -313,7 +313,7 @@ export default function ManageCustomer() {
 
   // ========== RENDER ==========
   return (
-    <div className="p-6">
+    <div>
       <Helmet>
         <title>Quản lý Khách hàng</title>
       </Helmet>
@@ -392,8 +392,8 @@ export default function ManageCustomer() {
                 showTotal: (total) => `Tổng ${total} khách hàng`
               }}
               scroll={{
-                y: "calc(100vh - 500px)", 
-                x: true 
+                y: "calc(100vh - 500px)",
+                x: true
               }}
             />
           </div>

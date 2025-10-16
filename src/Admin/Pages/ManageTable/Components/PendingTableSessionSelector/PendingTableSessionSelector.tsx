@@ -139,16 +139,27 @@ export default function PendingTableSessionSelector({
                       </p>
 
                       <div className="flex items-center justify-end gap-2 mt-2">
-                        <Link
-                          to={`/admin/tables/${idDiningTable}/session/${session.session_id}`}
-                          state={{
-                            idDiningTable,
-                            idTableSession: session.session_id
+                        <Button
+                          type="primary"
+                          style={{
+                            backgroundColor: "#ef233c",
+                            borderColor: "#ef233c"
                           }}
-                          style={{ padding: 0, color: "#ef233c", display: "block" }}
                         >
-                          Chi tiết
-                        </Link>
+                          <Link
+                            to={`/admin/tables/${idDiningTable}/session/${session.session_id}`}
+                            state={{
+                              idDiningTable,
+                              idTableSession: session.session_id
+                            }}
+                            style={{
+                              color: "white",
+                              display: "block"
+                            }}
+                          >
+                            Chi tiết
+                          </Link>
+                        </Button>
                         <Button
                           type="primary"
                           style={{
