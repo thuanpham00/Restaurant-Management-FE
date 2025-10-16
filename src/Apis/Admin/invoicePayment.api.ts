@@ -29,7 +29,7 @@ export const invoicePaymentAPI = {
     return Http.post("/api/invoices", payload)
   },
 
-  update: (idInvoice: string, payload: InvoicePaymentUpdatePayload) => {
+  update: (idInvoice: string, payload: InvoicePaymentPayload | InvoicePaymentUpdatePayload) => {
     return Http.put(`/api/invoices/${idInvoice}`, payload)
   }
 }

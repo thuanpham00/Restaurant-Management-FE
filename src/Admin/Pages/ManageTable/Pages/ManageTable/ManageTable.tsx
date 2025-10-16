@@ -1,5 +1,20 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Row, Spin, Pagination, Empty, Divider, Button, Modal, Form, InputNumber, Switch, Input, Select } from "antd"
+import {
+  Row,
+  Spin,
+  Pagination,
+  Empty,
+  Divider,
+  Button,
+  Modal,
+  Form,
+  InputNumber,
+  Switch,
+  Input,
+  Select,
+  Col,
+  Typography
+} from "antd"
 import omitBy from "lodash/omitBy"
 import isUndefined from "lodash/isUndefined"
 import useQueryParams from "src/Hook/useQueryParams"
@@ -8,7 +23,7 @@ import { diningTableAPI, tableSessionAPI } from "src/Apis/Admin"
 import { ErrorResponse, PaginatedResponse } from "src/Types/utils.type"
 import { Helmet } from "react-helmet-async"
 import "antd/dist/reset.css"
-import { createSearchParams, useNavigate, useSearchParams } from "react-router-dom"
+import { createSearchParams, Link, useNavigate, useSearchParams } from "react-router-dom"
 import { Filter, RotateCcw, Table2, TabletSmartphone } from "lucide-react"
 import { Fragment, useState } from "react"
 import { toast } from "react-toastify"
@@ -21,6 +36,8 @@ import NavigateBack from "src/Admin/Components/NavigateBack"
 import TableSessionItem from "../../Components/TableSessionItem"
 import { TableSession } from "src/Types/tableSession.type"
 import MergeIntoTable from "../../Components/MergeIntoTable"
+
+const { Title } = Typography
 
 export default function ManageTable() {
   const navigate = useNavigate()
@@ -67,7 +84,9 @@ export default function ManageTable() {
   const paginated2: PaginatedResponse<TableSession> | undefined = dataTableSessionActive?.data.data
   const listTableSessionActive = paginated2?.data || []
 
-  const listTableSessionActiveData = listTableSessionActive.filter((item) => item.session_status === 1)
+  const listTableSessionActiveData = listTableSessionActive.filter(
+    (item) => item.session_status === 1 && item.session_type !== 1
+  )
 
   const [searchParams, setSearchParams] = useSearchParams()
   const handlePaginationChange = (page: number, pageSize: number) => {
@@ -143,6 +162,36 @@ export default function ManageTable() {
   }
 
   const [mergedTable, setMergedTable] = useState(false)
+
+  const groupedTablesMap = new Map<string, TableSession[]>()
+
+  // Bước 1: Gom tất cả bàn có groupKey (merged_into hoặc session)
+  const tempGroups = new Map<string, TableSession[]>()
+
+  listTableSession.forEach((table) => {
+    const groupKey = table.merged_into_session_id || table.session_id
+    if (groupKey) {
+      if (!tempGroups.has(groupKey)) tempGroups.set(groupKey, [])
+      tempGroups.get(groupKey)!.push(table)
+    }
+  })
+
+  // Bước 2: Chỉ giữ lại group có từ 2 bàn trở lên (tức là thật sự có gộp)
+  tempGroups.forEach((tables, key) => {
+    if (tables.length > 1) {
+      groupedTablesMap.set(key, tables)
+    }
+  })
+
+  // Bước 3: Đánh dấu những bàn đã nằm trong group
+  const groupedTableIds = new Set(
+    Array.from(groupedTablesMap.values())
+      .flat()
+      .map((t) => t.dining_table_id)
+  )
+
+  // Bàn độc lập (chưa gộp)
+  const singleTables = listTableSession.filter((t) => !groupedTableIds.has(t.dining_table_id))
 
   return (
     <div>
@@ -246,13 +295,74 @@ export default function ManageTable() {
         <Empty description="Không có bàn hợp lệ" className="mt-16" />
       ) : (
         <>
-          <Row gutter={[24, 24]}>
-            {listTableSession.map((table, index) => (
-              <Fragment key={table.dining_table_id}>
-                <TableSessionItem table={table} index={index} />
-              </Fragment>
-            ))}
-          </Row>
+          <>
+            {/* --- Bàn gộp --- */}
+            {groupedTablesMap.size > 0 && (
+              <>
+                <Title level={4} className="text-yellow-600 mb-3">
+                  Bàn gộp
+                </Title>
+
+                <div className="flex items-center flex-wrap">
+                  {Array.from(groupedTablesMap.entries()).map(([groupKey, tables]) => {
+                    const widthValue = tables.length === 2 ? 50 : 100
+                    const mainTable = tables.find((t) => t.session_id === groupKey) || tables[0]
+                    const mainTableId = mainTable.dining_table_id
+                    const subTables = tables
+                      .filter((t) => t.dining_table_id !== mainTableId)
+                      .map((t) => t.dining_table_id)
+                    console.log("mainTable", mainTable)
+                    return (
+                      <div
+                        key={groupKey}
+                        className="rounded-2xl p-3 mb-6 border-4 border-yellow-400 shadow-[0_0_25px_4px_rgba(250,204,21,0.5)] transition-all duration-300"
+                        style={{ width: `${widthValue}%` }}
+                      >
+                        <Row gutter={[16, 16]}>
+                          {tables.map((table, index) => (
+                            <Col key={table.dining_table_id} flex="1 0 45%">
+                              <TableSessionItem
+                                table={table}
+                                index={index}
+                                mainTableId={mainTableId}
+                                subTables={subTables}
+                              />
+                            </Col>
+                          ))}
+                        </Row>
+                        <div style={{ width: `${widthValue * 2}%` }} className="flex justify-center">
+                          <Link
+                            to={`${path.AdminTables}/${mainTableId}`}
+                            state={{ tableName: mainTable.table_number, dataTable: mainTable }}
+                            className="p-2 bg-red-500 rounded-sm text-white mt-2"
+                          >
+                            Chi tiết
+                          </Link>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              </>
+            )}
+
+            {/* --- Bàn đơn --- */}
+            {singleTables.length > 0 && (
+              <>
+                <Title level={4} className="text-blue-600 mb-3">
+                  Bàn đơn
+                </Title>
+
+                <Row gutter={[24, 24]}>
+                  {singleTables.map((table, index) => (
+                    <Col key={table.dining_table_id} xs={24} sm={12} md={8} lg={6} xl={6}>
+                      <TableSessionItem table={table} index={index} />
+                    </Col>
+                  ))}
+                </Row>
+              </>
+            )}
+          </>
 
           <Divider />
 
@@ -273,6 +383,7 @@ export default function ManageTable() {
         listTableSessionActiveData={listTableSessionActiveData}
         mergedTable={mergedTable}
         setMergedTable={setMergedTable}
+        queryConfig={queryConfig}
       />
 
       <Modal

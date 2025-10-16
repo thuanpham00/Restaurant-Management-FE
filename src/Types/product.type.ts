@@ -10,5 +10,6 @@ export enum TableSessionStatus {
   "Pending",
   "Active",
   "Completed",
-  "Cancelled"
+  "Cancelled",
+  "Merged"
 }

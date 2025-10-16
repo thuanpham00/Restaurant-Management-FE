@@ -41,8 +41,8 @@ export const tableSessionAPI = {
     return Http.get<SuccessResponse<TableSessionDetail>>(`/api/table-sessions/${idDiningTable}`)
   },
 
-  getDetailTableSessionOrderByIdTable: (idDiningTable: string) => {
-    return Http.get<SuccessResponse<TableSessionOrder[]>>(`/api/table-sessions/${idDiningTable}/orders`)
+  getDetailTableSessionOrderByIdTable: (idTableSession: string) => {
+    return Http.get<SuccessResponse<TableSessionOrder[]>>(`/api/table-sessions/${idTableSession}/orders`)
   },
 
   getListPendingTableSessionByIdTable: (idDiningTable: string) => {
@@ -62,5 +62,9 @@ export const tableSessionAPI = {
         number_of_people
       }
     })
+  },
+
+  mergeTableSession: (body: { source_session_ids: string[]; target_session_id: string; employee_id: string }) => {
+    return Http.post<SuccessResponse<any>>(`/api/table-sessions/merge`, body)
   }
 }

@@ -30,5 +30,6 @@ export type ReservationCheckAssignTable = {
   customer_name: string
   session_id: string
   dining_table_id: string
+  dining_table_number: number
   assigned: boolean
 }

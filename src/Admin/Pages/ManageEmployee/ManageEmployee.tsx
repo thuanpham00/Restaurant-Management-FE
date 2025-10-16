@@ -365,6 +365,7 @@ export default function ManageEmployee() {
       title: "Lương cơ bản",
       dataIndex: "base_salary",
       key: "base_salary",
+      width: 120,
       render: (salary: string) => <span className="font-medium">{parseFloat(salary).toLocaleString("vi-VN")} đ</span>
     },
     {
@@ -378,7 +379,6 @@ export default function ManageEmployee() {
     {
       title: "Hành động",
       key: "action",
-      width: 200,
       render: (_: any, record: Employee) => (
         <div className="flex gap-2">
           <Button
@@ -408,7 +408,7 @@ export default function ManageEmployee() {
 
   // ========== RENDER ==========
   return (
-    <div className="p-6">
+    <div>
       <Helmet>
         <title>Quản lý Nhân viên</title>
       </Helmet>
@@ -456,15 +456,21 @@ export default function ManageEmployee() {
             </Select>
           </Form.Item>
 
-          <Form.Item name="role_id" className="mb-0"  >
-            <Select placeholder="Vai trò" allowClear showSearch optionFilterProp="label" dropdownStyle={{width: "auto"}} >
+          <Form.Item name="role_id" className="mb-0">
+            <Select
+              placeholder="Vai trò"
+              allowClear
+              showSearch
+              optionFilterProp="label"
+              dropdownStyle={{ width: "auto" }}
+            >
               {roleOptions
-              .filter((role: { label: string; value: string}) => role.label !== "Customer")
-              .map((role: { label: string; value: string }) => (
-                <Option key={role.value} value={role.value} label={role.label}>
-                  {role.label}
-                </Option>
-              ))}
+                .filter((role: { label: string; value: string }) => role.label !== "Customer")
+                .map((role: { label: string; value: string }) => (
+                  <Option key={role.value} value={role.value} label={role.label}>
+                    {role.label}
+                  </Option>
+                ))}
             </Select>
           </Form.Item>
 

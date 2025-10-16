@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useMutation } from "@tanstack/react-query"
-import { Button, Form, FormInstance, InputNumber, Switch } from "antd"
+import { Button, Form, FormInstance, InputNumber, Modal, Switch } from "antd"
 import { useEffect, useState } from "react"
 import { toast } from "react-toastify"
 import { diningTableAPI } from "src/Apis/Admin"
@@ -71,41 +71,58 @@ export default function InfoTable({
     }
   }
 
+  const [showInfoTable, setShowInfoTable] = useState(false)
+
   return (
-    <div className="p-4 bg-[#fff] border border-gray-200 rounded-xl shadow-md">
-      <Form form={form} layout="vertical" onFinish={handleUpdateDiningTable} initialValues={{ is_active: true }}>
-        <h2 className="text-lg font-medium -tracking-wide mb-2">Thông tin bàn</h2>
-        <Form.Item label="Số bàn" name="table_number" rules={[{ required: true, message: "Vui lòng nhập số bàn!" }]}>
-          <InputNumber style={{ width: "100%" }} disabled={!checkUpdate} />
-        </Form.Item>
+    <div>
+      <Button
+        onClick={() => setShowInfoTable(true)}
+        type="primary"
+        className="bg-green-500 hover:!bg-green-600 duration-200"
+      >
+        Thông tin bàn
+      </Button>
 
-        <Form.Item label="Sức chứa" name="capacity" rules={[{ required: true, message: "Vui lòng nhập sức chứa!" }]}>
-          <InputNumber style={{ width: "100%" }} disabled={!checkUpdate} />
-        </Form.Item>
+      <Modal
+        title="Thông tin bàn"
+        open={showInfoTable}
+        onCancel={() => setShowInfoTable(false)}
+        footer={null} // chúng ta sẽ dùng button trong form
+      >
+        <Form form={form} layout="vertical" onFinish={handleUpdateDiningTable} initialValues={{ is_active: true }}>
+          <h2 className="text-lg font-medium -tracking-wide mb-2">Thông tin bàn</h2>
+          <Form.Item label="Số bàn" name="table_number" rules={[{ required: true, message: "Vui lòng nhập số bàn!" }]}>
+            <InputNumber style={{ width: "100%" }} disabled={!checkUpdate} />
+          </Form.Item>
 
-        <Form.Item label="Hoạt động" name="is_active" valuePropName="checked">
-          <Switch defaultChecked disabled={!checkUpdate} />
-        </Form.Item>
+          <Form.Item label="Sức chứa" name="capacity" rules={[{ required: true, message: "Vui lòng nhập sức chứa!" }]}>
+            <InputNumber style={{ width: "100%" }} disabled={!checkUpdate} />
+          </Form.Item>
 
-        <div>
-          {checkUpdate ? (
-            <div className="flex items-center gap-2 justify-end">
-              <Button danger onClick={() => setCheckUpdate(false)}>
-                Hủy
-              </Button>
-              <Button type="primary" disabled={loading} htmlType="submit">
-                Lưu
-              </Button>
-            </div>
-          ) : (
-            <div className="flex justify-end">
-              <Button onClick={handleCheckUpdate} type="primary">
-                Cập nhật
-              </Button>
-            </div>
-          )}
-        </div>
-      </Form>
+          <Form.Item label="Hoạt động" name="is_active" valuePropName="checked">
+            <Switch defaultChecked disabled={!checkUpdate} />
+          </Form.Item>
+
+          <div>
+            {checkUpdate ? (
+              <div className="flex items-center gap-2 justify-end">
+                <Button danger onClick={() => setCheckUpdate(false)}>
+                  Hủy
+                </Button>
+                <Button type="primary" disabled={loading} htmlType="submit">
+                  Lưu
+                </Button>
+              </div>
+            ) : (
+              <div className="flex justify-end">
+                <Button onClick={handleCheckUpdate} type="primary">
+                  Cập nhật
+                </Button>
+              </div>
+            )}
+          </div>
+        </Form>
+      </Modal>
     </div>
   )
 }

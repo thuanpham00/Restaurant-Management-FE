@@ -42,7 +42,6 @@ import weekOfYear from "dayjs/plugin/weekOfYear"
 import weekYear from "dayjs/plugin/weekYear"
 import { isError400 } from "src/Helpers/utils"
 
-// Kích hoạt plugin
 dayjs.extend(customParseFormat)
 dayjs.extend(utc)
 dayjs.extend(weekday)
