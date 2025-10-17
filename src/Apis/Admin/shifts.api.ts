@@ -9,7 +9,9 @@ import {
   EmployeeShiftCheckIn,
   EmployeeShiftCheckOut,
   EmployeeShiftStatusUpdate,
-  queryParamConfigEmployeeShift
+  queryParamConfigEmployeeShift,
+  BulkAssignRequest,
+  BulkAssignResponse
 } from "src/Types/shift.type"
 
 // ========== SHIFTS API ==========
@@ -69,5 +71,10 @@ export const employeeShiftsAPI = {
 
   updateStatus: (id: string, data: EmployeeShiftStatusUpdate) => {
     return Http.patch<SuccessResponse<EmployeeShift>>(`/api/employee-shifts/${id}/status`, data)
+  },
+
+  // ========== BULK ASSIGN ==========
+  bulkAssign: (data: BulkAssignRequest) => {
+    return Http.post<SuccessResponse<BulkAssignResponse>>(`/api/employee-shifts/bulk-assign`, data)
   }
 }

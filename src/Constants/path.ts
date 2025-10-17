@@ -22,6 +22,7 @@ export const path = {
   AdminCustomers: "/admin/customers",
   AdminStaff: "/admin/staff",
   AdminShifts: "/admin/shifts",
+  AdminShiftDetail: "/admin/shifts/:id",
   AdminPayroll: "/admin/payroll",
   AdminPayrollDetail: "/admin/payroll/:id",
 
