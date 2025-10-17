@@ -6,13 +6,18 @@ import { path } from "../../Constants/path"
 import { lazy, Suspense } from "react"
 import { rolesForApi } from "src/Helpers/role_permission"
 import { useAppStore } from "src/StateGlobal/zustand"
+import ForgotPassword from "../Pages/Login/ForgotPassword"
 
 // Lazy load các component
 const Home = lazy(() => import("../Pages/Home"))
 const Menu = lazy(() => import("../Pages/Menu"))
-// const DetailMenu = lazy(() => import("../Pages/DetailMenu"));
+const DetailMenu = lazy(() => import("../Pages/DetailMenu"))
 const Login = lazy(() => import("../Pages/Login"))
 const Register = lazy(() => import("../Pages/Register"))
+const Table = lazy(() => import("../Pages/Table"))
+const Setting = lazy(() => import("../Pages/Settings"))
+const ReservationHistory = lazy(() => import("../Pages/ReservationHistory"))
+const AuthCallback = lazy(() => import("../Pages/Login/AuthCallback"))
 
 const ProjectRouter = () => {
   const { isAuthenticated } = useAppStore()
@@ -40,6 +45,18 @@ const BlockAdminForClient = () => {
 
 export default function useRouterClient() {
   const routerElement = useRoutes([
+    {
+      path: "/auth/callback",
+      element: (
+        <Suspense>
+          <AuthCallback />
+        </Suspense>
+      )
+    },
+    {
+      path: "/forgot-password",
+      element: <ForgotPassword />
+    },
     {
       path: "",
       element: <BlockAdminForClient />,
@@ -71,15 +88,39 @@ export default function useRouterClient() {
                   <Menu />
                 </Suspense>
               )
+            },
+            {
+              path: "dish/:id",
+              element: (
+                <Suspense>
+                  <DetailMenu />
+                </Suspense>
+              )
+            },
+            {
+              path: "table",
+              element: (
+                <Suspense>
+                  <Table />
+                </Suspense>
+              )
+            },
+            {
+              path: "reservation-history",
+              element: (
+                <Suspense>
+                  <ReservationHistory />
+                </Suspense>
+              )
+            },
+            {
+              path: "settings",
+              element: (
+                <Suspense>
+                  <Setting />
+                </Suspense>
+              )
             }
-            // {
-            //   path: "product/:id",
-            //   element: (
-            //     <Suspense>
-            //       <DetailMenu />
-            //     </Suspense>
-            //   ),
-            // },
           ]
         },
         {

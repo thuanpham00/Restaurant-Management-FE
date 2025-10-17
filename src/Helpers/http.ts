@@ -15,36 +15,39 @@ import { toast } from "react-toastify"
 import { HttpStatusCode } from "src/Constants/httpStatus"
 
 class http {
-  // khai báo các thuộc tính của class
   instance: AxiosInstance
   public accessToken: string
   private refreshTokenRequest: Promise<string> | null
+
   constructor() {
     this.accessToken = getAccessTokenFromLS()
     this.refreshTokenRequest = null
     this.instance = axios.create({
-      baseURL: config.baseURLClient, // kết nối tới server
-      timeout: 10000, // thời gian chờ server
+      baseURL: config.baseURLClient,
+      timeout: 10000,
       headers: {
-        "Content-Type": "application/json" // yc server trả về json
+        "Content-Type": "application/json"
       },
-      withCredentials: true // cho phép gửi cookie từ client lên server
+      withCredentials: true
     })
-    // interceptors : trung gian khi client gửi lên server và server gửi kết quả về client đều đi qua nó
-    // sau khi login xong thì server gửi về access_token
+
+    // Request interceptor
     this.instance.interceptors.request.use(
-      (config) => {
-        if (config.headers && this.accessToken) {
-          config.headers.Authorization = `Bearer ${this.accessToken}`
-          // config > headers > Authorization
-          return config
+      (cfg) => {
+        // Đồng bộ token từ localStorage (hỗ trợ sau OAuth callback)
+        const tokenLS = getAccessTokenFromLS()
+        if (tokenLS && tokenLS !== this.accessToken) {
+          this.accessToken = tokenLS
         }
-        return config // nếu ko có AT thì không cần gửi lên server (tùy api)
+        if (cfg.headers && this.accessToken) {
+          cfg.headers.Authorization = `Bearer ${this.accessToken}`
+        }
+        return cfg
       },
-      (error) => {
-        return Promise.reject(error)
-      }
+      (error) => Promise.reject(error)
     )
+
+    // Response interceptor
     this.instance.interceptors.response.use(
       (response) => {
         if (response.config.url === "/api/auth/login") {
@@ -55,7 +58,6 @@ class http {
           setRoleToLS(data.data.user.role.name)
           setAvatarImageToLS(data.data.user.avatar as string)
           setUserIdToLS(data.data.user.id)
-          // ở server sẽ tự động lưu RT vào cookie ở trình duyệt
         }
         if (response.config.url === "/api/auth/logout") {
           clearLS()
@@ -64,59 +66,53 @@ class http {
         }
         return response
       },
-      // nơi bắt lỗi chung cho response
       (error) => {
-        // bắt lỗi 403 chung cho các API
-        if (isError403<MessageResponse>) {
+        // 403 Forbidden
+        if (isError403<MessageResponse>(error)) {
           if (
-            error.response.status === HttpStatusCode.Forbidden ||
-            error.response.data.message === "Không có quyền truy cập!"
+            error.response?.status === HttpStatusCode.Forbidden ||
+            error.response?.data.message === "Không có quyền truy cập!"
           ) {
-            toast.error(error.response.data.message, {
-              autoClose: 1500
-            })
+            toast.error(error.response?.data.message || "Không có quyền truy cập!", { autoClose: 1500 })
           }
         }
+
+        // 404 Not Found
         if (isError404<MessageResponse>(error)) {
-          //
+          // handle 404 nếu cần
         }
-        if (isError401(error)) {
-          const config = error.response?.config || ({ headers: {} } as InternalAxiosRequestConfig)
-          const { url } = config
-          console.log(error)
-          // lỗi Unauthorized (401) có nhiều trường hợp
-          // - token không đúng
-          // - không truyền token
-          // - token hết hạn*
 
-          // nếu là lỗi accessToken hết hạn thì tạo mới accessToken
+        // 401 Unauthorized
+        if (isError401(error)) {
+          const originalRequest =
+            (error.response?.config as InternalAxiosRequestConfig) ||
+            ({ headers: {} } as InternalAxiosRequestConfig)
+          const { url } = originalRequest
+          // Access token hết hạn -> refresh
           if (isAxiosExpiredTokenError<MessageResponse>(error, "Unauthenticated.") && url !== "/api/auth/refresh") {
-            this.refreshTokenRequest = this.refreshTokenRequest ? this.refreshTokenRequest : this.handleRefreshToken()
-            // nếu không return ở đây nó sẽ chạy xuống bên dưới
+            this.refreshTokenRequest = this.refreshTokenRequest ?? this.handleRefreshToken()
             return this.refreshTokenRequest.then((accessToken) => {
-              if (error.response?.config.headers) {
-                return this.instance({
-                  ...config,
-                  headers: { ...config.headers, Authorization: `Bearer ${accessToken}` } // gửi lại lên server accessToken mới
-                })
-              }
+              return this.instance({
+                ...originalRequest,
+                headers: { ...(originalRequest.headers || {}), Authorization: `Bearer ${accessToken}` }
+              })
             })
           }
 
+          // Refresh token hết hạn/invalid
           if (isAxiosExpiredTokenError<MessageResponse>(error, "Invalid or expired refresh token")) {
-            // nếu refresh-token hết hạn thì nó clearLS
             this.accessToken = ""
             clearLS()
             toast.error("Phiên làm việc hết hạn", { autoClose: 1500 })
           }
         }
+
         return Promise.reject(error)
       }
     )
   }
 
   private handleRefreshToken() {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return this.instance
       .post<SuccessResponse<{ access_token: string }>>("/api/auth/refresh")
       .then((res) => {
@@ -135,7 +131,8 @@ class http {
   }
 }
 
-export const httpRaw = new http()
-
-const Http = new http().instance
+// Single instance dùng chung
+const httpClient = new http()
+export const httpRaw = httpClient
+const Http = httpClient.instance
 export default Http

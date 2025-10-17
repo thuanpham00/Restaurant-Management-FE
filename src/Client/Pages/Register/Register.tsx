@@ -1,8 +1,6 @@
-// src/Components/Register.tsx
 import { useState } from "react"
 import { NavLink, useNavigate } from "react-router-dom"
 import { LucideUtensils, Eye, EyeOff } from "lucide-react"
-import { Helmet } from "react-helmet-async"
 import { useForm } from "react-hook-form"
 import { yupResolver } from "@hookform/resolvers/yup"
 import { useMutation } from "@tanstack/react-query"
@@ -12,13 +10,16 @@ import { isError422 } from "src/Helpers/utils"
 import { ErrorResponse } from "src/Types/utils.type"
 import { path } from "src/Constants/path"
 import { clientAPI } from "src/Apis/Client/auth.api"
+import { assets } from "src/Assets/assets"
 
 type FormData = SchemaRegisterType
 
 const Register = () => {
   const navigate = useNavigate()
-  const [showPassword, setShowPassword] = useState(false)
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+  const [showPassword, setShowPassword] = useState({
+    password: false,
+    confirm: false
+  }) // State để quản lý ẩn/hiện mật khẩu
 
   const {
     formState: { errors },
@@ -66,21 +67,16 @@ const Register = () => {
 
   return (
     <div className="min-h-screen w-full flex items-center justify-center bg-black relative">
-      <Helmet>
-        <title>Đăng ký tài khoản - FoodZone</title>
-        <meta
-          name="description"
-          content="Đăng ký tài khoản FoodZone để bắt đầu đặt món ăn và tận hưởng trải nghiệm ẩm thực tuyệt vời."
-        />
-      </Helmet>
 
       <div className="absolute inset-0 bg-black bg-opacity-70 z-0">
         <div
           className="absolute inset-0 opacity-40 bg-cover bg-center"
           style={{
-            backgroundImage:
-              'url("https://images.unsplash.com/photo-1504674900247-0877df9cc836?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80")',
-            backgroundBlendMode: "overlay"
+            backgroundImage: `url(${assets.images.background})`,
+            backgroundBlendMode: "overlay",
+            backgroundSize: "100% 100%",
+            backgroundPosition: "center",
+            backgroundRepeat: "no-repeat"
           }}
         />
       </div>
@@ -90,7 +86,7 @@ const Register = () => {
           <LucideUtensils size={20} className="text-white" />
         </div>
         <span className="text-white font-bold text-xl">
-          food<span className="text-orange-500">.</span>
+          Restaurant<span className="text-orange-500">.</span>
         </span>
       </div>
 
@@ -128,40 +124,46 @@ const Register = () => {
               <label htmlFor="password" className="block text-gray-300 text-sm font-medium mb-2">
                 Mật khẩu
               </label>
-              <input
-                type={showPassword ? "text" : "password"}
-                id="password"
-                {...register("password")}
-                className="w-full px-4 py-3 bg-[#2d2d2d] border border-gray-600 rounded-lg text-white focus:outline-none focus:border-orange-500"
-                placeholder="••••••••"
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-2 top-[70%] -translate-y-1/2 text-gray-400 hover:text-white"
-              >
-                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-              </button>
+              <div className="relative">
+                <input
+                  type={showPassword.password ? "text" : "password"}
+                  id="password"
+                  {...register("password")}
+                  className="w-full px-4 py-3 bg-[#2d2d2d] border border-gray-600 rounded-lg text-white focus:outline-none focus:border-orange-500 pr-12"
+                  placeholder="••••••••"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((s) => ({ ...s, password: !s.password }))}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-200"
+                  aria-label="Ẩn/hiện mật khẩu"
+                >
+                  {showPassword.password ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                </button>
+              </div>
               {errors.password && <p className="text-red-500 text-sm mt-1">{errors.password.message}</p>}
             </div>
             <div className="mb-6 relative">
               <label htmlFor="confirmPassword" className="block text-gray-300 text-sm font-medium mb-2">
                 Xác nhận mật khẩu
               </label>
-              <input
-                type={showConfirmPassword ? "text" : "password"}
-                id="confirmPassword"
-                {...register("password_confirmation")}
-                className="w-full px-4 py-3 bg-[#2d2d2d] border border-gray-600 rounded-lg text-white focus:outline-none focus:border-orange-500"
-                placeholder="••••••••"
-              />
-              <button
-                type="button"
-                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                className="absolute right-2 top-[44%] -translate-y-1/2 text-gray-400 hover:text-white"
-              >
-                {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-              </button>
+              <div className="relative">
+                <input
+                  type={showPassword.confirm ? "text" : "password"}
+                  id="confirmPassword"
+                  {...register("password_confirmation")}
+                  className="w-full px-4 py-3 bg-[#2d2d2d] border border-gray-600 rounded-lg text-white focus:outline-none focus:border-orange-500 pr-12"
+                  placeholder="••••••••"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((s) => ({ ...s, confirm: !s.confirm }))}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-200"
+                  aria-label="Ẩn/hiện xác nhận mật khẩu"
+                >
+                  {showPassword.confirm ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                </button>
+              </div>
               {errors.password_confirmation && (
                 <p className="text-red-500 text-sm mt-1">{errors.password_confirmation.message}</p>
               )}
