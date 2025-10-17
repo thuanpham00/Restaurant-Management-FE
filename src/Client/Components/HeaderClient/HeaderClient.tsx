@@ -314,17 +314,17 @@ const Header = () => {
                 <img
                   src={assets.images.image90}
                   alt="Food item"
-                  className="w-16 h-16 object-cover rounded-xl border-2 border-orange-400 shadow-lg"
+                  className="w-16 h-16 object-cover rounded-xl shadow-lg"
                 />
                 <img
                   src={assets.images.image77}
                   alt="Food item"
-                  className="w-16 h-16 object-cover rounded-xl border-2 border-orange-400 shadow-lg"
+                  className="w-16 h-16 object-cover rounded-xl shadow-lg"
                 />
                 <img
                   src={assets.images.image91}
                   alt="Food item"
-                  className="w-16 h-16 object-cover rounded-xl border-2 border-orange-400 shadow-lg"
+                  className="w-16 h-16 object-cover rounded-xl shadow-lg"
                 />
               </div>
             </div>
