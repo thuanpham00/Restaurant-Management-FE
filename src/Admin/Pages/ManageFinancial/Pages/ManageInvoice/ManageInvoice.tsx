@@ -1,17 +1,17 @@
 import { keepPreviousData, useQuery } from "@tanstack/react-query"
-import { Empty, Pagination, Space, Spin, Table, Tag, Typography } from "antd"
+import { Button, Empty, Pagination, Space, Spin, Table, Tag, Tooltip, Typography } from "antd"
 import { ColumnsType } from "antd/es/table"
 import dayjs from "dayjs"
 import { isUndefined, omitBy } from "lodash"
 import { Helmet } from "react-helmet-async"
 import { Link, useSearchParams } from "react-router-dom"
-import { Fragment } from "react/jsx-runtime"
+import { Fragment, useMemo, useState } from "react"
 import NavigateBack from "src/Admin/Components/NavigateBack"
 import { invoicePaymentAPI } from "src/Apis/Admin/invoicePayment.api"
 import useQueryParams from "src/Hook/useQueryParams"
-import { Invoice } from "src/Types/invoicePayment.type"
 import { queryParamConfigInvoice } from "src/Types/queryParams.type"
-import { GitBranch, Merge } from "lucide-react"
+import { ChevronRight, ChevronDown, Maximize2, Minimize2, GitBranch, Eye } from "lucide-react"
+import { buildInvoiceTree, InvoiceTreeNode, getAllInvoiceIds, formatCurrency } from "src/Helpers/invoiceTree"
 
 const { Text } = Typography
 
@@ -20,7 +20,7 @@ export default function ManageInvoice() {
   const queryConfig: queryParamConfigInvoice = omitBy(
     {
       page: queryParams.page || "1",
-      per_page: queryParams.per_page || "5"
+      per_page: queryParams.per_page || "20" // Tăng lên để load đủ invoices cho tree
     },
     isUndefined
   )
@@ -38,7 +38,25 @@ export default function ManageInvoice() {
   })
 
   const paginated = data?.data.data
-  const listPromotion = paginated?.data
+  const invoiceList = paginated?.data || []
+
+  // ✅ State để quản lý expand/collapse
+  const [expandedRowKeys, setExpandedRowKeys] = useState<string[]>([])
+
+  // ✅ Build tree structure từ flat list
+  const invoiceTree = useMemo(() => {
+    return buildInvoiceTree(invoiceList)
+  }, [invoiceList])
+
+  // ✅ Handle expand all / collapse all
+  const handleExpandAll = () => {
+    const allKeys = getAllInvoiceIds(invoiceTree)
+    setExpandedRowKeys(allKeys)
+  }
+
+  const handleCollapseAll = () => {
+    setExpandedRowKeys([])
+  }
 
   const [searchParams, setSearchParams] = useSearchParams()
   const handlePaginationChange = (page: number, pageSize: number) => {
@@ -47,99 +65,137 @@ export default function ManageInvoice() {
     setSearchParams(searchParams) // trigger re-render → useQuery tự refetch
   }
 
-  const columns: ColumnsType<Invoice> = [
+  const columns: ColumnsType<InvoiceTreeNode> = [
     {
       title: "Mã hóa đơn",
-      dataIndex: "id",
+      dataIndex: ["invoice", "id"],
       key: "id",
-      render: (text) => <span className="font-medium">{text}</span>
+      width: 200,
+      render: (text, record) => {
+        const isExpanded = expandedRowKeys.includes(record.key)
+
+        return (
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 6
+            }}
+          >
+            {/* Expand/Collapse Icon - Chỉ hiển thị nếu có children */}
+            {record.hasChildren ? (
+              <span
+                onClick={() => {
+                  if (isExpanded) {
+                    setExpandedRowKeys(expandedRowKeys.filter((k) => k !== record.key))
+                  } else {
+                    setExpandedRowKeys([...expandedRowKeys, record.key])
+                  }
+                }}
+                style={{
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  flexShrink: 0
+                }}
+              >
+                {isExpanded ? <ChevronDown size={16} color="#1890ff" /> : <ChevronRight size={16} color="#1890ff" />}
+              </span>
+            ) : (
+              <span style={{ width: 16, flexShrink: 0 }} /> // Placeholder để align
+            )}
+
+            {/* Indent dấu ↳ cho các invoice con */}
+            <span style={{ marginLeft: record.level * 16, flexShrink: 0 }}>
+              {record.level > 0 && (
+                <GitBranch
+                  size={14}
+                  style={{
+                    marginRight: 6,
+                    color: "#8c8c8c",
+                    verticalAlign: "middle"
+                  }}
+                />
+              )}
+            </span>
+
+            {/* Mã hóa đơn */}
+            <span className={record.level === 0 ? "font-bold" : "font-medium"} style={{ whiteSpace: "nowrap" }}>
+              {text}
+            </span>
+          </div>
+        )
+      }
     },
     {
       title: "Mã phiên bàn",
-      dataIndex: "table_session_id",
-      key: "table_session_id"
+      dataIndex: ["invoice", "table_session_id"],
+      key: "table_session_id",
+      width: 120
     },
     {
-      title: "Tổng tiền",
-      dataIndex: "total_amount",
-      key: "total_amount",
-      render: (value: string) => (
-        <span>{Number(value).toLocaleString("vi-VN", { style: "currency", currency: "VND" })}</span>
+      title: "Tổng tiền gốc",
+      key: "totalOriginal",
+      width: 150,
+      align: "right",
+      render: (_, record) => (
+        <span className={record.level === 0 ? "font-semibold" : ""}>{formatCurrency(record.totalOriginal)}</span>
       )
     },
     {
-      title: "Giảm giá",
-      dataIndex: "discount",
-      key: "discount",
-      render: (value: string) => (
-        <span>{Number(value).toLocaleString("vi-VN", { style: "currency", currency: "VND" })}</span>
-      )
-    },
-    {
-      title: "Thuế",
-      dataIndex: "tax",
-      key: "tax",
-      render: (value: string) => (
-        <span>{Number(value).toLocaleString("vi-VN", { style: "currency", currency: "VND" })}</span>
-      )
-    },
-    {
-      title: "Thành tiền",
-      dataIndex: "final_amount",
-      key: "final_amount",
-      render: (value: string) => (
-        <span className="font-semibold text-red-500 text-center block">
-          {Number(value).toLocaleString("vi-VN", { style: "currency", currency: "VND" })}
-        </span>
-      )
-    },
-    {
-      title: "Loại & Quan hệ",
-      key: "type_relationship",
-      width: 200,
-      render: (_: unknown, record: Invoice) => {
-        if (!record.operation_type) {
-          return <Tag color="default">Bình thường</Tag>
+      title: () => (
+        <Tooltip title="Tổng số tiền đã tách thành các hóa đơn con">
+          <span>Đã tách</span>
+        </Tooltip>
+      ),
+      key: "totalSplit",
+      width: 150,
+      align: "right",
+      render: (_, record) => {
+        if (record.totalSplit === 0) {
+          return <Text type="secondary">-</Text>
         }
-
-        if (record.operation_type === "split_invoice") {
-          return (
-            <Space direction="vertical" size="small" style={{ width: "100%" }}>
-              <Tag color="purple" icon={<GitBranch size={12} />}>
-                Đã tách
-              </Tag>
-              {record.split_percentage && (
-                <Text type="secondary" style={{ fontSize: 12 }}>
-                  {record.split_percentage}% từ{" "}
-                  {record.parent_invoice_id && (
-                    <Link to={`/admin/manage-invoice/${record.parent_invoice_id}`} className="text-blue-500">
-                      #{record.parent_invoice_id}
-                    </Link>
-                  )}
-                </Text>
-              )}
-            </Space>
-          )
+        return <span className="text-orange-600 font-medium">{formatCurrency(record.totalSplit)}</span>
+      }
+    },
+    {
+      title: () => (
+        <Tooltip title="Số tiền còn lại chưa tách (Gốc - Đã tách)">
+          <span>Còn lại</span>
+        </Tooltip>
+      ),
+      key: "remaining",
+      width: 150,
+      align: "right",
+      render: (_, record) => {
+        if (!record.hasChildren) {
+          return <Text type="secondary">-</Text>
         }
-
-        if (record.operation_type === "merge_invoice") {
-          return (
-            <Space direction="vertical" size="small" style={{ width: "100%" }}>
-              <Tag color="cyan" icon={<Merge size={12} />}>
-                Đã gộp
-              </Tag>
-            </Space>
-          )
+        return (
+          <span className={record.remaining > 0 ? "text-green-600 font-semibold" : "text-gray-400"}>
+            {formatCurrency(record.remaining)}
+          </span>
+        )
+      }
+    },
+    {
+      title: "% Tách",
+      key: "split_percentage",
+      width: 80,
+      align: "center",
+      render: (_, record) => {
+        if (record.level === 0 || !record.invoice.split_percentage) {
+          return <Text type="secondary">-</Text>
         }
-
-        return <Tag>{record.operation_type}</Tag>
+        return <Tag color="purple">{record.invoice.split_percentage}%</Tag>
       }
     },
     {
       title: "Trạng thái",
-      dataIndex: "status",
       key: "status",
-      render: (status: number) => {
+      width: 150,
+      render: (_, record) => {
+        const status = record.invoice.status
         let text = ""
         let color: string | undefined = ""
 
@@ -149,11 +205,11 @@ export default function ManageInvoice() {
             color = "orange"
             break
           case 1:
-            text = "Thanh toán trước 1 phần"
+            text = "Thanh toán 1 phần"
             color = "blue"
             break
           case 2:
-            text = "Thanh toán đủ"
+            text = "Đã thanh toán"
             color = "green"
             break
           case 3:
@@ -170,25 +226,21 @@ export default function ManageInvoice() {
     },
     {
       title: "Ngày tạo",
-      dataIndex: "created_at",
       key: "created_at",
-      render: (date: string) => dayjs(date).format("DD/MM/YYYY HH:mm")
-    },
-    {
-      title: "Cập nhật",
-      dataIndex: "updated_at",
-      key: "updated_at",
-      render: (date: string) => dayjs(date).format("DD/MM/YYYY HH:mm")
+      width: 150,
+      render: (_, record) => dayjs(record.invoice.created_at).format("DD/MM/YYYY HH:mm")
     },
     {
       title: <div className="text-center">Hành động</div>,
       key: "action",
-      fixed: "right", // nếu muốn luôn hiển thị khi scroll ngang
+      fixed: "right",
       width: 120,
-      render: (_, record: Invoice) => (
-        <Link to={`/admin/invoices/${record.id}`} className="text-blue-500 text-center block">
-          Xem chi tiết
-        </Link>
+      render: (_, record) => (
+        <Tooltip title="Xem chi tiết">
+          <Link to={`/admin/invoices/${record.invoice.id}`} className="text-blue-500 flex items-center justify-center">
+            <Eye size={18} className="hover:text-blue-600 transition-colors" />
+          </Link>
+        </Tooltip>
       )
     }
   ]
@@ -218,22 +270,47 @@ export default function ManageInvoice() {
             <div style={{ minHeight: 100, width: 300, marginTop: 10 }} />
           </Spin>
         </div>
-      ) : (listPromotion as Invoice[])?.length === 0 ? (
-        <Empty description="Không có khuyến mãi hợp lệ" className="mt-16" />
+      ) : invoiceTree.length === 0 ? (
+        <Empty description="Không có hóa đơn nào" className="mt-16" />
       ) : (
         <Fragment>
+          {/* Expand/Collapse Buttons */}
+          <div style={{ marginBottom: 16, display: "flex", gap: 8 }}>
+            <Button icon={<Maximize2 size={16} />} onClick={handleExpandAll} size="small">
+              Mở rộng tất cả
+            </Button>
+            <Button icon={<Minimize2 size={16} />} onClick={handleCollapseAll} size="small">
+              Thu gọn tất cả
+            </Button>
+            <Text type="secondary" style={{ marginLeft: "auto", alignSelf: "center" }}>
+              Tổng: <strong>{invoiceTree.length}</strong> nhóm hóa đơn
+            </Text>
+          </div>
+
           <Table
-            rowKey="id"
+            rowKey="key"
             loading={isFetching}
             columns={columns}
-            dataSource={listPromotion as Invoice[]}
+            dataSource={invoiceTree}
             pagination={false}
             bordered={true}
-            rowClassName={(_, index) =>
-              index % 2 === 0
-                ? "bg-[#f2f2f2] hover:bg-blue-50 transition-colors"
-                : "bg-white hover:bg-blue-50 transition-colors"
-            }
+            expandable={{
+              expandedRowKeys,
+              onExpandedRowsChange: (keys) => setExpandedRowKeys(keys as string[]),
+              expandIcon: () => null,
+              indentSize: 0
+            }}
+            rowClassName={(record) => {
+              // Root invoices: bold background
+              if (record.level === 0) {
+                return "bg-blue-50 font-semibold"
+              }
+              // Child invoices: lighter background with alternating rows
+              return record.key.endsWith("1") || record.key.endsWith("3") || record.key.endsWith("5")
+                ? "bg-gray-50"
+                : "bg-white"
+            }}
+            scroll={{ x: 1400 }}
           />
 
           <div style={{ marginTop: 16, textAlign: "center", display: "flex", justifyContent: "flex-end" }}>
@@ -243,7 +320,7 @@ export default function ManageInvoice() {
               pageSize={parseInt(queryConfig.per_page as string)}
               onChange={handlePaginationChange}
               showSizeChanger
-              pageSizeOptions={["5", "10", "20", "50"]}
+              pageSizeOptions={["20", "50", "100"]}
             />
           </div>
         </Fragment>
