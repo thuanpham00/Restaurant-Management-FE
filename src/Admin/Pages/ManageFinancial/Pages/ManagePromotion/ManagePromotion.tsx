@@ -362,7 +362,7 @@ export default function ManagePromotion() {
 
           <Form.Item>
             <Button icon={<RotateCcw size={16} />} onClick={resetFilterForm}>
-              Reset
+              Đặt lại
             </Button>
           </Form.Item>
         </Form>

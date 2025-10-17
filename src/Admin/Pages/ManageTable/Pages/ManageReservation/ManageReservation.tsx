@@ -319,7 +319,7 @@ export default function ManageReservation() {
 
             <Form.Item>
               <Button icon={<RotateCcw size={16} />} onClick={resetFilterForm}>
-                Reset
+                Đặt lại
               </Button>
             </Form.Item>
           </div>
