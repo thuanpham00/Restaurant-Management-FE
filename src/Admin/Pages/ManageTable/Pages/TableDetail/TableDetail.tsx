@@ -1169,6 +1169,7 @@ export default function TableDetail() {
                     <div style={{ padding: 16 }}>
                       <InvoiceListSummary
                         invoices={invoiceList}
+                        tableSessionId={dataTableSessionDetail?.session_id}
                         onViewDetail={(invoice) => {
                           setSelectedInvoiceForDetail(invoice)
                           setShowInvoiceDetailModal(true)

@@ -117,3 +117,31 @@ export type SplitInvoiceResponse = {
     verification: string
   }
 }
+
+// Invoice Summary Types (from backend API)
+export type InvoiceSummary = {
+  table_session_id: string
+  summary: {
+    total_invoices: number
+    total_amount: number
+    total_paid: number
+    total_remaining: number
+    unpaid_count: number
+    partially_paid_count: number
+    paid_count: number
+    cancelled_count: number
+    merged_count: number
+  }
+  invoices: InvoiceSummaryItem[]
+}
+
+export type InvoiceSummaryItem = {
+  invoice_id: string
+  final_amount: number
+  total_paid: number
+  remaining_amount: number
+  status: number // 0=Unpaid, 1=Partially Paid, 2=Paid, 3=Cancelled, 4=Merged
+  status_label: string
+  operation_type: string | null
+  created_at: string
+}
