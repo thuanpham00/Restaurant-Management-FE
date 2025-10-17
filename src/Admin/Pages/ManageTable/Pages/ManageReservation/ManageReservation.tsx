@@ -172,6 +172,15 @@ export default function ManageReservation() {
         )?.dining_table_number
         return <span className="text-gray-700 font-semibold text-center block">{findTableNumber || "-"}</span>
       }
+    },
+    (activeTab === "confirmed" || activeTab === "completed") && {
+      title: <div className="text-center">Phiên bàn</div>,
+      dataIndex: "session_id",
+      key: "session_id",
+      render: (_: string, record: Reservation) => {
+        const findTableSession = listCheckAssignedTable?.find((item) => item.reservation_id === record.id)?.session_id
+        return <span className="text-gray-700 font-semibold text-center block">{findTableSession || "-"}</span>
+      }
     }
   ].filter(Boolean) as ColumnsType<Reservation>
 

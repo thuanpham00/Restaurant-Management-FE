@@ -11,11 +11,11 @@ import {
   SplitTableRequest,
   SplitTableResponse
 } from "src/Types/tableSession.type"
-import { PaginatedResponse, SuccessResponse } from "src/Types/utils.type"
+import { SuccessResponse } from "src/Types/utils.type"
 
 export const tableSessionAPI = {
   getListTableSession: (params: queryParamConfigTableSessions, signal: AbortSignal) => {
-    return Http.get<SuccessResponse<PaginatedResponse<TableSession>>>("/api/table-sessions", {
+    return Http.get<SuccessResponse<TableSession>>("/api/table-sessions", {
       params,
       signal
     })

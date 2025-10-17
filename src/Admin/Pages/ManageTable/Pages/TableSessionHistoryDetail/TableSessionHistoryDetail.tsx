@@ -134,12 +134,19 @@ export default function TableSessionHistoryDetail() {
       title: "Đơn giá",
       dataIndex: ["dish", "price"],
       key: "price",
-      render: (_: any, item: any) => item.price
+      render: (price: string | number) => {
+        const value = Number(price) || 0 // ép kiểu & fallback nếu null
+        return <div>{value.toLocaleString("vi-VN")}đ</div>
+      }
     },
     {
       title: "Tổng tiền",
       dataIndex: "total_price",
-      key: "total_price"
+      key: "total_price",
+      render: (price: string | number) => {
+        const value = Number(price) || 0 // ép kiểu & fallback nếu null
+        return <div className="text-red-500">{value.toLocaleString("vi-VN")}đ</div>
+      }
     },
     {
       title: "Ghi chú",
@@ -268,7 +275,11 @@ export default function TableSessionHistoryDetail() {
     {
       title: "Giá (VNĐ)",
       dataIndex: "price",
-      key: "price"
+      key: "price",
+      render: (price) => {
+        const formattedPrice = Number(price).toLocaleString("vi-VN")
+        return <div className="text-red-500 font-medium">{formattedPrice}đ</div>
+      }
     }
   ]
 
@@ -498,7 +509,7 @@ export default function TableSessionHistoryDetail() {
           <div className="flex justify-between items-center bg-blue-50 p-2 border-b border-gray-200">
             <div className="text-lg font-semibold text-blue-700">Order ID: {order.order_id}</div>
             <Tag color="red" className="font-semibold text-lg">
-              Tổng: {order.total_amount ?? 0}đ
+              Tổng: {Number(order.total_amount || 0).toLocaleString("vi-VN")}đ
             </Tag>
           </div>
 

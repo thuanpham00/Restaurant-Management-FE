@@ -143,9 +143,13 @@ export default function TableSessionItem({
           {mainTableId && subTables && (
             <>
               {table.dining_table_id === mainTableId ? (
-                <Tag color="blue">Bàn chính</Tag>
+                <Tag color="blue" className="text-[15px] py-1">
+                  Bàn chính
+                </Tag>
               ) : subTables.includes(table.dining_table_id) ? (
-                <Tag color="gold">Bàn phụ</Tag>
+                <Tag color="gold" className="text-[15px] py-1">
+                  Bàn phụ
+                </Tag>
               ) : null}
             </>
           )}
@@ -201,7 +205,7 @@ export default function TableSessionItem({
 
           {mergeTableSessionSelected?.includes(table.session_id) && (
             <span
-              className={`absolute top-10 right-2 px-2 py-1 text-xs font-semibold rounded ${
+              className={`absolute top-10 right-2 px-2 py-1 text-[15px] font-semibold rounded ${
                 mergeTableSessionSelected[0] === table.session_id
                   ? "bg-blue-500 text-white"
                   : "bg-emerald-500 text-white"

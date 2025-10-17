@@ -2,7 +2,6 @@
 import {
   Row,
   Spin,
-  Pagination,
   Empty,
   Divider,
   Button,
@@ -20,13 +19,13 @@ import isUndefined from "lodash/isUndefined"
 import useQueryParams from "src/Hook/useQueryParams"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { diningTableAPI, tableSessionAPI } from "src/Apis/Admin"
-import { ErrorResponse, PaginatedResponse } from "src/Types/utils.type"
+import { ErrorResponse } from "src/Types/utils.type"
 import { Helmet } from "react-helmet-async"
 import "antd/dist/reset.css"
 import { useRealtimeQuery } from "src/Hook/useRealtimeQuery"
-import { createSearchParams, Link, useNavigate, useSearchParams } from "react-router-dom"
+import { createSearchParams, Link, useNavigate } from "react-router-dom"
 import { Filter, RotateCcw, Table2, TabletSmartphone } from "lucide-react"
-import { Fragment, useState } from "react"
+import { useState } from "react"
 import { toast } from "react-toastify"
 import { isError422 } from "src/Helpers/utils"
 import { queryParamConfigTableSessions } from "src/Types/queryParams.type"
@@ -45,8 +44,6 @@ export default function ManageTable() {
   const queryParams: queryParamConfigTableSessions = useQueryParams()
   const queryConfig: queryParamConfigTableSessions = omitBy(
     {
-      page: queryParams.page || "1",
-      per_page: queryParams.per_page || "8",
       is_active: queryParams.is_active,
       session_status: queryParams.session_status,
       capacity: queryParams.capacity
@@ -67,8 +64,7 @@ export default function ManageTable() {
     }
   )
 
-  const paginated: PaginatedResponse<TableSession> | undefined = data?.data.data
-  const listTableSession = paginated?.data || []
+  const listTableSession = (data?.data.data || []) as TableSession[]
 
   // ✅ Query bàn active - Fresh data when needed (for merge table feature)
   const { data: dataTableSessionActive } = useRealtimeQuery(["listTableSessionActive"], () => {
@@ -82,19 +78,12 @@ export default function ManageTable() {
       controller.signal
     )
   })
-  const paginated2: PaginatedResponse<TableSession> | undefined = dataTableSessionActive?.data.data
-  const listTableSessionActive = paginated2?.data || []
+
+  const listTableSessionActive = (dataTableSessionActive?.data.data || []) as TableSession[]
 
   const listTableSessionActiveData = listTableSessionActive.filter(
     (item) => item.session_status === 1 && item.session_type !== 1
   )
-
-  const [searchParams, setSearchParams] = useSearchParams()
-  const handlePaginationChange = (page: number, pageSize: number) => {
-    searchParams.set("page", page.toString())
-    searchParams.set("per_page", pageSize.toString())
-    setSearchParams(searchParams) // trigger re-render → useQuery tự refetch
-  }
 
   const [addItem, setAddItem] = useState<boolean | null>(null)
 
@@ -304,19 +293,18 @@ export default function ManageTable() {
                   Bàn gộp
                 </Title>
 
-                <div className="flex items-center flex-wrap">
+                <div className="flex items-center flex-wrap justify-between">
                   {Array.from(groupedTablesMap.entries()).map(([groupKey, tables]) => {
-                    const widthValue = tables.length === 2 ? 50 : 100
+                    const widthValue = tables.length === 2 ? 49 : 99
                     const mainTable = tables.find((t) => t.session_id === groupKey) || tables[0]
                     const mainTableId = mainTable.dining_table_id
                     const subTables = tables
                       .filter((t) => t.dining_table_id !== mainTableId)
                       .map((t) => t.dining_table_id)
-                    console.log("mainTable", mainTable)
                     return (
                       <div
                         key={groupKey}
-                        className="rounded-2xl p-3 mb-6 border-4 border-yellow-400 shadow-[0_0_25px_4px_rgba(250,204,21,0.5)] transition-all duration-300"
+                        className="rounded-2xl p-3 mb-6 border-4 border-[#a3d9a5] shadow-[0_0_14px_#a3d9a5] transition-all duration-300"
                         style={{ width: `${widthValue}%` }}
                       >
                         <Row gutter={[16, 16]}>
@@ -366,17 +354,6 @@ export default function ManageTable() {
           </>
 
           <Divider />
-
-          <div style={{ marginTop: 16, textAlign: "center", display: "flex", justifyContent: "flex-end" }}>
-            <Pagination
-              current={parseInt(queryConfig.page as string)}
-              total={paginated?.total}
-              pageSize={parseInt(queryConfig.per_page as string)}
-              onChange={handlePaginationChange}
-              showSizeChanger
-              pageSizeOptions={["8", "10", "20", "50"]}
-            />
-          </div>
         </>
       )}
 

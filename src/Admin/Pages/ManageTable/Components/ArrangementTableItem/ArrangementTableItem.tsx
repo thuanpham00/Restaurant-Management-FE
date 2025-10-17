@@ -75,9 +75,9 @@ export default function ArrangementTableItem({
 
         <div className="absolute inset-0 bg-black/50"></div>
 
-        <div className="relative z-10 p-4 pt-2 text-white flex items-start justify-start flex-col">
+        <div className="relative z-10 p-4 pt-4 text-white flex items-start justify-start flex-col h-full">
           <Radio
-            className="absolute top-2 right-2"
+            className="absolute top-4 right-2"
             checked={selectedTableId === table.id}
             disabled={!table.table_available}
           />
@@ -99,7 +99,7 @@ export default function ArrangementTableItem({
           </div>
 
           {!table.table_available && table.reason && (
-            <div className="absolute bottom-[-26px] left-0 right-0 bg-black/70 text-white px-3 py-2 text-center text-xs rounded-t-md">
+            <div className="absolute bottom-0 left-0 right-0 bg-black/70 text-white px-3 py-2 text-center text-xs rounded-t-md">
               <span className="font-medium">Lý do:</span> <span>{table.reason}</span>
             </div>
           )}
@@ -113,50 +113,50 @@ export default function ArrangementTableItem({
           >
             Xem lịch
           </button>
-
-          <Modal
-            width={1200}
-            title={`Lịch đặt bàn ${table.table_number} - ${table.id} | Giờ hoạt động (10:00AM - 0:00PM)`}
-            closable={{ "aria-label": "Custom Close Button" }}
-            open={viewCalendar === true}
-            onCancel={() => setViewCalendar(false)}
-            footer={null}
-            style={{ top: 30 }}
-          >
-            <div className="flex items-center gap-3 mb-3">
-              <strong>Ghi chú:</strong>
-              <span className="flex items-center gap-2">
-                <div className="w-4 h-4 bg-[#2196F3]"></div> <div>Phiên hoàn thành</div>
-              </span>
-              <span className="flex items-center gap-2">
-                <div className="w-4 h-4 bg-[#4CAF50]"></div> <div>Phiên đang phục vụ</div>
-              </span>
-              <span className="flex items-center gap-2">
-                <div className="w-4 h-4 bg-[#ff9800]"></div> <div>Phiên chờ</div>
-              </span>
-              <span className="flex items-center gap-2">
-                <div className="w-4 h-4 bg-[#f44336]"></div> <div>Phiên đã hủy</div>
-              </span>
-            </div>
-
-            <FullCalendar
-              plugins={[timeGridPlugin, interactionPlugin]}
-              initialView="timeGridWeek"
-              allDaySlot={false}
-              slotMinTime="08:00:00"
-              slotMaxTime="22:00:00"
-              selectable={true}
-              height={500}
-              scrollTime="07:00:00"
-              expandRows={true}
-              events={calendarEvents}
-              eventClick={(info: any) => {
-                console.log("Clicked reservation:", info.event)
-              }}
-            />
-          </Modal>
         </div>
       </button>
+
+      <Modal
+        width={1200}
+        title={`Lịch đặt bàn ${table.table_number} - ${table.id} | Giờ hoạt động (10:00AM - 0:00PM)`}
+        closable={{ "aria-label": "Custom Close Button" }}
+        open={viewCalendar === true}
+        onCancel={() => setViewCalendar(false)}
+        footer={null}
+        style={{ top: 30 }}
+      >
+        <div className="flex items-center gap-3 mb-3">
+          <strong>Ghi chú:</strong>
+          <span className="flex items-center gap-2">
+            <div className="w-4 h-4 bg-[#2196F3]"></div> <div>Phiên hoàn thành</div>
+          </span>
+          <span className="flex items-center gap-2">
+            <div className="w-4 h-4 bg-[#4CAF50]"></div> <div>Phiên đang phục vụ</div>
+          </span>
+          <span className="flex items-center gap-2">
+            <div className="w-4 h-4 bg-[#ff9800]"></div> <div>Phiên chờ</div>
+          </span>
+          <span className="flex items-center gap-2">
+            <div className="w-4 h-4 bg-[#f44336]"></div> <div>Phiên đã hủy</div>
+          </span>
+        </div>
+
+        <FullCalendar
+          plugins={[timeGridPlugin, interactionPlugin]}
+          initialView="timeGridWeek"
+          allDaySlot={false}
+          slotMinTime="08:00:00"
+          slotMaxTime="22:00:00"
+          selectable={true}
+          height={500}
+          scrollTime="07:00:00"
+          expandRows={true}
+          events={calendarEvents}
+          eventClick={(info: any) => {
+            console.log("Clicked reservation:", info.event)
+          }}
+        />
+      </Modal>
     </Col>
   )
 }

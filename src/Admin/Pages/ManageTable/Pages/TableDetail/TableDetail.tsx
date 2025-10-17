@@ -255,7 +255,7 @@ export default function TableDetail() {
       return tableSessionAPI.getListPendingTableSessionByIdTable(idDiningTable)
     },
     {
-      enabled: hasCurrentSession === false 
+      enabled: hasCurrentSession === false
     }
   )
 
@@ -505,7 +505,11 @@ export default function TableDetail() {
     {
       title: "Giá (VNĐ)",
       dataIndex: "price",
-      key: "price"
+      key: "price",
+      render: (price) => {
+        const formattedPrice = Number(price).toLocaleString("vi-VN")
+        return <div className="text-red-500 font-medium">{formattedPrice}đ</div>
+      }
     }
   ]
 
@@ -785,7 +789,6 @@ export default function TableDetail() {
                     })
                     return
                   }
-
                   // ✅ NEW LOGIC: Check if invoices exist
                   if (invoiceList.length === 0) {
                     // No invoices → Open CreateInvoiceModal
@@ -1193,9 +1196,9 @@ export default function TableDetail() {
                     setShowSplitInvoiceModal(true)
                   }}
                   onPaymentSuccess={() => {
-                    queryClient.invalidateQueries({ queryKey: ['detailTableSession', idDiningTable] })
-                    queryClient.invalidateQueries({ 
-                      queryKey: ['listInvoicesForTableSession', dataTableSessionDetail?.session_id] 
+                    queryClient.invalidateQueries({ queryKey: ["detailTableSession", idDiningTable] })
+                    queryClient.invalidateQueries({
+                      queryKey: ["listInvoicesForTableSession", dataTableSessionDetail?.session_id]
                     })
                   }}
                 />

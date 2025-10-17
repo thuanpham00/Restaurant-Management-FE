@@ -1,12 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { Modal, Descriptions, Space, Button, InputNumber, Radio, Divider } from 'antd'
-import { useState, useMemo } from 'react'
-import { toast } from 'react-toastify'
-import { invoicePaymentAPI } from 'src/Apis/Admin/invoicePayment.api'
-import { useAppStore } from 'src/StateGlobal/zustand'
-import { InvoicePaymentPayload } from 'src/Types/invoicePayment.type'
-import PromotionForm from '../PromotionForm'
+import { useMutation, useQueryClient } from "@tanstack/react-query"
+import { Modal, Descriptions, Space, Button, InputNumber, Radio, Divider } from "antd"
+import { useState, useMemo } from "react"
+import { toast } from "react-toastify"
+import { invoicePaymentAPI } from "src/Apis/Admin/invoicePayment.api"
+import { useAppStore } from "src/StateGlobal/zustand"
+import { InvoicePaymentPayload } from "src/Types/invoicePayment.type"
+import PromotionForm from "../PromotionForm"
 
 interface CreateInvoiceModalProps {
   open: boolean
@@ -16,13 +16,7 @@ interface CreateInvoiceModalProps {
   idDiningTable: string
 }
 
-const CreateInvoiceModal = ({
-  open,
-  onClose,
-  totalAmount,
-  tableSessionId,
-  idDiningTable
-}: CreateInvoiceModalProps) => {
+const CreateInvoiceModal = ({ open, onClose, totalAmount, tableSessionId, idDiningTable }: CreateInvoiceModalProps) => {
   const queryClient = useQueryClient()
   const { employeeId } = useAppStore()
 
@@ -88,16 +82,16 @@ const CreateInvoiceModal = ({
 
     saveDraftMutation.mutate(payload, {
       onSuccess: () => {
-        toast.success('Đã lưu hóa đơn tạm thời!', { autoClose: 1500 })
+        toast.success("Đã lưu hóa đơn tạm thời!", { autoClose: 1500 })
         onClose()
         // Invalidate queries
-        queryClient.invalidateQueries({ queryKey: ['detailTableSession', idDiningTable] })
-        queryClient.invalidateQueries({ queryKey: ['detailTableSessionOrder', tableSessionId] })
-        queryClient.invalidateQueries({ queryKey: ['listInvoicesForTableSession', tableSessionId] })
+        queryClient.invalidateQueries({ queryKey: ["detailTableSession", idDiningTable] })
+        queryClient.invalidateQueries({ queryKey: ["detailTableSessionOrder", tableSessionId] })
+        queryClient.invalidateQueries({ queryKey: ["listInvoicesForTableSession", tableSessionId] })
       },
       onError: (err: any) => {
-        console.error('Error creating draft invoice:', err)
-        toast.error('Lỗi khi tạo hóa đơn tạm thời!', { autoClose: 1500 })
+        console.error("Error creating draft invoice:", err)
+        toast.error("Lỗi khi tạo hóa đơn tạm thời!", { autoClose: 1500 })
       }
     })
   }
@@ -121,16 +115,16 @@ const CreateInvoiceModal = ({
 
     payNowMutation.mutate(payload, {
       onSuccess: () => {
-        toast.success('Thanh toán thành công!', { autoClose: 1500 })
+        toast.success("Thanh toán thành công!", { autoClose: 1500 })
         onClose()
         // Invalidate queries
-        queryClient.invalidateQueries({ queryKey: ['detailTableSession', idDiningTable] })
-        queryClient.invalidateQueries({ queryKey: ['detailTableSessionOrder', tableSessionId] })
-        queryClient.invalidateQueries({ queryKey: ['listInvoicesForTableSession', tableSessionId] })
+        queryClient.invalidateQueries({ queryKey: ["detailTableSession", idDiningTable] })
+        queryClient.invalidateQueries({ queryKey: ["detailTableSessionOrder", tableSessionId] })
+        queryClient.invalidateQueries({ queryKey: ["listInvoicesForTableSession", tableSessionId] })
       },
       onError: (err: any) => {
-        console.error('Error processing payment:', err)
-        toast.error('Lỗi khi thanh toán!', { autoClose: 1500 })
+        console.error("Error processing payment:", err)
+        toast.error("Lỗi khi thanh toán!", { autoClose: 1500 })
       }
     })
   }
@@ -144,68 +138,68 @@ const CreateInvoiceModal = ({
       width={700}
       centered // ✅ Center modal
       styles={{
-        body: { 
-          maxHeight: 'calc(100vh - 200px)', // ✅ Responsive height
-          overflowY: 'auto',
-          padding: '20px'
+        body: {
+          maxHeight: "calc(100vh - 200px)", // ✅ Responsive height
+          overflowY: "auto",
+          padding: "20px"
         }
       }}
     >
-      <Space direction="vertical" style={{ width: '100%' }} size="large">
+      <Space direction="vertical" style={{ width: "100%" }} size="large">
         {/* Financial Summary */}
         <Descriptions column={1} bordered size="small" layout="horizontal">
           <Descriptions.Item label="Tạm tính" contentStyle={{ fontWeight: 500 }}>
-            {financialCalculation.subtotal.toLocaleString('vi-VN')} đ
+            {financialCalculation.subtotal.toLocaleString("vi-VN")} đ
           </Descriptions.Item>
         </Descriptions>
 
-        <Divider style={{ margin: '12px 0' }} />
+        <Divider style={{ margin: "12px 0" }} />
 
         {/* Promotion Form */}
         <div>
-          <h3 style={{ marginBottom: '8px', fontWeight: 600 }}>Áp dụng khuyến mãi</h3>
-          <PromotionForm
-            setTotalPercentage={setTotalPercentage}
-            setListPromotionApply={setListPromotionApply}
-          />
+          <h3 style={{ marginBottom: "8px", fontWeight: 600 }}>Áp dụng khuyến mãi</h3>
+          <PromotionForm setTotalPercentage={setTotalPercentage} setListPromotionApply={setListPromotionApply} />
         </div>
 
         {/* VAT Input */}
         <div>
-          <h3 style={{ marginBottom: '8px', fontWeight: 600 }}>Thuế VAT (%)</h3>
+          <h3 style={{ marginBottom: "8px", fontWeight: 600 }}>Thuế VAT (%)</h3>
           <InputNumber
             min={0}
             max={100}
             value={vat}
             onChange={(value) => setVat(value || 0)}
-            style={{ width: '200px' }}
+            style={{ width: "200px" }}
             placeholder="Nhập % VAT"
           />
         </div>
 
-        <Divider style={{ margin: '12px 0' }} />
+        <Divider style={{ margin: "12px 0" }} />
 
         {/* Final Calculation */}
         <Descriptions column={1} bordered size="small" layout="horizontal">
           <Descriptions.Item label="Giảm giá">
-            {financialCalculation.discountPercent}% (-{financialCalculation.discountAmount.toLocaleString('vi-VN')} đ)
+            {financialCalculation.discountPercent}% (-{financialCalculation.discountAmount.toLocaleString("vi-VN")} đ)
           </Descriptions.Item>
           <Descriptions.Item label="Sau giảm giá">
-            {financialCalculation.afterDiscount.toLocaleString('vi-VN')} đ
+            {financialCalculation.afterDiscount.toLocaleString("vi-VN")} đ
           </Descriptions.Item>
           <Descriptions.Item label="Thuế VAT ({vat}%)">
-            +{financialCalculation.taxAmount.toLocaleString('vi-VN')} đ
+            +{financialCalculation.taxAmount.toLocaleString("vi-VN")} đ
           </Descriptions.Item>
-          <Descriptions.Item label="Tổng tiền cuối" contentStyle={{ color: 'red', fontWeight: 'bold', fontSize: '16px' }}>
-            {financialCalculation.finalAmount.toLocaleString('vi-VN')} đ
+          <Descriptions.Item
+            label="Tổng tiền cuối"
+            contentStyle={{ color: "red", fontWeight: "bold", fontSize: "16px" }}
+          >
+            {financialCalculation.finalAmount.toLocaleString("vi-VN")} đ
           </Descriptions.Item>
         </Descriptions>
 
-        <Divider style={{ margin: '12px 0' }} />
+        <Divider style={{ margin: "12px 0" }} />
 
         {/* Payment Method */}
         <div>
-          <h3 style={{ marginBottom: '8px', fontWeight: 600 }}>Phương thức thanh toán</h3>
+          <h3 style={{ marginBottom: "8px", fontWeight: 600 }}>Phương thức thanh toán</h3>
           <Radio.Group value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value)}>
             <Radio value={0}>Tiền mặt</Radio>
             <Radio value={1}>Chuyển khoản ngân hàng</Radio>
@@ -213,11 +207,8 @@ const CreateInvoiceModal = ({
         </div>
 
         {/* Action Buttons */}
-        <Space style={{ width: '100%', justifyContent: 'flex-end' }}>
-          <Button 
-            onClick={onClose}
-            disabled={saveDraftMutation.isPending || payNowMutation.isPending}
-          >
+        <Space style={{ width: "100%", justifyContent: "flex-end" }}>
+          <Button onClick={onClose} disabled={saveDraftMutation.isPending || payNowMutation.isPending}>
             Hủy
           </Button>
           <Button
@@ -226,9 +217,9 @@ const CreateInvoiceModal = ({
             loading={saveDraftMutation.isPending}
             disabled={payNowMutation.isPending} // ✅ Disable khi button kia đang xử lý
             style={{
-              backgroundColor: '#faad14',
-              borderColor: '#faad14',
-              color: '#fff'
+              backgroundColor: "#faad14",
+              borderColor: "#faad14",
+              color: "#fff"
             }}
           >
             Lưu hóa đơn tạm
@@ -239,8 +230,8 @@ const CreateInvoiceModal = ({
             loading={payNowMutation.isPending}
             disabled={saveDraftMutation.isPending} // ✅ Disable khi button kia đang xử lý
             style={{
-              backgroundColor: '#52c41a',
-              borderColor: '#52c41a'
+              backgroundColor: "#52c41a",
+              borderColor: "#52c41a"
             }}
           >
             Thanh toán ngay

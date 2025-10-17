@@ -84,8 +84,8 @@ export default function ManageDish() {
   const [editingId, setEditingId] = useState<string | null | boolean>(null)
   const [form] = Form.useForm<Dish>()
 
-  const [file, setFile] = useState<File | null>(null)
-  const avatarWatch = Form.useWatch("image", form)
+  const [file, setFile] = useState<File | undefined>(undefined)
+  const [previewOldImage, setPreviewOldImage] = useState<string>("")
 
   const previewImage = useMemo(() => {
     return file ? URL.createObjectURL(file) : ""
@@ -95,15 +95,17 @@ export default function ManageDish() {
     setFile(file as File)
   }
 
-  // const updateImageDishMutation = useMutation({
-  //   mutationFn: (body: { file: File; dishId: string }) => {
-  //     return MediaAPI.uploadImageDish(body.file, body.dishId)
-  //   }
-  // })
-
   // Update API
   const updateMutation = useMutation({
-    mutationFn: (values: Partial<Dish>) => {
+    mutationFn: (values: {
+      name?: string
+      desc?: string
+      price?: string
+      cooking_time?: number
+      category_id?: string
+      is_active?: boolean
+      image?: File
+    }) => {
       return dishesAPI.update(editingId as string, values)
     },
     onSuccess: () => {
@@ -121,7 +123,15 @@ export default function ManageDish() {
   })
 
   const createMutation = useMutation({
-    mutationFn: (values: { name: string; desc?: string }) => {
+    mutationFn: (values: {
+      name: string
+      desc: string
+      price: string
+      cooking_time: number
+      category_id: string
+      is_active: boolean
+      image?: File
+    }) => {
       return dishesAPI.create(values)
     },
     onSuccess: () => {
@@ -130,6 +140,7 @@ export default function ManageDish() {
       })
       queryClient.invalidateQueries({ queryKey: ["listDish"] })
       setIsModalOpen(false)
+      setFile(undefined) // reset file
     },
     onError: () => {
       toast.error("Tạo món ăn thất bại", {
@@ -149,6 +160,8 @@ export default function ManageDish() {
         is_active: true
       })
       setEditingId(true)
+      setFile(undefined)
+      setPreviewOldImage("")
     } else {
       form.setFieldsValue({
         name: record.name,
@@ -156,45 +169,32 @@ export default function ManageDish() {
         price: record.price,
         cooking_time: record.cooking_time,
         category_id: record.category_id,
-        is_active: record.is_active,
-        image: record.image
+        is_active: record.is_active
       })
+      setFile(undefined) // reset lại file để tránh lưu giá trị rác
+      setPreviewOldImage(record.image) // 🟢 hiển thị ảnh cũ
       setEditingId(record.id)
     }
     setIsModalOpen(true)
   }
 
+  console.log(file)
+
   const handleUpdate = () => {
     form.validateFields().then(async (values) => {
-      try {
-        // let imageUrl = values.image
+      const payload: any = {
+        ...values
+      }
 
-        // // 🟢 Nếu người dùng chọn ảnh mới => upload lên server trước
-        // if (file) {
-        //   const res = await updateImageDishMutation.mutateAsync({
-        //     file,
-        //     dishId: editingId as string
-        //   })
-        //   imageUrl = res.data.data.url // đường dẫn ảnh trả về từ backend
-        // }
+      if (file) {
+        payload.image = file
+      }
 
-        const payload = {
-          ...values
-          // image: imageUrl
-        }
-
-        // 🟢 Nếu đang tạo mới
-        if (editingId === true) {
-          await createMutation.mutateAsync(payload)
-        } else {
-          await updateMutation.mutateAsync(payload)
-        }
-
-        setIsModalOpen(false)
-        setFile(null) // reset file
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      } catch (error: any) {
-        toast.error("Cập nhật món ăn thất bại!", { autoClose: 1500 })
+      if (editingId === true) {
+        await createMutation.mutateAsync(payload)
+      } else {
+        console.log(payload)
+        await updateMutation.mutateAsync(payload)
       }
     })
   }
@@ -359,7 +359,7 @@ export default function ManageDish() {
         Danh sách món ăn
       </h1>
 
-      <div className="mt-4  gap-4 mb-4">
+      <div className="mt-4 gap-4 mb-4">
         <Form
           form={filterForm}
           layout="inline"
@@ -544,7 +544,7 @@ export default function ManageDish() {
                 <div className="flex items-center justify-center flex-col px-4 shadow-sm">
                   <div className="mb-2 text-black dark:text-white">Ảnh món ăn</div>
                   <img
-                    src={previewImage || avatarWatch || assets.rectangles.Burger}
+                    src={previewImage || previewOldImage || assets.rectangles.Burger}
                     className="h-28 w-28 rounded-full mx-auto"
                     alt="avatar default"
                   />
