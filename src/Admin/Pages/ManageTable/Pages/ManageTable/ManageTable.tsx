@@ -63,7 +63,7 @@ export default function ManageTable() {
       return tableSessionAPI.getListTableSession(queryConfig, controller.signal)
     },
     {
-      refetchInterval: 30000 // Auto refetch every 30 seconds for table status updates
+      // refetchInterval: 30000 // Auto refetch every 30 seconds for table status updates
     }
   )
 
@@ -71,20 +71,17 @@ export default function ManageTable() {
   const listTableSession = paginated?.data || []
 
   // ✅ Query bàn active - Fresh data when needed (for merge table feature)
-  const { data: dataTableSessionActive } = useRealtimeQuery(
-    ["listTableSessionActive"],
-    () => {
-      const controller = new AbortController()
-      setTimeout(() => controller.abort(), 10000)
-      return tableSessionAPI.getListTableSession(
-        {
-          page: "1",
-          per_page: "100"
-        },
-        controller.signal
-      )
-    }
-  )
+  const { data: dataTableSessionActive } = useRealtimeQuery(["listTableSessionActive"], () => {
+    const controller = new AbortController()
+    setTimeout(() => controller.abort(), 10000)
+    return tableSessionAPI.getListTableSession(
+      {
+        page: "1",
+        per_page: "100"
+      },
+      controller.signal
+    )
+  })
   const paginated2: PaginatedResponse<TableSession> | undefined = dataTableSessionActive?.data.data
   const listTableSessionActive = paginated2?.data || []
 

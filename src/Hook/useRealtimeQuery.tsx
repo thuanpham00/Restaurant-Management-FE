@@ -3,32 +3,32 @@ import { useQuery, UseQueryOptions, QueryKey } from "@tanstack/react-query"
 
 /**
  * Custom hook for real-time data queries in restaurant management system
- * 
+ *
  * Features:
  * - Always fetch fresh data (staleTime: 0)
  * - Refetch on component mount (refetchOnMount: "always")
  * - Refetch when window regains focus (refetchOnWindowFocus: true)
  * - Optional auto-refetch interval
  * - No memory cache (gcTime: 0)
- * 
+ *
  * Use Cases:
  * - Table sessions (frequently changing)
  * - Order items (real-time updates)
  * - Invoice details (payment updates)
  * - Table status (occupancy changes)
- * 
+ *
  * @param queryKey - Unique identifier for the query
  * @param queryFn - Function that fetches the data
  * @param options - Additional query options
  * @returns Query result with data, loading, error states
- * 
+ *
  * @example
  * // Basic usage - always fresh data
  * const { data, isLoading } = useRealtimeQuery(
  *   ["tableSession", tableId],
  *   () => fetchTableSession(tableId)
  * )
- * 
+ *
  * @example
  * // With auto-refetch every 15 seconds
  * const { data } = useRealtimeQuery(
@@ -36,7 +36,7 @@ import { useQuery, UseQueryOptions, QueryKey } from "@tanstack/react-query"
  *   () => fetchOrders(sessionId),
  *   { refetchInterval: 15000 }
  * )
- * 
+ *
  * @example
  * // Conditional refetch based on data
  * const { data } = useRealtimeQuery(
@@ -65,24 +65,24 @@ export function useRealtimeQuery<
      * Can be a function that returns interval based on data
      */
     refetchInterval?: number | false | ((data: TData | undefined) => number | false)
-    
+
     /**
      * Enable/disable the query
      * Default: true
      */
     enabled?: boolean
-    
+
     /**
      * Number of retry attempts on error
      * Default: 0 (no retry)
      */
     retry?: number
-    
+
     /**
      * Custom error handler
      */
     onError?: (error: TError) => void
-    
+
     /**
      * Custom success handler
      */
@@ -92,21 +92,21 @@ export function useRealtimeQuery<
   return useQuery<TQueryFnData, TError, TData, TQueryKey>({
     queryKey,
     queryFn,
-    
+
     // Cache configuration for real-time data
     staleTime: 0, // Always consider data stale - fetch on every access
     gcTime: 0, // Don't keep unused data in memory (was cacheTime in v4)
-    
+
     // Refetch configuration
     refetchOnMount: "always", // Always refetch when component mounts
     refetchOnWindowFocus: true, // Refetch when user returns to the tab
     refetchOnReconnect: true, // Refetch when network reconnects
-    
+
     // Optional configurations from options
     refetchInterval: options?.refetchInterval,
     enabled: options?.enabled ?? true,
     retry: options?.retry ?? 0,
-    
+
     // Callbacks
     ...((options?.onError || options?.onSuccess) && {
       onError: options?.onError,
@@ -117,9 +117,9 @@ export function useRealtimeQuery<
 
 /**
  * Hook to detect if page is visible (for pausing polling)
- * 
+ *
  * @returns true if page is visible, false if hidden
- * 
+ *
  * @example
  * const isVisible = usePageVisibility()
  * const { data } = useRealtimeQuery(
@@ -137,7 +137,7 @@ export function usePageVisibility() {
     }
 
     document.addEventListener("visibilitychange", handleVisibilityChange)
-    
+
     return () => {
       document.removeEventListener("visibilitychange", handleVisibilityChange)
     }

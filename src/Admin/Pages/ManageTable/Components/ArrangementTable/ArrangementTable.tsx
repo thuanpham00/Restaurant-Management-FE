@@ -124,6 +124,7 @@ export default function ArrangementTable({
       })
       setArrangement(null)
       queryClient.invalidateQueries({ queryKey: ["listReservation", queryConfig] })
+      queryClient.invalidateQueries({ queryKey: ["listCheckAssignedTables", queryConfig] })
     },
     onError: (error: any) => {
       toast.error(error?.response?.data?.message || "Cập nhật thất bại ❌", {

@@ -68,8 +68,6 @@ export default function TableSessionHistoryDetail() {
 
   const dataHistoryTableSessionDetail = data?.data?.data as HistoryTableSessionDetail
 
-  console.log(dataHistoryTableSessionDetail)
-
   const { data: dataDetailInvoice, isError: isErrorInvoice } = useQuery({
     queryKey: ["detailDetailInvoice", idTableSession],
     queryFn: () => {
@@ -82,6 +80,7 @@ export default function TableSessionHistoryDetail() {
   })
 
   const detailInvoice = dataDetailInvoice?.data.data
+
   const deleteMenuMutation = useMutation({
     mutationFn: (body: { idOrder: string; idOrderItem: string }) =>
       orderItemsAPI.delete(body.idOrderItem, body.idOrder),
@@ -428,247 +427,243 @@ export default function TableSessionHistoryDetail() {
         Thông tin phiên bàn {idTableSession}
       </h1>
 
-      <Row gutter={12} style={{ overflow: "hidden" }}>
-        <Col span={11} className="space-y-4">
+      <Descriptions
+        title="Thông tin phiên bàn"
+        bordered
+        column={2}
+        size="middle"
+        labelStyle={{ fontWeight: 500, background: "#fafafa" }}
+        contentStyle={{ background: "#fff" }}
+      >
+        <Descriptions.Item label="Mã phiên">{dataHistoryTableSessionDetail.session_id}</Descriptions.Item>
+        <Descriptions.Item label="Bàn số">{dataHistoryTableSessionDetail.table_number}</Descriptions.Item>
+        <Descriptions.Item label="Sức chứa">{dataHistoryTableSessionDetail.table_capacity}</Descriptions.Item>
+        <Descriptions.Item label="Loại phiên">
+          {renderSessionType(dataHistoryTableSessionDetail.session_type)}
+        </Descriptions.Item>
+        <Descriptions.Item label="Trạng thái">
+          {renderSessionStatus(dataHistoryTableSessionDetail.session_status)}
+        </Descriptions.Item>
+        <Descriptions.Item label="Bắt đầu">{dataHistoryTableSessionDetail.started_at}</Descriptions.Item>
+        <Descriptions.Item label="Kết thúc">{dataHistoryTableSessionDetail.ended_at}</Descriptions.Item>
+        <Descriptions.Item label="Nhân viên">{dataHistoryTableSessionDetail.employee_id}</Descriptions.Item>
+        <Descriptions.Item label="Khách hàng">{dataHistoryTableSessionDetail.customer_id}</Descriptions.Item>
+      </Descriptions>
+
+      {/* Thông tin reservation */}
+      {dataHistoryTableSessionDetail.session_type === 2 && dataHistoryTableSessionDetail.reservation && (
+        <div className="mt-4">
           <Descriptions
-            title="Thông tin phiên bàn"
+            title="Thông tin đặt trước"
             bordered
             column={2}
             size="middle"
             labelStyle={{ fontWeight: 500, background: "#fafafa" }}
             contentStyle={{ background: "#fff" }}
           >
-            <Descriptions.Item label="Mã phiên">{dataHistoryTableSessionDetail.session_id}</Descriptions.Item>
-            <Descriptions.Item label="Bàn số">{dataHistoryTableSessionDetail.table_number}</Descriptions.Item>
-            <Descriptions.Item label="Sức chứa">{dataHistoryTableSessionDetail.table_capacity}</Descriptions.Item>
-            <Descriptions.Item label="Loại phiên">
-              {renderSessionType(dataHistoryTableSessionDetail.session_type)}
+            <Descriptions.Item label="Mã đặt">
+              {dataHistoryTableSessionDetail.reservation.reservation_id}
             </Descriptions.Item>
-            <Descriptions.Item label="Trạng thái">
-              {renderSessionStatus(dataHistoryTableSessionDetail.session_status)}
+            <Descriptions.Item label="Khách">
+              {dataHistoryTableSessionDetail.reservation.customer_name}
             </Descriptions.Item>
-            <Descriptions.Item label="Bắt đầu">{dataHistoryTableSessionDetail.started_at}</Descriptions.Item>
-            <Descriptions.Item label="Kết thúc">{dataHistoryTableSessionDetail.ended_at}</Descriptions.Item>
-            <Descriptions.Item label="Nhân viên">{dataHistoryTableSessionDetail.employee_id}</Descriptions.Item>
-            <Descriptions.Item label="Khách hàng">{dataHistoryTableSessionDetail.customer_id}</Descriptions.Item>
+            <Descriptions.Item label="SĐT">
+              {dataHistoryTableSessionDetail.reservation.customer_phone}
+            </Descriptions.Item>
+            <Descriptions.Item label="Giới tính">
+              {dataHistoryTableSessionDetail.reservation.customer_gender}
+            </Descriptions.Item>
+            <Descriptions.Item label="Địa chỉ">
+              {dataHistoryTableSessionDetail.reservation.customer_address}
+            </Descriptions.Item>
+            <Descriptions.Item label="Ngày đặt">
+              {dataHistoryTableSessionDetail.reservation.reserved_at}
+            </Descriptions.Item>
+            <Descriptions.Item label="Số lượng người">
+              {dataHistoryTableSessionDetail.reservation.number_of_people}
+            </Descriptions.Item>
+            <Descriptions.Item label="Ghi chú">{dataHistoryTableSessionDetail.reservation.notes}</Descriptions.Item>
           </Descriptions>
+        </div>
+      )}
 
-          {/* Thông tin reservation */}
-          {dataHistoryTableSessionDetail.session_type === 2 && dataHistoryTableSessionDetail.reservation && (
-            <Descriptions
-              title="Thông tin đặt trước"
-              bordered
-              column={2}
-              size="middle"
-              labelStyle={{ fontWeight: 500, background: "#fafafa" }}
-              contentStyle={{ background: "#fff" }}
-            >
-              <Descriptions.Item label="Mã đặt">
-                {dataHistoryTableSessionDetail.reservation.reservation_id}
-              </Descriptions.Item>
-              <Descriptions.Item label="Khách">
-                {dataHistoryTableSessionDetail.reservation.customer_name}
-              </Descriptions.Item>
-              <Descriptions.Item label="SĐT">
-                {dataHistoryTableSessionDetail.reservation.customer_phone}
-              </Descriptions.Item>
-              <Descriptions.Item label="Giới tính">
-                {dataHistoryTableSessionDetail.reservation.customer_gender}
-              </Descriptions.Item>
-              <Descriptions.Item label="Địa chỉ">
-                {dataHistoryTableSessionDetail.reservation.customer_address}
-              </Descriptions.Item>
-              <Descriptions.Item label="Ngày đặt">
-                {dataHistoryTableSessionDetail.reservation.reserved_at}
-              </Descriptions.Item>
-              <Descriptions.Item label="Số lượng người">
-                {dataHistoryTableSessionDetail.reservation.number_of_people}
-              </Descriptions.Item>
-              <Descriptions.Item label="Ghi chú">{dataHistoryTableSessionDetail.reservation.notes}</Descriptions.Item>
-            </Descriptions>
-          )}
-        </Col>
-
-        <Col span={13}>
-          {dataHistoryTableSessionDetail.orders.map((order, idx) => (
-            <Card
-              key={idx}
-              className="mb-4 rounded-lg shadow-sm"
-              styles={{
-                body: { padding: "0.5rem" }
-              }}
-            >
-              <div className="flex justify-between items-center bg-blue-50 p-2 border-b border-gray-200">
-                <div className="text-lg font-semibold text-blue-700">Order ID: {order.order_id}</div>
-                <Tag color="red" className="font-semibold text-lg">
-                  Tổng: {order.total_amount ?? 0}đ
-                </Tag>
-              </div>
-
-              <div className="mt-2 overflow-x-auto">
-                <Table
-                  rowKey="order_item_id"
-                  dataSource={order.items.filter((item) => item.status !== 4)}
-                  columns={orderColumns}
-                  pagination={false}
-                  bordered
-                  size="small"
-                  rowClassName={(_, index) =>
-                    index % 2 === 0
-                      ? "bg-[#f2f2f2] hover:bg-blue-50 transition-colors"
-                      : "bg-white hover:bg-blue-50 transition-colors"
-                  }
-                />
-
-                {prePaymentValue && (
-                  <div className="mt-2 flex justify-end gap-2">
-                    <Button
-                      className="py-4 shadow-md"
-                      type="primary"
-                      icon={<HandCoins />}
-                      onClick={() => {
-                        if (order.items.length === 0) {
-                          toast.error("Vui lòng order món trước khi đặt cọc", {
-                            autoClose: 1500
-                          })
-                        } else {
-                          setShowInvoice(true)
-                        }
-                      }}
-                      style={{
-                        backgroundColor: "#f56a00", // đỏ cam
-                        borderColor: "#f56a00",
-                        transition: "background-color 0.2s ease, border-color 0.2s ease"
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.backgroundColor = "#ff7a45" // hover nhạt hơn
-                        e.currentTarget.style.borderColor = "#ff7a45"
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.backgroundColor = "#f56a00"
-                        e.currentTarget.style.borderColor = "#f56a00"
-                      }}
-                    >
-                      Đặt cọc
-                    </Button>
-                    <Button
-                      className="py-4 bg-lime-600 hover:!bg-lime-700"
-                      type="primary"
-                      icon={<ChefHat />}
-                      onClick={() => setIsModalOpen(true)}
-                    >
-                      Thêm Order
-                    </Button>
-                  </div>
-                )}
-              </div>
-            </Card>
-          ))}
-
-          <div className="py-4 px-0 bg-white shadow rounded-lg space-y-6">
-            {/* 1. Thông tin tổng quan hóa đơn */}
-            <div className="flex justify-between items-center bg-blue-50 p-2 border-b border-gray-200">
-              <div className="text-lg font-semibold text-blue-700">Hóa đơn: {detailInvoice?.id}</div>
-              {isErrorInvoice ? (
-                <Tag className="font-semibold text-lg" color={"orange"}>
-                  {"Chưa thanh toán"}
-                </Tag>
-              ) : (
-                <Tag
-                  className="font-semibold text-lg"
-                  color={
-                    detailInvoice?.status === 0
-                      ? "orange"
-                      : detailInvoice?.status === 1
-                        ? "green"
-                        : detailInvoice?.status === 2
-                          ? "blue"
-                          : "red"
-                  }
-                >
-                  {detailInvoice?.status === 0
-                    ? "Chưa thanh toán"
-                    : detailInvoice?.status === 1
-                      ? "Thanh toán trước 1 phần"
-                      : detailInvoice?.status === 2
-                        ? "Thanh toán đủ"
-                        : "Đã hủy"}
-                </Tag>
-              )}
-            </div>
-
-            <Descriptions column={1} bordered size="small">
-              <Descriptions.Item label="Tổng tiền">
-                {Number(detailInvoice?.total_amount ?? 0).toLocaleString("vi-VN")} đ
-              </Descriptions.Item>
-              <Descriptions.Item label="Giảm giá">
-                {Number(detailInvoice?.discount ?? 0).toLocaleString("vi-VN")} %
-              </Descriptions.Item>
-              <Descriptions.Item label="Thuế VAT">{Number(detailInvoice?.tax ?? 0)} %</Descriptions.Item>
-              <Descriptions.Item label="Thành tiền">
-                <b>{Number(detailInvoice?.final_amount ?? 0).toLocaleString("vi-VN")} đ</b>
-              </Descriptions.Item>
-            </Descriptions>
-
-            <div>
-              <h3 className="text-lg font-semibold text-gray-700 mb-2 p-2 pt-0">Lịch sử thanh toán</h3>
-              <Table
-                rowKey="id"
-                size="small"
-                bordered
-                pagination={false}
-                dataSource={detailInvoice?.payments || []}
-                columns={[
-                  {
-                    title: "Thời gian",
-                    dataIndex: "paid_at",
-                    key: "paid_at",
-                    render: (text: string) => new Date(text).toLocaleString()
-                  },
-                  {
-                    title: "Số tiền",
-                    dataIndex: "amount",
-                    key: "amount",
-                    render: (text: number) => Number(text).toLocaleString("vi-VN") + " đ"
-                  },
-                  {
-                    title: "Phương thức",
-                    dataIndex: "method",
-                    key: "method",
-                    render: (method: number) => (method === 0 ? "Tiền mặt" : method === 1 ? "Chuyển khoản" : "Khác")
-                  },
-                  {
-                    title: "Trạng thái",
-                    dataIndex: "status",
-                    key: "status",
-                    render: (status: number) => (
-                      <Tag color={status === 0 ? "orange" : status === 1 ? "green" : status === 2 ? "red" : "gray"}>
-                        {status === 0
-                          ? "Chưa thanh toán"
-                          : status === 1
-                            ? "Hoàn thành"
-                            : status === 2
-                              ? "Thất bại"
-                              : "Đã hoàn tiền"}
-                      </Tag>
-                    )
-                  },
-                  {
-                    title: "Nhân viên",
-                    dataIndex: ["employee", "full_name"],
-                    key: "employee"
-                  }
-                ]}
-                rowClassName={(_, index) =>
-                  index % 2 === 0
-                    ? "bg-[#f9f9f9] hover:bg-blue-50 transition-colors"
-                    : "bg-white hover:bg-blue-50 transition-colors"
-                }
-              />
-            </div>
+      {dataHistoryTableSessionDetail.orders.map((order, idx) => (
+        <Card
+          key={idx}
+          className="mb-4 rounded-lg shadow-sm"
+          styles={{
+            body: { padding: "0.5rem" }
+          }}
+        >
+          <div className="flex justify-between items-center bg-blue-50 p-2 border-b border-gray-200">
+            <div className="text-lg font-semibold text-blue-700">Order ID: {order.order_id}</div>
+            <Tag color="red" className="font-semibold text-lg">
+              Tổng: {order.total_amount ?? 0}đ
+            </Tag>
           </div>
-        </Col>
-      </Row>
+
+          <div className="mt-2 overflow-x-auto">
+            <Table
+              rowKey="order_item_id"
+              dataSource={order.items.filter((item) => item.status !== 4)}
+              columns={orderColumns}
+              pagination={false}
+              bordered
+              size="small"
+              rowClassName={(_, index) =>
+                index % 2 === 0
+                  ? "bg-[#f2f2f2] hover:bg-blue-50 transition-colors"
+                  : "bg-white hover:bg-blue-50 transition-colors"
+              }
+            />
+
+            {prePaymentValue && (
+              <div className="mt-2 flex justify-end gap-2">
+                <Button
+                  className="py-4 shadow-md"
+                  type="primary"
+                  icon={<HandCoins />}
+                  onClick={() => {
+                    if (order.items.length === 0) {
+                      toast.error("Vui lòng order món trước khi đặt cọc", {
+                        autoClose: 1500
+                      })
+                    } else {
+                      setShowInvoice(true)
+                    }
+                  }}
+                  style={{
+                    backgroundColor: "#f56a00", // đỏ cam
+                    borderColor: "#f56a00",
+                    transition: "background-color 0.2s ease, border-color 0.2s ease"
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = "#ff7a45" // hover nhạt hơn
+                    e.currentTarget.style.borderColor = "#ff7a45"
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = "#f56a00"
+                    e.currentTarget.style.borderColor = "#f56a00"
+                  }}
+                >
+                  Đặt cọc
+                </Button>
+                <Button
+                  className="py-4 bg-lime-600 hover:!bg-lime-700"
+                  type="primary"
+                  icon={<ChefHat />}
+                  onClick={() => setIsModalOpen(true)}
+                >
+                  Thêm Order
+                </Button>
+              </div>
+            )}
+          </div>
+        </Card>
+      ))}
+
+      <div className="py-4 px-0 bg-white shadow rounded-lg space-y-6">
+        {/* 1. Thông tin tổng quan hóa đơn */}
+        <div className="flex justify-between items-center bg-blue-50 p-2 border-b border-gray-200">
+          <div className="text-lg font-semibold text-blue-700">Hóa đơn: {detailInvoice?.id}</div>
+          {isErrorInvoice ? (
+            <Tag className="font-semibold text-lg" color={"orange"}>
+              {"Chưa thanh toán"}
+            </Tag>
+          ) : (
+            <Tag
+              className="font-semibold text-lg"
+              color={
+                detailInvoice?.status === 0
+                  ? "orange"
+                  : detailInvoice?.status === 1
+                    ? "green"
+                    : detailInvoice?.status === 2
+                      ? "blue"
+                      : "red"
+              }
+            >
+              {detailInvoice?.status === 0
+                ? "Chưa thanh toán"
+                : detailInvoice?.status === 1
+                  ? "Thanh toán trước 1 phần"
+                  : detailInvoice?.status === 2
+                    ? "Thanh toán đủ"
+                    : "Đã hủy"}
+            </Tag>
+          )}
+        </div>
+
+        <Descriptions column={1} bordered size="small">
+          <Descriptions.Item label="Tổng tiền">
+            {Number(detailInvoice?.total_amount ?? 0).toLocaleString("vi-VN")} đ
+          </Descriptions.Item>
+          <Descriptions.Item label="Giảm giá">
+            {Number(detailInvoice?.discount ?? 0).toLocaleString("vi-VN")} %
+          </Descriptions.Item>
+          <Descriptions.Item label="Thuế VAT">{Number(detailInvoice?.tax ?? 0)} %</Descriptions.Item>
+          <Descriptions.Item label="Thành tiền">
+            <b>{Number(detailInvoice?.final_amount ?? 0).toLocaleString("vi-VN")} đ</b>
+          </Descriptions.Item>
+        </Descriptions>
+
+        <div>
+          <h3 className="text-lg font-semibold text-gray-700 mb-2 p-2 pt-0">Lịch sử thanh toán</h3>
+          <Table
+            rowKey="id"
+            size="small"
+            bordered
+            pagination={false}
+            dataSource={detailInvoice?.payments || []}
+            columns={[
+              {
+                title: "Thời gian",
+                dataIndex: "paid_at",
+                key: "paid_at",
+                render: (text: string) => new Date(text).toLocaleString()
+              },
+              {
+                title: "Số tiền",
+                dataIndex: "amount",
+                key: "amount",
+                render: (text: number) => Number(text).toLocaleString("vi-VN") + " đ"
+              },
+              {
+                title: "Phương thức",
+                dataIndex: "method",
+                key: "method",
+                render: (method: number) => (method === 0 ? "Tiền mặt" : method === 1 ? "Chuyển khoản" : "Khác")
+              },
+              {
+                title: "Trạng thái",
+                dataIndex: "status",
+                key: "status",
+                render: (status: number) => (
+                  <Tag color={status === 0 ? "orange" : status === 1 ? "green" : status === 2 ? "red" : "gray"}>
+                    {status === 0
+                      ? "Chưa thanh toán"
+                      : status === 1
+                        ? "Hoàn thành"
+                        : status === 2
+                          ? "Thất bại"
+                          : "Đã hoàn tiền"}
+                  </Tag>
+                )
+              },
+              {
+                title: "Nhân viên",
+                dataIndex: ["employee", "full_name"],
+                key: "employee"
+              }
+            ]}
+            rowClassName={(_, index) =>
+              index % 2 === 0
+                ? "bg-[#f9f9f9] hover:bg-blue-50 transition-colors"
+                : "bg-white hover:bg-blue-50 transition-colors"
+            }
+          />
+        </div>
+      </div>
 
       <Modal
         title="Thêm order"

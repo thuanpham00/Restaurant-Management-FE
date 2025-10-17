@@ -210,8 +210,7 @@ export default function TableDetail() {
       return tableSessionAPI.getDetailTableSessionOrderByIdTable(dataTableSessionDetail?.session_id)
     },
     {
-      enabled: Boolean(dataTableSessionDetail),
-      refetchInterval: 15000 // Auto refetch every 15 seconds for order status updates
+      enabled: Boolean(dataTableSessionDetail)
     }
   )
 
@@ -276,8 +275,7 @@ export default function TableDetail() {
       )
     },
     {
-      enabled: Boolean(idDiningTable) && Boolean(dataTableSessionDetail?.session_id),
-      refetchInterval: 20000 // Auto refetch every 20 seconds for payment updates
+      enabled: Boolean(idDiningTable) && Boolean(dataTableSessionDetail?.session_id)
     }
   )
 
@@ -673,8 +671,7 @@ export default function TableDetail() {
 
   // ✅ Mutation to complete table session when all invoices are paid
   const completeTableSessionMutation = useMutation({
-    mutationFn: (sessionId: string) => 
-      tableSessionAPI.updateStatusTableSession(sessionId),
+    mutationFn: (sessionId: string) => tableSessionAPI.updateStatusTableSession(sessionId),
     onSuccess: () => {
       toast.success("Phiên bàn đã hoàn tất! Tất cả hóa đơn đã được thanh toán.", {
         autoClose: 2000
@@ -693,7 +690,7 @@ export default function TableDetail() {
   // ✅ Auto-check and complete session when all invoices are paid
   useEffect(() => {
     if (
-      paymentStatus.allPaid && 
+      paymentStatus.allPaid &&
       dataTableSessionDetail?.session_status === 1 && // Only if session is "Đang phục vụ"
       !completeTableSessionMutation.isPending
     ) {
@@ -763,7 +760,7 @@ export default function TableDetail() {
                 icon={<Split />}
                 onClick={() => setShowSplitTableModal(true)}
                 disabled={
-                  !dataTableSessionOrder?.items || 
+                  !dataTableSessionOrder?.items ||
                   dataTableSessionOrder.items.length < 2 ||
                   paymentStatus.allPaid || // ✅ Disable khi tất cả hóa đơn đã thanh toán
                   invoiceList.length === 0 // ✅ Disable khi chưa có hóa đơn
@@ -803,7 +800,7 @@ export default function TableDetail() {
                     }
 
                     // Find first unpaid or partial paid invoice
-                    const unpaidInvoice = invoiceList.find(inv => inv.status !== 2)
+                    const unpaidInvoice = invoiceList.find((inv) => inv.status !== 2)
                     if (unpaidInvoice) {
                       setSelectedInvoiceForDetail(unpaidInvoice)
                       setShowInvoiceDetailModal(true)
@@ -830,14 +827,13 @@ export default function TableDetail() {
                   }
                 }}
               >
-                {invoiceList.length === 0 
+                {invoiceList.length === 0
                   ? "Tạo hóa đơn"
-                  : paymentStatus.allPaid 
-                    ? "✓ Đã thanh toán" 
-                    : paymentStatus.hasPendingPayments 
+                  : paymentStatus.allPaid
+                    ? "✓ Đã thanh toán"
+                    : paymentStatus.hasPendingPayments
                       ? `Thanh toán (${paymentStatus.unpaidCount + paymentStatus.partialPaidCount}/${paymentStatus.totalInvoices} HĐ)`
-                      : "Thanh toán"
-                }
+                      : "Thanh toán"}
               </Button>
             </>
           )}
@@ -1168,11 +1164,7 @@ export default function TableDetail() {
 
                   <Panel
                     key="invoiceInfo"
-                    header={
-                      <h2 className="text-lg font-semibold text-gray-700">
-                        Hóa đơn ({invoiceList.length})
-                      </h2>
-                    }
+                    header={<h2 className="text-lg font-semibold text-gray-700">Hóa đơn ({invoiceList.length})</h2>}
                   >
                     <div style={{ padding: 16 }}>
                       <InvoiceListSummary
@@ -1194,7 +1186,7 @@ export default function TableDetail() {
                     setSelectedInvoiceForDetail(null)
                   }}
                   invoiceId={selectedInvoiceForDetail?.id || null}
-                  tableSessionId={dataTableSessionDetail?.session_id || ''}
+                  tableSessionId={dataTableSessionDetail?.session_id || ""}
                   idDiningTable={idDiningTable}
                   onSplitInvoice={(invoice) => {
                     setSelectedInvoiceForDetail(invoice as any)
