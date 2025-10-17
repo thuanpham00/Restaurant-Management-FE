@@ -204,45 +204,46 @@ const ForgotPassword = () => {
   }
 
   return (
-    <div className="min-h-screen w-full flex items-center justify-center bg-black relative">
-
-
-      <div className="absolute inset-0 bg-opacity-70 z-0">
+    <div className="min-h-screen w-full flex items-center justify-center bg-gradient-to-br from-orange-500/20 via-gray-900/90 to-gray-900 relative">
+      {/* Overlay background */}
+      <div className="absolute inset-0 z-0">
         <div
           className="absolute inset-0 opacity-40 bg-cover bg-center"
           style={{
             backgroundImage: `url(${assets.images.background})`,
             backgroundBlendMode: "overlay",
-            backgroundSize: "100% 100%",
+            backgroundSize: "cover",
             backgroundPosition: "center",
             backgroundRepeat: "no-repeat"
           }}
         />
+        <div className="absolute inset-0 bg-gradient-to-br from-orange-500/10 via-gray-900/80 to-gray-900/90" />
       </div>
 
-      <div className="absolute top-6 left-6 z-10 flex items-center">
-        <div className="bg-orange-500 rounded-full p-2 mr-2">
-          <LucideUtensils size={20} className="text-white" />
+      {/* Logo */}
+      <div className="absolute top-8 left-8 z-10 flex items-center">
+        <div className="bg-gradient-to-br from-orange-500 to-orange-400 rounded-full p-3 shadow-lg">
+          <LucideUtensils size={28} className="text-white" />
         </div>
-        <span className="text-white font-bold text-xl">
-          Restaurant<span className="text-orange-500">.</span>
+        <span className="text-white font-extrabold text-2xl ml-3 tracking-tight drop-shadow-lg">
+          WowWraps<span className="text-orange-400">.</span>
         </span>
       </div>
 
       <div className="z-10 w-full max-w-md px-4">
-        <div className="bg-[#1a1a1a] rounded-xl p-8 shadow-2xl w-full">
+        <div className="bg-gradient-to-br from-gray-900/90 via-gray-800/95 to-gray-900/90 border-2 border-orange-400/30 rounded-2xl p-10 shadow-2xl w-full backdrop-blur-lg">
           <NavLink to="/login" className="flex items-center text-gray-400 hover:text-white mb-6 transition-colors">
             <ArrowLeft size={20} className="mr-2" />
             <span>Quay lại đăng nhập</span>
           </NavLink>
 
-          <h1 className="text-2xl font-bold text-white text-center mb-2">
+          <h1 className="text-3xl font-extrabold text-white text-center mb-2 drop-shadow-lg">
             {step === 1 && "Quên mật khẩu"}
             {step === 2 && "Nhập mã OTP"}
             {step === 3 && "Đặt mật khẩu mới"}
           </h1>
 
-          <p className="text-gray-400 text-center mb-8 text-sm">
+          <p className="text-gray-400 text-center mb-8 text-base font-medium">
             {step === 1 && "Nhập email của bạn để nhận mã xác thực"}
             {step === 2 && "Mã OTP đã được gửi đến email của bạn"}
             {step === 3 && "Nhập mật khẩu mới để hoàn tất"}
@@ -252,14 +253,14 @@ const ForgotPassword = () => {
           {step === 1 && (
             <form onSubmit={handleSubmitEmail(onSubmitEmail)}>
               <div className="mb-6">
-                <label htmlFor="email" className="block text-gray-300 text-sm font-medium mb-2">
+                <label htmlFor="email" className="block text-gray-300 text-sm font-semibold mb-2">
                   Email
                 </label>
                 <input
                   type="email"
                   id="email"
                   {...registerEmail("email")}
-                  className="w-full px-4 py-3 bg-[#2d2d2d] border border-gray-600 rounded-lg text-white focus:outline-none focus:border-orange-500"
+                  className="w-full px-4 py-3 bg-gray-800 border-2 border-gray-700 rounded-xl text-white focus:outline-none focus:border-orange-500 font-medium"
                   placeholder="your@email.com"
                 />
                 {emailErrors.email && <p className="text-red-500 text-sm mt-1">{emailErrors.email.message}</p>}
@@ -268,7 +269,7 @@ const ForgotPassword = () => {
               <button
                 type="submit"
                 disabled={sendOtpMutation.isPending}
-                className="w-full bg-orange-500 hover:bg-orange-600 text-white font-medium py-3 px-4 rounded-lg transition duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-bold py-3 px-4 rounded-xl shadow-lg transition duration-300 disabled:opacity-50 disabled:cursor-not-allowed text-lg"
               >
                 {sendOtpMutation.isPending ? "Đang gửi..." : "Gửi mã xác thực"}
               </button>
@@ -279,7 +280,7 @@ const ForgotPassword = () => {
           {step === 2 && (
             <form onSubmit={handleSubmitOtp(onSubmitOtp)}>
               <div className="mb-6">
-                <label htmlFor="otp" className="block text-gray-300 text-sm font-medium mb-2">
+                <label htmlFor="otp" className="block text-gray-300 text-sm font-semibold mb-2">
                   Mã OTP (6 số)
                 </label>
                 <input
@@ -287,7 +288,7 @@ const ForgotPassword = () => {
                   id="otp"
                   maxLength={6}
                   {...registerOtp("otp")}
-                  className="w-full px-4 py-3 bg-[#2d2d2d] border border-gray-600 rounded-lg text-white text-center text-2xl tracking-widest focus:outline-none focus:border-orange-500"
+                  className="w-full px-4 py-3 bg-gray-800 border-2 border-gray-700 rounded-xl text-white text-center text-2xl tracking-widest focus:outline-none focus:border-orange-500 font-medium"
                   placeholder="000000"
                 />
                 {otpErrors.otp && <p className="text-red-500 text-sm mt-1">{otpErrors.otp.message}</p>}
@@ -302,7 +303,7 @@ const ForgotPassword = () => {
               <button
                 type="submit"
                 disabled={verifyOtpMutation.isPending || countdown === 0}
-                className="w-full bg-orange-500 hover:bg-orange-600 text-white font-medium py-3 px-4 rounded-lg transition duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-bold py-3 px-4 rounded-xl shadow-lg transition duration-300 disabled:opacity-50 disabled:cursor-not-allowed text-lg"
               >
                 {verifyOtpMutation.isPending ? "Đang xác thực..." : "Xác nhận"}
               </button>
@@ -321,7 +322,7 @@ const ForgotPassword = () => {
           {step === 3 && (
             <form onSubmit={handleSubmitPassword(onSubmitPassword)}>
               <div className="mb-6">
-                <label htmlFor="password" className="block text-gray-300 text-sm font-medium mb-2">
+                <label htmlFor="password" className="block text-gray-300 text-sm font-semibold mb-2">
                   Mật khẩu mới
                 </label>
                 <div className="relative">
@@ -329,13 +330,13 @@ const ForgotPassword = () => {
                     type={showPassword.new ? "text" : "password"}
                     id="password"
                     {...registerPassword("password")}
-                    className="w-full px-4 py-3 bg-[#2d2d2d] border border-gray-600 rounded-lg text-white focus:outline-none focus:border-orange-500 pr-12"
+                    className="w-full px-4 py-3 bg-gray-800 border-2 border-gray-700 rounded-xl text-white focus:outline-none focus:border-orange-500 pr-12 font-medium"
                     placeholder="••••••••"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword((s) => ({ ...s, new: !s.new }))}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-200"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-orange-400"
                     aria-label="Ẩn/hiện mật khẩu mới"
                   >
                     {showPassword.new ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
@@ -347,7 +348,7 @@ const ForgotPassword = () => {
               </div>
 
               <div className="mb-6">
-                <label htmlFor="password_confirmation" className="block text-gray-300 text-sm font-medium mb-2">
+                <label htmlFor="password_confirmation" className="block text-gray-300 text-sm font-semibold mb-2">
                   Xác nhận mật khẩu
                 </label>
                 <div className="relative">
@@ -355,13 +356,13 @@ const ForgotPassword = () => {
                     type={showPassword.confirm ? "text" : "password"}
                     id="password_confirmation"
                     {...registerPassword("password_confirmation")}
-                    className="w-full px-4 py-3 bg-[#2d2d2d] border border-gray-600 rounded-lg text-white focus:outline-none focus:border-orange-500 pr-12"
+                    className="w-full px-4 py-3 bg-gray-800 border-2 border-gray-700 rounded-xl text-white focus:outline-none focus:border-orange-500 pr-12 font-medium"
                     placeholder="••••••••"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword((s) => ({ ...s, confirm: !s.confirm }))}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-200"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-orange-400"
                     aria-label="Ẩn/hiện xác nhận mật khẩu"
                   >
                     {showPassword.confirm ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
@@ -375,7 +376,7 @@ const ForgotPassword = () => {
               <button
                 type="submit"
                 disabled={resetPasswordMutation.isPending}
-                className="w-full bg-orange-500 hover:bg-orange-600 text-white font-medium py-3 px-4 rounded-lg transition duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-bold py-3 px-4 rounded-xl shadow-lg transition duration-300 disabled:opacity-50 disabled:cursor-not-allowed text-lg"
               >
                 {resetPasswordMutation.isPending ? "Đang xử lý..." : "Đặt lại mật khẩu"}
               </button>

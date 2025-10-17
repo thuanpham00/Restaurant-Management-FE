@@ -5,6 +5,18 @@ import { reservationAPI } from "src/Apis/Client/ReservationHistory.api"
 import { Reservation } from "src/Types/reservation.type"
 import { isAxiosError, AxiosResponse } from "axios"
 import { useNavigate } from "react-router-dom"
+import {
+  Calendar,
+  Users,
+  Clock,
+  MessageSquare,
+  CheckCircle,
+  XCircle,
+  AlertCircle,
+  Loader2,
+  ChevronLeft,
+  ChevronRight
+} from "lucide-react"
 
 type Paginated<T> = {
   data: T[]
@@ -15,10 +27,10 @@ type Paginated<T> = {
 }
 
 const STATUS_LABEL: Record<number, string> = {
-  0: "Pending",
-  1: "Confirmed",
-  2: "Cancelled",
-  3: "Completed"
+  0: "Chờ xác nhận",
+  1: "Đã xác nhận",
+  2: "Đã hủy",
+  3: "Đã hoàn thành"
 }
 
 const STATUS_CLASS: Record<number, string> = {
@@ -26,6 +38,20 @@ const STATUS_CLASS: Record<number, string> = {
   1: "bg-green-600/30 text-green-300 border border-green-700/50",
   2: "bg-red-600/30 text-red-300 border border-red-700/50",
   3: "bg-blue-600/30 text-blue-300 border border-blue-700/50"
+}
+
+const STATUS_GLOW: Record<number, string> = {
+  0: "bg-yellow-500/20",
+  1: "bg-green-500/20",
+  2: "bg-red-500/20",
+  3: "bg-blue-500/20"
+}
+
+const STATUS_ICON: Record<number, React.ElementType> = {
+  0: AlertCircle,
+  1: CheckCircle,
+  2: XCircle,
+  3: CheckCircle
 }
 
 function normalizeStatus(s: unknown): number {
@@ -93,33 +119,128 @@ const ReservationHistory: React.FC = () => {
   return (
     <div className="bg-gray-900 text-white min-h-screen">
       <Header />
-      <section className="container mx-auto px-4 py-10">
-        <h1 className="text-3xl md:text-4xl font-semibold mb-6">Lịch sử đặt bàn</h1>
 
-        {loading && <div className="text-gray-300">Đang tải...</div>}
-        {error && <div className="bg-red-600/80 text-white p-4 rounded-lg mb-6 max-w-2xl">{error}</div>}
+      <section className="container mx-auto px-4 py-12 md:py-16">
+        {/* Header */}
+        <div className="mb-8 md:mb-12">
+          <h1 className="text-4xl md:text-5xl font-bold mb-3 bg-gradient-to-r from-orange-400 to-orange-300 bg-clip-text text-transparent">
+            Lịch sử đặt bàn
+          </h1>
+          <p className="text-gray-400 text-lg">Quản lý và theo dõi các đặt bàn của bạn</p>
+        </div>
 
-        {!loading && !error && items.length === 0 && <div className="text-gray-400">Bạn chưa có đặt bàn nào.</div>}
+        {/* Loading State */}
+        {loading && (
+          <div className="flex flex-col items-center justify-center py-20">
+            <Loader2 className="w-12 h-12 text-orange-400 animate-spin mb-4" />
+            <p className="text-gray-400 text-lg">Đang tải dữ liệu...</p>
+          </div>
+        )}
 
-        <div className="grid gap-4">
+        {/* Error State */}
+        {error && (
+          <div className="bg-gradient-to-br from-red-500/10 to-red-600/5 border-2 border-red-500/30 rounded-2xl p-6 mb-6 max-w-2xl backdrop-blur-sm">
+            <div className="flex items-start gap-4">
+              <XCircle className="w-6 h-6 text-red-400 flex-shrink-0 mt-0.5" />
+              <div>
+                <h3 className="text-red-400 font-semibold text-lg mb-1">Có lỗi xảy ra</h3>
+                <p className="text-red-300/90">{error}</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Empty State */}
+        {!loading && !error && items.length === 0 && (
+          <div className="text-center py-20">
+            <div className="inline-flex items-center justify-center w-24 h-24 rounded-full bg-gray-800/50 border-2 border-gray-700 mb-6">
+              <Calendar className="w-12 h-12 text-gray-500" />
+            </div>
+            <h3 className="text-2xl font-semibold text-gray-400 mb-2">Chưa có đặt bàn nào</h3>
+            <p className="text-gray-500 mb-6">Hãy đặt bàn ngay để trải nghiệm dịch vụ của chúng tôi</p>
+            <button
+              onClick={() => navigate("/table")}
+              className="px-6 py-3 bg-orange-500 hover:bg-orange-600 text-white rounded-lg font-medium transition-colors duration-200"
+            >
+              Đặt bàn ngay
+            </button>
+          </div>
+        )}
+
+        {/* Reservation Cards */}
+        <div className="grid gap-6">
           {items.map((r) => {
             const code = normalizeStatus(r.status)
             const label = STATUS_LABEL[code]
             const cls = STATUS_CLASS[code]
+            const glow = STATUS_GLOW[code]
+            const StatusIcon = STATUS_ICON[code]
+
             return (
-              <div key={r.id} className="bg-gray-800/60 border border-gray-700 rounded-lg p-4">
-                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-                  <div>
-                    <div className="text-lg font-medium">
-                      Tên khách hàng: <span className="text-orange-400">{r.customer.full_name}</span>
+              <div
+                key={r.id}
+                className="group relative bg-gradient-to-br from-gray-800/40 to-gray-800/20 backdrop-blur-sm border-2 border-gray-700/50 rounded-2xl p-6 transition-all duration-300 hover:border-orange-500/50 hover:shadow-2xl hover:shadow-orange-500/10 hover:-translate-y-1"
+              >
+                {/* Glow effect */}
+                <div
+                  className={`absolute inset-0 rounded-2xl ${glow} opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-xl pointer-events-none`}
+                />
+
+                <div className="relative flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+                  {/* Left Side - Info */}
+                  <div className="flex-1 space-y-4">
+                    {/* Customer Name */}
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-orange-500/20 border-2 border-orange-500/30 flex items-center justify-center flex-shrink-0">
+                        <Users className="w-5 h-5 text-orange-400" />
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-400">Khách hàng</p>
+                        <p className="text-xl font-semibold text-orange-400">{r.customer.full_name}</p>
+                      </div>
                     </div>
-                    <div className="text-gray-300">
-                      Thời gian: {fmt(r.reserved_at)} • Số người: {r.number_of_people}
+
+                    {/* Details Grid */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pl-13">
+                      {/* Time */}
+                      <div className="flex items-center gap-3 text-gray-300">
+                        <Clock className="w-5 h-5 text-gray-500 flex-shrink-0" />
+                        <div>
+                          <p className="text-xs text-gray-500">Thời gian</p>
+                          <p className="font-medium">{fmt(r.reserved_at)}</p>
+                        </div>
+                      </div>
+
+                      {/* Number of People */}
+                      <div className="flex items-center gap-3 text-gray-300">
+                        <Users className="w-5 h-5 text-gray-500 flex-shrink-0" />
+                        <div>
+                          <p className="text-xs text-gray-500">Số người</p>
+                          <p className="font-medium">{r.number_of_people} người</p>
+                        </div>
+                      </div>
                     </div>
-                    {r.notes && <div className="text-gray-400 mt-1">Ghi chú: {r.notes}</div>}
+
+                    {/* Notes */}
+                    {r.notes && (
+                      <div className="flex items-start gap-3 pl-13 bg-gray-800/30 rounded-lg p-3 border border-gray-700/50">
+                        <MessageSquare className="w-5 h-5 text-gray-500 flex-shrink-0 mt-0.5" />
+                        <div className="flex-1">
+                          <p className="text-xs text-gray-500 mb-1">Ghi chú</p>
+                          <p className="text-gray-300 text-sm leading-relaxed">{r.notes}</p>
+                        </div>
+                      </div>
+                    )}
                   </div>
-                  <div className="flex items-center gap-2">
-                    <span className={`px-3 py-1 rounded-full text-sm ${cls}`}>{label}</span>
+
+                  {/* Right Side - Status Badge */}
+                  <div className="flex items-center justify-end md:justify-center">
+                    <div
+                      className={`flex items-center gap-2 px-5 py-3 rounded-xl border-2 ${cls} shadow-lg backdrop-blur-sm`}
+                    >
+                      <StatusIcon className="w-5 h-5" />
+                      <span className="font-semibold text-sm whitespace-nowrap">{label}</span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -127,28 +248,36 @@ const ReservationHistory: React.FC = () => {
           })}
         </div>
 
+        {/* Pagination */}
         {lastPage > 1 && (
-          <div className="flex items-center gap-2 mt-6">
+          <div className="flex items-center justify-center gap-4 mt-10">
             <button
-              className="px-3 py-2 rounded bg-gray-800 border border-gray-700 disabled:opacity-50"
+              className="flex items-center gap-2 px-5 py-3 rounded-xl bg-gradient-to-br from-gray-800 to-gray-900 border-2 border-gray-700 text-white font-medium transition-all duration-300 hover:border-orange-500/50 hover:shadow-lg hover:shadow-orange-500/20 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:border-gray-700 disabled:hover:shadow-none"
               disabled={loading || page <= 1}
               onClick={() => load(page - 1)}
             >
-              Trang trước
+              <ChevronLeft className="w-5 h-5" />
+              <span>Trang trước</span>
             </button>
-            <span className="text-gray-300">
-              {page} / {lastPage}
-            </span>
+
+            <div className="flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-br from-orange-500/20 to-orange-600/10 border-2 border-orange-500/30 backdrop-blur-sm">
+              <span className="text-orange-400 font-bold text-lg">{page}</span>
+              <span className="text-gray-500">/</span>
+              <span className="text-gray-400 font-medium">{lastPage}</span>
+            </div>
+
             <button
-              className="px-3 py-2 rounded bg-gray-800 border border-gray-700 disabled:opacity-50"
+              className="flex items-center gap-2 px-5 py-3 rounded-xl bg-gradient-to-br from-gray-800 to-gray-900 border-2 border-gray-700 text-white font-medium transition-all duration-300 hover:border-orange-500/50 hover:shadow-lg hover:shadow-orange-500/20 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:border-gray-700 disabled:hover:shadow-none"
               disabled={loading || page >= lastPage}
               onClick={() => load(page + 1)}
             >
-              Trang sau
+              <span>Trang sau</span>
+              <ChevronRight className="w-5 h-5" />
             </button>
           </div>
         )}
       </section>
+
       <Footer />
     </div>
   )

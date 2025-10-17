@@ -30,37 +30,28 @@ const Header = () => {
   const navigate = useNavigate()
   const [menuOpen, setMenuOpen] = useState(false)
   const [user, setUserLocal] = useState<UserType | null>(storeUser || null)
-  const [loading, setLoading] = useState(true)
   const menuRef = useRef<HTMLDivElement | null>(null)
   const { pathname } = useLocation()
 
   useEffect(() => {
     const fetchUser = async () => {
-      setLoading(true)
-      if (storeUser && !user?.id) {
-        setUserLocal(storeUser)
-        setUser?.(storeUser)
-      }
-
-      const cached = localStorage.getItem("user")
-      if (cached) {
-        try {
-          const u = JSON.parse(cached) as UserType
-          setUserLocal(u)
-          setUser?.(u)
-        } catch {
-          console.log("Invalid JSON in localStorage")
-        }
-      }
-
       const userId = localStorage.getItem("userId") || storeUser?.id || user?.id
-      console.log("userId:", userId)
-      if (!userId) {
-        console.log("No userId found")
-        setLoading(false)
+      if (!userId || (user && user.id === userId)) {
         return
       }
+
       try {
+        const cached = localStorage.getItem("user")
+        if (cached) {
+          try {
+            const u = JSON.parse(cached) as UserType
+            setUserLocal(u)
+            setUser?.(u)
+          } catch {
+            console.log("Invalid JSON in localStorage")
+          }
+        }
+
         const res = await userAPI.getById(userId)
         console.log("API response:", res.data)
         if (res.data.status === "success") {
@@ -72,12 +63,17 @@ const Header = () => {
         if (isAxiosError(error)) {
           console.log("API error:", error.response?.data || error.message)
         }
-      } finally {
-        setLoading(false)
       }
     }
     fetchUser()
-  }, [storeUser?.id, setUser])
+  }, [storeUser?.id, setUser, user?.id])
+
+  useEffect(() => {
+    if (storeUser && (!user || user.id !== storeUser.id)) {
+      setUserLocal(storeUser)
+      setUser?.(storeUser)
+    }
+  }, [storeUser, setUser])
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -104,8 +100,7 @@ const Header = () => {
 
   const handleLogout = () => {
     logoutMutation.mutate(undefined, {
-      onSuccess: (response) => {
-        toast.success(response.data.message || "Đăng xuất thành công", { autoClose: 1000 })
+      onSuccess: () => {
         clearLS()
         localStorage.removeItem("user")
         localStorage.removeItem("userId")
@@ -123,224 +118,213 @@ const Header = () => {
 
   console.log("Rendering with user:", user)
 
-  if (loading) {
-    return <div>Loading...</div>
-  }
-
   const isHome = pathname === "/" || pathname === "/home"
 
   return (
     <header
-      className={`relative bg-gray-900 ${
-        isHome ? "overflow-hidden h-[300px] sm:h-[400px] md:h-[500px] lg:h-[573px]" : "overflow-visible h-auto"
+      className={`relative bg-gradient-to-br from-orange-500/10 via-gray-900/90 to-gray-900 shadow-xl ${
+        isHome ? "overflow-hidden h-[340px] sm:h-[440px] md:h-[540px] lg:h-[600px]" : "overflow-visible h-auto"
       } z-[200]`}
     >
       <nav
-        className={`relative z-[300] px-4 sm:px-6 md:px-8 lg:px-12 xl:px-16 ${isHome ? "py-4 sm:py-5 md:py-7" : "py-3 sm:py-4"}`}
+        className={`relative z-[300] px-4 sm:px-8 lg:px-16 xl:px-24 ${
+          isHome ? "py-6 sm:py-7 md:py-9" : "py-4 sm:py-5"
+        } flex items-center justify-between`}
       >
-        <div className="flex items-center justify-between flex-wrap gap-4">
-          {/* Logo */}
-          <div className="flex items-center">
-            <div className="bg-orange-500 rounded-full p-2 mr-2">
-              <LucideUtensils size={20} className="text-white" />
-            </div>
-            <span className="text-white font-bold text-xl">
-              Restaurant<span className="text-orange-500">.</span>
-            </span>
+        {/* Logo */}
+        <div className="flex items-center gap-3">
+          <div className="bg-gradient-to-br from-orange-500 to-orange-400 rounded-full p-3 shadow-lg">
+            <LucideUtensils size={26} className="text-white" />
           </div>
+          <span className="text-white font-extrabold text-2xl tracking-tight drop-shadow-lg">
+            WowWraps<span className="text-orange-400">.</span>
+          </span>
+        </div>
 
-          {/* Navigation Links */}
-          <div className="flex items-center flex-wrap gap-3 sm:gap-4 md:gap-6 text-white text-xs sm:text-sm md:text-base">
-            <NavLink
-              to="/home"
-              className={({ isActive }) =>
-                isActive
-                  ? "text-orange-400 font-medium transition-colors"
-                  : "text-white/80 hover:text-white transition-colors"
-              }
-            >
-              Home
-            </NavLink>
-            <NavLink
-              to="/menu"
-              className={({ isActive }) =>
-                isActive
-                  ? "text-orange-400 font-medium transition-colors"
-                  : "text-white/80 hover:text-white transition-colors"
-              }
-            >
-              Menu
-            </NavLink>
-            <NavLink
-              to="/table"
-              className={({ isActive }) =>
-                isActive
-                  ? "text-orange-400 font-medium transition-colors"
-                  : "text-white/80 hover:text-white transition-colors"
-              }
-            >
-              Reservation
-            </NavLink>
-            <NavLink
-              to="/Reservation-history"
-              className={({ isActive }) =>
-                isActive
-                  ? "text-orange-400 font-medium transition-colors"
-                  : "text-white/80 hover:text-white transition-colors"
-              }
-            >
-              Reservation History
-            </NavLink>
-          </div>
+        {/* Navigation */}
+        <div className="flex items-center gap-6 text-white text-base font-medium">
+          <NavLink
+            to="/home"
+            className={({ isActive }) =>
+              isActive
+                ? "text-orange-400 border-b-2 border-orange-400 pb-1"
+                : "text-white/80 hover:text-orange-400 transition-colors"
+            }
+          >
+            Trang chủ
+          </NavLink>
+          <NavLink
+            to="/menu"
+            className={({ isActive }) =>
+              isActive
+                ? "text-orange-400 border-b-2 border-orange-400 pb-1"
+                : "text-white/80 hover:text-orange-400 transition-colors"
+            }
+          >
+            Thực đơn
+          </NavLink>
+          <NavLink
+            to="/table"
+            className={({ isActive }) =>
+              isActive
+                ? "text-orange-400 border-b-2 border-orange-400 pb-1"
+                : "text-white/80 hover:text-orange-400 transition-colors"
+            }
+          >
+            Đặt bàn
+          </NavLink>
+          <NavLink
+            to="/Reservation-history"
+            className={({ isActive }) =>
+              isActive
+                ? "text-orange-400 border-b-2 border-orange-400 pb-1"
+                : "text-white/80 hover:text-orange-400 transition-colors"
+            }
+          >
+            Lịch sử đặt bàn
+          </NavLink>
+        </div>
 
-          {/* Right side info */}
-          <div className="flex items-center gap-3 sm:gap-4 text-white text-xs sm:text-sm md:text-base">
-            {isAuthenticated ? (
-              <div className="relative" ref={menuRef}>
-                <button
-                  onClick={() => setMenuOpen((o) => !o)}
-                  className="flex flex-col items-center gap-1 focus:outline-none group"
-                  aria-haspopup="menu"
-                  aria-expanded={menuOpen}
-                  title={user?.name || "Tài khoản"}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" || e.key === " ") {
-                      e.preventDefault()
-                      setMenuOpen((o) => !o)
-                    }
+        {/* User menu */}
+        <div className="flex items-center gap-4">
+          {isAuthenticated ? (
+            <div className="relative" ref={menuRef}>
+              <button
+                onClick={() => setMenuOpen((o) => !o)}
+                className="flex items-center gap-2 bg-gray-800/80 border-2 border-orange-400 rounded-full px-3 py-2 shadow-lg hover:scale-105 transition-all"
+                aria-haspopup="menu"
+                aria-expanded={menuOpen}
+                title={user?.name || "Tài khoản"}
+              >
+                <img
+                  src={toMediaUrl(user?.avatar) || defaultAvatar}
+                  alt={user?.name || "User"}
+                  onError={(e) => {
+                    const t = e.target as HTMLImageElement
+                    t.src = defaultAvatar
                   }}
+                  className="w-10 h-10 rounded-full object-cover border-2 border-orange-400"
+                />
+                <span className="text-white font-semibold">{user?.name || "Tài khoản"}</span>
+              </button>
+              {menuOpen && (
+                <div
+                  role="menu"
+                  className="absolute right-0 mt-3 w-56 bg-gray-900/95 border border-orange-400 rounded-xl shadow-2xl z-[100] p-4
+      before:content-[''] before:absolute before:-top-2 before:right-6
+      before:w-0 before:h-0
+      before:border-l-8 before:border-r-8 before:border-b-8
+      before:border-l-transparent before:border-r-transparent before:border-b-orange-400"
                 >
-                  <div className="relative">
-                    <img
-                      src={toMediaUrl(user?.avatar) || defaultAvatar}
-                      alt={user?.name || "User"}
-                      onError={(e) => {
-                        const t = e.target as HTMLImageElement
-                        t.src = defaultAvatar
-                      }}
-                      className="w-8 h-8 sm:w-9 sm:h-9 md:w-10 md:h-10 rounded-full object-cover border border-gray-700 transition-all group-hover:border-orange-500"
-                    />
-                    {/* Online indicator */}
-                    <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-500 border-2 border-gray-900 rounded-full"></span>
+                  <div className="mb-3 pb-3 border-b border-gray-700">
+                    <p className="text-xs text-gray-400">Đăng nhập với</p>
+                    <p className="text-sm font-medium text-white">{user?.email || "-"}</p>
                   </div>
-                  <span className="text-gray-300 max-w-[100px] sm:max-w-[120px] truncate hidden sm:block group-hover:text-orange-400 transition-colors">
-                    {user?.name || "Tài khoản"}
-                  </span>
-                </button>
-
-                {menuOpen && (
-                  <div
-                    role="menu"
-                    className="absolute right-7 mt-2 w-48 sm:w-56 bg-gray-800 border border-gray-700 rounded-lg shadow-lg z-[100] before:content-[''] before:absolute before:-top-2 before:right-4 before:w-0 before:h-0 before:border-l-8 before:border-r-8 before:border-b-8 before:border-l-transparent before:border-r-transparent before:border-b-gray-800"
-                  >
-                    <div className="px-4 py-2 sm:py-3 border-b border-gray-700">
-                      <p className="text-xs sm:text-sm text-gray-400">Đăng nhập với</p>
-                      <p className="text-xs sm:text-sm font-medium text-white break-words">{user?.email || "-"}</p>
-                    </div>
-                    <ul className="py-1 text-xs sm:text-sm text-white">
-                      <li>
-                        <button
-                          role="menuitem"
-                          className="w-full text-left px-4 py-2 hover:bg-gray-700 transition-colors duration-200"
-                          onClick={() => {
-                            setMenuOpen(false)
-                            navigate("/settings")
-                          }}
-                        >
-                          Thông tin cá nhân
-                        </button>
-                      </li>
-                      <li>
-                        <button
-                          role="menuitem"
-                          className="w-full text-left px-4 py-2 hover:bg-gray-700 transition-colors duration-200"
-                          onClick={handleLogout}
-                        >
-                          Đăng xuất
-                        </button>
-                      </li>
-                    </ul>
-                  </div>
-                )}
-              </div>
-            ) : (
-              <>
-                <NavLink
-                  to="/login"
-                  className={({ isActive }) =>
-                    `px-3 py-1 sm:px-4 sm:py-2 rounded-md border border-gray-700 font-medium transition-all duration-200 ${
-                      isActive
-                        ? "bg-orange-500/20 text-orange-400 border-orange-500"
-                        : "bg-gray-800 text-white/80 hover:bg-orange-500 hover:text-white hover:border-orange-500 hover:scale-105"
-                    }`
-                  }
-                >
-                  Log in
-                </NavLink>
-                <NavLink
-                  to="/register"
-                  className={({ isActive }) =>
-                    `px-3 py-1 sm:px-4 sm:py-2 rounded-md border border-gray-700 font-medium transition-all duration-200 ${
-                      isActive
-                        ? "bg-orange-500/20 text-orange-400 border-orange-500"
-                        : "bg-gray-800 text-white/80 hover:bg-orange-500 hover:text-white hover:border-orange-500 hover:scale-105"
-                    }`
-                  }
-                >
-                  Register
-                </NavLink>
-              </>
-            )}
-          </div>
+                  <ul className="space-y-2 text-base">
+                    <li>
+                      <button
+                        role="menuitem"
+                        className="text-white w-full text-left px-4 py-2 rounded-lg hover:bg-orange-500/20 transition-colors"
+                        onClick={() => {
+                          setMenuOpen(false)
+                          navigate("/settings")
+                        }}
+                      >
+                        Thông tin cá nhân
+                      </button>
+                    </li>
+                    <li>
+                      <button
+                        role="menuitem"
+                        className="text-white w-full text-left px-4 py-2 rounded-lg hover:bg-orange-500/20 transition-colors"
+                        onClick={handleLogout}
+                      >
+                        Đăng xuất
+                      </button>
+                    </li>
+                  </ul>
+                </div>
+              )}
+            </div>
+          ) : (
+            <>
+              <NavLink
+                to="/login"
+                className={({ isActive }) =>
+                  `px-5 py-2 rounded-xl border-2 font-semibold transition-all duration-200 ${
+                    isActive
+                      ? "bg-orange-500/20 text-orange-400 border-orange-400"
+                      : "bg-gray-800/80 text-white/80 border-gray-700 hover:bg-orange-500 hover:text-white hover:border-orange-400 hover:scale-105"
+                  }`
+                }
+              >
+                Đăng nhập
+              </NavLink>
+              <NavLink
+                to="/register"
+                className={({ isActive }) =>
+                  `px-5 py-2 rounded-xl border-2 font-semibold transition-all duration-200 ${
+                    isActive
+                      ? "bg-orange-500/20 text-orange-400 border-orange-400"
+                      : "bg-gray-800/80 text-white/80 border-gray-700 hover:bg-orange-500 hover:text-white hover:border-orange-400 hover:scale-105"
+                  }`
+                }
+              >
+                Đăng ký
+              </NavLink>
+            </>
+          )}
         </div>
       </nav>
 
-      {/* Hero Content */}
+      {/* Hero Section for Home */}
       {isHome && (
-        <div className="relative z-[5] px-4 sm:px-6 md:px-8 lg:px-12 xl:px-16 mt-6 sm:mt-8 md:mt-12 lg:mt-16">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 md:gap-8 items-center">
+        <div className="relative z-[5] px-4 sm:px-8 lg:px-16 xl:px-24 mt-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-10 items-center">
             <div className="text-center md:text-left">
-              <p className="text-white/80 text-sm sm:text-base md:text-lg mb-3 sm:mb-4">Hi, new friend!</p>
-              <h1 className="text-white text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-medium leading-tight mb-3 sm:mb-4 md:mb-6">
-                We do not cook, we create your emotions!
-              </h1>
-              <p className="text-white/80 text-sm sm:text-base md:text-lg mb-4 sm:mb-6 md:mb-8 max-w-md mx-auto md:mx-0">
-                Theres evidence that cooking, like other creative practices, can boost well-being, self-esteem, and
-                other measures of mental health.
+              <p className="text-orange-400 text-base font-semibold mb-4 animate-pulse">
+                Chào mừng bạn mới đến với WowWraps!
               </p>
-              <NavLink to="/menu" className="inline-block text-orange-400 font-medium text-sm sm:text-base">
-                Our menu
-                <div className="h-px bg-orange-400 w-full mt-1"></div>
+              <h1 className="text-white text-4xl sm:text-5xl md:text-6xl font-extrabold leading-tight mb-5 drop-shadow-lg">
+                Không chỉ là món ăn, mà là trải nghiệm cảm xúc!
+              </h1>
+              <p className="text-white/80 text-lg mb-8 max-w-lg mx-auto md:mx-0">
+                Nấu ăn là nghệ thuật, là niềm vui và là sự kết nối. Hãy khám phá thực đơn đa dạng và không gian ấm cúng
+                của chúng tôi!
+              </p>
+              <NavLink
+                to="/menu"
+                className="inline-block px-8 py-4 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-bold text-lg rounded-xl shadow-xl hover:shadow-orange-500/40 transition-all duration-300"
+              >
+                Khám phá thực đơn
               </NavLink>
             </div>
-
             <div className="relative flex justify-center md:justify-end">
-              <div className="relative mr-0 sm:mr-12 md:mr-16">
+              <div className="relative mr-0 sm:mr-10 md:mr-16">
                 <img
                   src={assets.images.image89}
                   alt="Main dish"
-                  className="w-full max-w-[200px] sm:max-w-[250px] md:max-w-[300px] lg:max-w-[350px] h-auto object-cover rounded-lg"
+                  className="w-full max-w-[260px] sm:max-w-[320px] md:max-w-[380px] lg:max-w-[420px] h-auto object-cover rounded-3xl shadow-2xl border-2 border-orange-400 mr-2"
                 />
-                <div className="absolute bottom-2 sm:bottom-4 -left-4 sm:-left-6 bg-orange-400 px-3 sm:px-4 md:px-6 py-1 sm:py-2 md:py-3 rounded">
-                  <span className="text-white font-medium text-sm sm:text-base md:text-lg">Price: $11</span>
+                <div className="absolute bottom-4 -left-6 bg-gradient-to-r from-orange-500 to-orange-400 px-6 py-3 rounded-xl shadow-lg">
+                  <span className="text-white font-bold text-lg">Giá: $11</span>
                 </div>
               </div>
-
-              <div className="absolute right-0 top-0 space-y-3 sm:space-y-4">
+              <div className="absolute right-0 top-0 flex flex-col gap-4">
                 <img
                   src={assets.images.image90}
                   alt="Food item"
-                  className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 lg:w-20 lg:h-20 object-cover rounded"
+                  className="w-16 h-16 object-cover rounded-xl border-2 border-orange-400 shadow-lg"
                 />
                 <img
                   src={assets.images.image77}
                   alt="Food item"
-                  className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 lg:w-20 lg:h-20 object-cover rounded"
+                  className="w-16 h-16 object-cover rounded-xl border-2 border-orange-400 shadow-lg"
                 />
                 <img
                   src={assets.images.image91}
                   alt="Food item"
-                  className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 lg:w-20 lg:h-20 object-cover rounded"
+                  className="w-16 h-16 object-cover rounded-xl border-2 border-orange-400 shadow-lg"
                 />
               </div>
             </div>

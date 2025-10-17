@@ -272,102 +272,106 @@ export default function Setting() {
   }
 
   return (
-    <div className="bg-[#111827] min-h-screen flex flex-col">
+    <div className="bg-gradient-to-br from-gray-900 via-[#111827] to-gray-900 min-h-screen flex flex-col">
       <Header />
 
       <main className="flex-1 flex items-start justify-center py-12 px-4 sm:px-6 lg:px-12">
         <div className="w-full max-w-6xl">
           {error && (
-            <div className="bg-red-600/80 text-white p-4 rounded-lg mb-8 max-w-2xl mx-auto text-center shadow-md font-sans">
+            <div className="bg-gradient-to-r from-red-500/80 to-orange-500/60 text-white p-4 rounded-xl mb-8 max-w-2xl mx-auto text-center shadow-lg font-sans border-2 border-red-500/40">
               {error}
             </div>
           )}
-          <div className="flex flex-col md:flex-row bg-[#181818] rounded-2xl overflow-hidden shadow-2xl border border-[#222]">
+          <div className="flex flex-col md:flex-row bg-gradient-to-br from-[#181818] via-[#181818]/80 to-[#222] rounded-3xl overflow-hidden shadow-2xl border border-[#222] backdrop-blur-md">
             {/* Sidebar */}
-            <div className="w-full md:w-1/3 bg-[#141414] border-r border-[#222] p-8 flex flex-col items-center">
-              <img
-                src={toMediaUrl(user?.avatar) || defaultAvatar}
-                onError={(e) => {
-                  const t = e.target as HTMLImageElement
-                  t.src = defaultAvatar
-                }}
-                alt={user?.name || "User"}
-                className="h-24 w-24 rounded-full object-cover border border-[#2a2a2a] mb-4"
-              />
-              <h2 className="text-lg font-semibold text-white">{user?.name || "User"}</h2>
+            <div className="w-full md:w-1/3 bg-gradient-to-br from-[#141414] via-[#181818]/80 to-[#222] border-r border-[#222] p-8 flex flex-col items-center">
+              <div className="relative mb-4">
+                <img
+                  src={toMediaUrl(user?.avatar) || defaultAvatar}
+                  onError={(e) => {
+                    const t = e.target as HTMLImageElement
+                    t.src = defaultAvatar
+                  }}
+                  alt={user?.name || "User"}
+                  className="h-24 w-24 rounded-full object-cover border-4 border-orange-500/30 shadow-lg"
+                />
+                <span className="absolute bottom-0 right-0 bg-orange-500 text-white px-2 py-1 rounded-full text-xs font-bold shadow-md">
+                  {user?.name?.split(" ")[0] || "User"}
+                </span>
+              </div>
+              <h2 className="text-lg font-bold text-white mb-2">{user?.name || "User"}</h2>
+              <p className="text-gray-400 text-sm mb-6">{user?.email}</p>
 
-              <div className="mt-10 w-full space-y-3">
+              <div className="mt-6 w-full space-y-3">
                 <button
                   type="button"
                   onClick={() => setActiveTab("account")}
-                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 ${
+                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-semibold transition-all duration-200 ${
                     activeTab === "account"
-                      ? "bg-orange-500 text-white border border-orange-500/60"
+                      ? "bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-lg border border-orange-500/60"
                       : "bg-[#0e0e0e] text-gray-400 border border-[#2a2a2a] hover:bg-orange-600 hover:text-white hover:border-orange-600/60"
                   }`}
                 >
                   <UserIcon className="h-5 w-5" />
-                  <span className="font-medium">Thông tin tài khoản</span>
+                  <span>Thông tin tài khoản</span>
                 </button>
                 <button
                   type="button"
                   onClick={() => setActiveTab("password")}
-                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 ${
+                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-semibold transition-all duration-200 ${
                     activeTab === "password"
-                      ? "bg-orange-500 text-white border border-orange-500/60"
+                      ? "bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-lg border border-orange-500/60"
                       : "bg-[#0e0e0e] text-gray-400 border border-[#2a2a2a] hover:bg-orange-600 hover:text-white hover:border-orange-600/60"
                   }`}
                 >
                   <Lock className="h-5 w-5" />
-                  <span className="font-medium">Đổi mật khẩu</span>
+                  <span>Đổi mật khẩu</span>
                 </button>
                 <button
                   type="button"
                   onClick={() => setActiveTab("invoices")}
-                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 ${
+                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-semibold transition-all duration-200 ${
                     activeTab === "invoices"
-                      ? "bg-orange-500 text-white border border-orange-500/60"
+                      ? "bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-lg border border-orange-500/60"
                       : "bg-[#0e0e0e] text-gray-400 border border-[#2a2a2a] hover:bg-orange-600 hover:text-white hover:border-orange-600/60"
                   }`}
                 >
                   <FileText className="h-5 w-5" />
-                  <span className="font-medium">Lịch sử hóa đơn</span>
+                  <span>Lịch sử hóa đơn</span>
                 </button>
               </div>
             </div>
 
             {/* Main Content */}
             <div className="w-full md:flex-1 p-8 md:p-10">
-              <h1 className="text-2xl font-bold text-white mb-2">
+              <h1 className="text-3xl font-bold text-white mb-2 tracking-tight">
                 {activeTab === "account" && "Thông tin tài khoản"}
                 {activeTab === "password" && "Đổi mật khẩu"}
                 {activeTab === "invoices" && "Lịch sử hóa đơn"}
               </h1>
-              <p className="text-gray-400 mb-6">
+              <p className="text-gray-400 mb-6 text-base">
                 {activeTab === "account" && "Cập nhật thông tin cá nhân của bạn tại đây."}
                 {activeTab === "password" && "Thay đổi mật khẩu để bảo mật tài khoản."}
                 {activeTab === "invoices" && "Xem lại các hóa đơn thanh toán của bạn."}
               </p>
 
-              <div className="bg-[#101010] border border-[#222] rounded-xl p-6 md:p-8 shadow-lg">
+              <div className="bg-gradient-to-br from-[#101010] via-[#181818]/80 to-[#222] border border-[#222] rounded-2xl p-6 md:p-8 shadow-xl">
                 {activeTab === "account" && (
                   <form onSubmit={handleSave} className="space-y-6">
                     <div className="space-y-3">
-                      <label htmlFor="email" className="text-gray-300">
+                      <label htmlFor="email" className="text-gray-300 font-semibold">
                         Email
                       </label>
                       <input
                         type="text"
                         id="email"
                         value={form.email}
-                        onChange={(e) => setForm((s) => ({ ...s, email: e.target.value }))}
                         disabled
                         className="w-full bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg px-4 py-3 text-white opacity-50 cursor-not-allowed outline-none"
                       />
                     </div>
-
                     <div className="space-y-3">
-                      <label htmlFor="full_name" className="text-gray-300">
+                      <label htmlFor="full_name" className="text-gray-300 font-semibold">
                         Tên đầy đủ
                       </label>
                       <input
@@ -378,9 +382,8 @@ export default function Setting() {
                         className="w-full bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-orange-500/40 outline-none"
                       />
                     </div>
-
                     <div className="space-y-3">
-                      <label htmlFor="phone" className="text-gray-300">
+                      <label htmlFor="phone" className="text-gray-300 font-semibold">
                         Số điện thoại
                       </label>
                       <input
@@ -391,9 +394,8 @@ export default function Setting() {
                         className="w-full bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-orange-500/40 outline-none"
                       />
                     </div>
-
                     <div className="space-y-3">
-                      <label htmlFor="address" className="text-gray-300">
+                      <label htmlFor="address" className="text-gray-300 font-semibold">
                         Địa chỉ
                       </label>
                       <input
@@ -404,9 +406,8 @@ export default function Setting() {
                         className="w-full bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-orange-500/40 outline-none"
                       />
                     </div>
-
                     <div className="space-y-3">
-                      <label htmlFor="gender" className="text-gray-300">
+                      <label htmlFor="gender" className="text-gray-300 font-semibold">
                         Giới tính
                       </label>
                       <div className="flex gap-6 text-white">
@@ -423,9 +424,8 @@ export default function Setting() {
                         ))}
                       </div>
                     </div>
-
                     <div className="space-y-3">
-                      <label htmlFor="avatar" className="text-gray-300">
+                      <label htmlFor="avatar" className="text-gray-300 font-semibold">
                         Ảnh đại diện
                       </label>
                       <div className="flex items-center gap-6">
@@ -436,7 +436,7 @@ export default function Setting() {
                             t.src = defaultAvatar
                           }}
                           alt="Avatar"
-                          className="h-24 w-24 rounded-full border border-[#2a2a2a]"
+                          className="h-24 w-24 rounded-full border-4 border-orange-500/30 shadow-lg"
                         />
                         <div>
                           <input
@@ -452,7 +452,7 @@ export default function Setting() {
                             type="button"
                             disabled={avatarUploading}
                             onClick={() => avatarInputRef.current?.click()}
-                            className={`px-4 py-2 rounded-lg border border-orange-500/60 bg-orange-500 text-white hover:bg-orange-600 hover:border-orange-600/60 transition-all duration-200 ${
+                            className={`px-4 py-2 rounded-xl border border-orange-500/60 bg-gradient-to-r from-orange-500 to-orange-600 text-white font-semibold hover:bg-orange-600 hover:border-orange-600/60 transition-all duration-200 ${
                               avatarUploading ? "opacity-60 cursor-not-allowed" : ""
                             }`}
                           >
@@ -461,11 +461,10 @@ export default function Setting() {
                         </div>
                       </div>
                     </div>
-
                     <button
                       type="submit"
                       disabled={saving}
-                      className={`mt-6 w-full bg-orange-500 text-white font-medium py-3 rounded-lg border border-orange-500/60 hover:bg-orange-600 hover:border-orange-600/60 transition-all duration-200 ${
+                      className={`mt-6 w-full bg-gradient-to-r from-orange-500 to-orange-600 text-white font-bold py-3 rounded-xl border border-orange-500/60 hover:bg-orange-600 hover:border-orange-600/60 transition-all duration-200 ${
                         saving ? "opacity-60 cursor-not-allowed" : ""
                       }`}
                     >
@@ -477,7 +476,7 @@ export default function Setting() {
                 {activeTab === "password" && (
                   <form onSubmit={handleChangePassword} className="space-y-6">
                     <div className="space-y-3">
-                      <label htmlFor="current_password" className="text-gray-300">
+                      <label htmlFor="current_password" className="text-gray-300 font-semibold">
                         Mật khẩu hiện tại
                       </label>
                       <div className="relative">
@@ -498,9 +497,8 @@ export default function Setting() {
                         </button>
                       </div>
                     </div>
-
                     <div className="space-y-3">
-                      <label htmlFor="new_password" className="text-gray-300">
+                      <label htmlFor="new_password" className="text-gray-300 font-semibold">
                         Mật khẩu mới
                       </label>
                       <div className="relative">
@@ -521,9 +519,8 @@ export default function Setting() {
                         </button>
                       </div>
                     </div>
-
                     <div className="space-y-3">
-                      <label htmlFor="new_password_confirmation" className="text-gray-300">
+                      <label htmlFor="new_password_confirmation" className="text-gray-300 font-semibold">
                         Xác nhận mật khẩu mới
                       </label>
                       <div className="relative">
@@ -544,11 +541,10 @@ export default function Setting() {
                         </button>
                       </div>
                     </div>
-
                     <button
                       type="submit"
                       disabled={pwdSaving}
-                      className={`mt-6 w-full bg-orange-500 text-white font-medium py-3 rounded-lg border border-orange-500/60 hover:bg-orange-600 hover:border-orange-600/60 transition-all duration-200 ${
+                      className={`mt-6 w-full bg-gradient-to-r from-orange-500 to-orange-600 text-white font-bold py-3 rounded-xl border border-orange-500/60 hover:bg-orange-600 hover:border-orange-600/60 transition-all duration-200 ${
                         pwdSaving ? "opacity-60 cursor-not-allowed" : ""
                       }`}
                     >
@@ -574,13 +570,11 @@ export default function Setting() {
                         {invoices.map((invoice) => (
                           <div
                             key={invoice.invoice_id}
-                            className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg p-6 hover:border-orange-500/40 transition-all"
+                            className="bg-gradient-to-br from-[#1a1a1a] via-[#181818]/80 to-[#222] border border-[#2a2a2a] rounded-xl p-6 hover:border-orange-500/40 transition-all shadow-lg"
                           >
                             <div className="flex justify-between items-start mb-4">
                               <div>
-                                <h3 className="text-white font-semibold text-lg">
-                                  Hóa đơn được tạo vào ngày#{invoice.created_at}
-                                </h3>
+                                <h3 className="text-white font-semibold text-lg">Hóa đơn #{invoice.invoice_id}</h3>
                                 <p className="text-gray-400 text-sm mt-1">Bàn: {invoice.table_id}</p>
                                 <p className="text-gray-500 text-xs mt-1">{invoice.created_at}</p>
                               </div>
@@ -592,7 +586,6 @@ export default function Setting() {
                                 {invoice.status_label}
                               </span>
                             </div>
-
                             <div className="space-y-2 border-t border-[#2a2a2a] pt-4">
                               <div className="flex justify-between text-sm">
                                 <span className="text-gray-400">Tổng tiền:</span>

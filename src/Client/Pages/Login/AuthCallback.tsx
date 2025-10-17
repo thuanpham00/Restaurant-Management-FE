@@ -33,7 +33,6 @@ const AuthCallback: React.FC = () => {
 
     localStorage.setItem("access_token", accessToken)
     if (refreshToken) localStorage.setItem("refresh_token", refreshToken)
-
     ;(async () => {
       try {
         const res = await clientAPI.me()
@@ -49,7 +48,7 @@ const AuthCallback: React.FC = () => {
             localStorage.setItem("userId", String(user.id ?? user._id))
           }
         } catch {
-            // ignore
+          // ignore
         }
         toast.success(`Đăng nhập ${provider} thành công`, { autoClose: 2000 })
         navigate(isNew ? "/profile/complete" : "/", { replace: true })

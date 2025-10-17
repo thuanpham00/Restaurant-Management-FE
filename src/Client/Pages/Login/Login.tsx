@@ -55,7 +55,6 @@ const Login = () => {
     // Kiểm tra thành công
     const success = searchParams.get("success")
     if (success === "true") {
-      toast.success("Đăng nhập Google thành công!", { autoClose: 2000 })
       searchParams.delete("success")
       setSearchParams(searchParams, { replace: true })
     }
@@ -125,48 +124,52 @@ const Login = () => {
   }
 
   return (
-    <div className="min-h-screen w-full flex items-center justify-center bg-black relative">
-      <div className="absolute inset-0 bg-opacity-70 z-0">
+    <div className="min-h-screen w-full flex items-center justify-center bg-gradient-to-br from-orange-500/20 via-gray-900/90 to-gray-900 relative">
+      {/* Overlay background */}
+      <div className="absolute inset-0 z-0">
         <div
           className="absolute inset-0 opacity-40 bg-cover bg-center"
           style={{
             backgroundImage: `url(${assets.images.background})`,
             backgroundBlendMode: "overlay",
-            backgroundSize: "100% 100%",
+            backgroundSize: "cover",
             backgroundPosition: "center",
             backgroundRepeat: "no-repeat"
           }}
         />
+        <div className="absolute inset-0 bg-gradient-to-br from-orange-500/10 via-gray-900/80 to-gray-900/90" />
       </div>
 
-      <div className="absolute top-6 left-6 z-10 flex items-center">
-        <div className="bg-orange-500 rounded-full p-2 mr-2">
-          <LucideUtensils size={20} className="text-white" />
+      {/* Logo */}
+      <div className="absolute top-8 left-8 z-10 flex items-center">
+        <div className="bg-gradient-to-br from-orange-500 to-orange-400 rounded-full p-3 shadow-lg">
+          <LucideUtensils size={28} className="text-white" />
         </div>
-        <span className="text-white font-bold text-xl">
-          Restaurant<span className="text-orange-500">.</span>
+        <span className="text-white font-extrabold text-2xl ml-3 tracking-tight drop-shadow-lg">
+          WowWraps<span className="text-orange-400">.</span>
         </span>
       </div>
 
+      {/* Login Card */}
       <div className="z-10 w-full max-w-md px-4">
-        <div className="bg-[#1a1a1a] rounded-xl p-8 shadow-2xl w-full">
-          <h1 className="text-2xl font-bold text-white text-center mb-8">Đăng nhập</h1>
+        <div className="bg-gradient-to-br from-gray-900/90 via-gray-800/95 to-gray-900/90 border-2 border-orange-400/30 rounded-2xl p-10 shadow-2xl w-full backdrop-blur-lg">
+          <h1 className="text-3xl font-extrabold text-white text-center mb-8 drop-shadow-lg">Đăng nhập</h1>
           <form onSubmit={handleSubmitForm}>
             <div className="mb-6">
-              <label htmlFor="email" className="block text-gray-300 text-sm font-medium mb-2">
+              <label htmlFor="email" className="block text-gray-300 text-sm font-semibold mb-2">
                 Email
               </label>
               <input
                 type="email"
                 id="email"
                 {...register("email")}
-                className="w-full px-4 py-3 bg-[#2d2d2d] border border-gray-600 rounded-lg text-white focus:outline-none focus:border-orange-500"
+                className="w-full px-4 py-3 bg-gray-800 border-2 border-gray-700 rounded-xl text-white focus:outline-none focus:border-orange-500 font-medium"
                 placeholder="your@email.com"
               />
               {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email.message}</p>}
             </div>
             <div className="mb-2">
-              <label htmlFor="password" className="block text-gray-300 text-sm font-medium mb-2">
+              <label htmlFor="password" className="block text-gray-300 text-sm font-semibold mb-2">
                 Mật khẩu
               </label>
               <div className="relative">
@@ -174,13 +177,13 @@ const Login = () => {
                   type={showPassword ? "text" : "password"}
                   id="password"
                   {...register("password")}
-                  className="w-full px-4 py-3 bg-[#2d2d2d] border border-gray-600 rounded-lg text-white focus:outline-none focus:border-orange-500 pr-12"
+                  className="w-full px-4 py-3 bg-gray-800 border-2 border-gray-700 rounded-xl text-white focus:outline-none focus:border-orange-500 pr-12 font-medium"
                   placeholder="••••••••"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-200"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-orange-400"
                   aria-label="Ẩn/hiện mật khẩu"
                 >
                   {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
@@ -189,13 +192,13 @@ const Login = () => {
               {errors.password && <p className="text-red-500 text-sm mt-1">{errors.password.message}</p>}
             </div>
             <div className="mb-6 text-right">
-              <NavLink to="/forgot-password" className="text-orange-500 hover:text-orange-400 text-sm">
+              <NavLink to="/forgot-password" className="text-orange-400 hover:text-orange-500 text-sm font-semibold">
                 Quên mật khẩu?
               </NavLink>
             </div>
             <button
               type="submit"
-              className="w-full bg-orange-500 hover:bg-orange-600 text-white font-medium py-3 px-4 rounded-lg transition duration-300"
+              className="w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-bold py-3 px-4 rounded-xl shadow-lg transition duration-300 text-lg"
             >
               Đăng nhập
             </button>
@@ -203,14 +206,14 @@ const Login = () => {
 
           <div className="mt-8">
             <div className="flex items-center mb-6">
-              <div className="flex-grow h-px bg-gray-600"></div>
-              <span className="px-4 text-sm text-gray-400">hoặc tiếp tục với</span>
-              <div className="flex-grow h-px bg-gray-600"></div>
+              <div className="flex-grow h-px bg-gray-700"></div>
+              <span className="px-4 text-sm text-gray-400 font-medium">hoặc tiếp tục với</span>
+              <div className="flex-grow h-px bg-gray-700"></div>
             </div>
             <div className="flex justify-center space-x-4">
               <button
                 onClick={handleGoogleLogin}
-                className="bg-white hover:bg-gray-100 w-12 h-12 rounded-full flex items-center justify-center transition duration-300"
+                className="bg-white hover:bg-orange-100 w-12 h-12 rounded-full flex items-center justify-center shadow-lg transition duration-300"
               >
                 <img src={assets.images.google_logo} alt="Google Login" className="w-6 h-6 object-contain" />
               </button>
@@ -218,9 +221,9 @@ const Login = () => {
           </div>
 
           <div className="mt-6 text-center">
-            <p className="text-white text-sm">
+            <p className="text-white text-base font-medium">
               Chưa có tài khoản?{" "}
-              <NavLink to="/register" className="text-orange-500 hover:text-orange-400">
+              <NavLink to="/register" className="text-orange-400 hover:text-orange-500 font-bold">
                 Đăng ký miễn phí
               </NavLink>
             </p>
