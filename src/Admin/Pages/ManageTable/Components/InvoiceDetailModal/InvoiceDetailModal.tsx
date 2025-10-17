@@ -1,10 +1,11 @@
-import { Modal, Space, Button, Descriptions, Tag, Row, Col, Card } from 'antd'
+import { Modal, Space, Button, Descriptions, Tag, Row, Col, Card, Radio, Divider } from 'antd'
 import { FileText, CreditCard, Split } from 'lucide-react'
 import { useMemo, useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { invoicePaymentAPI } from 'src/Apis/Admin/invoicePayment.api'
-import PaymentDetailModal from '../PaymentDetailModal'
-import type { InvoiceDetail } from '../../../../../Types/invoicePayment.type'
+import { useAppStore } from 'src/StateGlobal/zustand'
+import { toast } from 'react-toastify'
+import type { InvoiceDetail, InvoicePaymentUpdatePayload } from '../../../../../Types/invoicePayment.type'
 
 interface InvoiceDetailModalProps {
   open: boolean
@@ -12,8 +13,8 @@ interface InvoiceDetailModalProps {
   invoiceId: string | null
   tableSessionId: string
   idDiningTable: string
-  setHasSessionPending?: React.Dispatch<React.SetStateAction<boolean>>
-  onSplitInvoice?: (invoice: InvoiceDetail) => void 
+  onSplitInvoice?: (invoice: InvoiceDetail) => void // ✅ Callback để mở SplitInvoiceModal
+  onPaymentSuccess?: () => void // ✅ Callback khi thanh toán thành công
 }
 
 export const InvoiceDetailModal = ({
@@ -22,10 +23,12 @@ export const InvoiceDetailModal = ({
   invoiceId,
   tableSessionId,
   idDiningTable,
-  setHasSessionPending,
-  onSplitInvoice // ✅ Thêm callback
+  onSplitInvoice, // ✅ Callback mở SplitInvoiceModal
+  onPaymentSuccess // ✅ Callback thanh toán thành công
 }: InvoiceDetailModalProps) => {
-  const [showPaymentModal, setShowPaymentModal] = useState(false)
+  const queryClient = useQueryClient()
+  const { employeeId } = useAppStore()
+  const [paymentMethod, setPaymentMethod] = useState<number | null>(null) // 0 = Cash, 1 = Bank Transfer
 
   // Fetch full invoice detail
   const { data: invoiceDetailData, isLoading } = useQuery({
@@ -49,6 +52,50 @@ export const InvoiceDetailModal = ({
 
     return { totalPaid, remaining }
   }, [invoiceDetail])
+
+  // ✅ Mutation thanh toán
+  const paymentMutation = useMutation({
+    mutationFn: (payload: InvoicePaymentUpdatePayload) => {
+      return invoicePaymentAPI.update(invoiceId!, payload)
+    },
+    onSuccess: () => {
+      toast.success('Thanh toán thành công!', { autoClose: 1500 })
+      
+      // Invalidate queries
+      queryClient.invalidateQueries({ queryKey: ['invoiceDetail', invoiceId] })
+      queryClient.invalidateQueries({ queryKey: ['detailTableSession', idDiningTable] })
+      queryClient.invalidateQueries({ queryKey: ['detailTableSessionOrder', tableSessionId] })
+      queryClient.invalidateQueries({ queryKey: ['listInvoicesForTableSession', tableSessionId] })
+      
+      // Callback success
+      if (onPaymentSuccess) {
+        onPaymentSuccess()
+      }
+      
+      // Đóng modal sau khi thanh toán thành công
+      onClose()
+    },
+    onError: (error: any) => {
+      toast.error(error?.response?.data?.message || 'Thanh toán thất bại. Vui lòng thử lại.', {
+        autoClose: 2000
+      })
+    }
+  })
+
+  // Handle thanh toán
+  const handlePayment = () => {
+    if (paymentMethod === null || !invoiceDetail) return
+
+    const payload: InvoicePaymentUpdatePayload = {
+      table_session_id: tableSessionId,
+      amount: financialInfo.remaining,
+      method: paymentMethod,
+      status_payment: 1,
+      employee_id: employeeId as string
+    }
+
+    paymentMutation.mutate(payload)
+  }
 
   // Get status info
   const getStatusInfo = (status: number) => {
@@ -172,25 +219,26 @@ export const InvoiceDetailModal = ({
           {/* Invoice Details */}
           <Descriptions 
             bordered 
-            column={2}
+            column={1}
             size="small"
-            labelStyle={{ fontWeight: 'bold', width: '40%' }}
+            labelStyle={{ fontWeight: 'bold', width: '35%' }}
+            contentStyle={{ textAlign: 'right' }}
           >
-            <Descriptions.Item label="Mã hóa đơn" span={2}>
+            <Descriptions.Item label="Mã hóa đơn">
               <Space>
-                <span style={{ fontSize: '16px', fontWeight: 'bold' }}>#{invoiceDetail.id}</span>
+                <span style={{ fontSize: '15px', fontWeight: 'bold' }}>#{invoiceDetail.id}</span>
                 {getOperationTypeBadge()}
               </Space>
             </Descriptions.Item>
             
-            <Descriptions.Item label="Trạng thái" span={2}>
-              <Tag color={statusInfo?.color} style={{ fontSize: '14px' }}>
+            <Descriptions.Item label="Trạng thái">
+              <Tag color={statusInfo?.color} style={{ fontSize: '13px' }}>
                 {statusInfo?.text}
               </Tag>
             </Descriptions.Item>
 
             {invoiceDetail.parent_invoice_id && (
-              <Descriptions.Item label="Hóa đơn gốc" span={2}>
+              <Descriptions.Item label="Hóa đơn gốc">
                 <span style={{ color: '#1890ff', fontWeight: 'bold' }}>
                   #{invoiceDetail.parent_invoice_id}
                 </span>
@@ -198,26 +246,32 @@ export const InvoiceDetailModal = ({
             )}
 
             {invoiceDetail.operation_notes && (
-              <Descriptions.Item label="Ghi chú" span={2}>
+              <Descriptions.Item label="Ghi chú">
                 {invoiceDetail.operation_notes}
               </Descriptions.Item>
             )}
 
             <Descriptions.Item label="Tạm tính">
-              {Number(invoiceDetail.total_amount).toLocaleString()} đ
+              <span style={{ fontSize: '14px' }}>
+                {Number(invoiceDetail.total_amount).toLocaleString('vi-VN')} đ
+              </span>
             </Descriptions.Item>
 
             <Descriptions.Item label="Giảm giá">
-              {invoiceDetail.discount ? `${Number(invoiceDetail.discount).toLocaleString()} đ` : '0 đ'}
+              <span style={{ fontSize: '14px' }}>
+                {invoiceDetail.discount ? `${Number(invoiceDetail.discount).toLocaleString('vi-VN')} đ` : '0 đ'}
+              </span>
             </Descriptions.Item>
 
             <Descriptions.Item label="Thuế VAT">
-              {invoiceDetail.tax ? `${Number(invoiceDetail.tax).toLocaleString()} đ` : '0 đ'}
+              <span style={{ fontSize: '14px' }}>
+                {invoiceDetail.tax ? `${Number(invoiceDetail.tax).toLocaleString('vi-VN')} đ` : '0 đ'}
+              </span>
             </Descriptions.Item>
 
             <Descriptions.Item label="Tổng tiền cuối">
               <span style={{ fontWeight: 'bold', fontSize: '16px', color: '#1890ff' }}>
-                {Number(invoiceDetail.final_amount).toLocaleString()} đ
+                {Number(invoiceDetail.final_amount).toLocaleString('vi-VN')} đ
               </span>
             </Descriptions.Item>
           </Descriptions>
@@ -259,8 +313,60 @@ export const InvoiceDetailModal = ({
             </Card>
           )}
 
+          {/* ✅ Form thanh toán tích hợp - Chỉ hiện khi còn tiền chưa thanh toán */}
+          {financialInfo.remaining > 0 && invoiceDetail.status !== 2 && (
+            <>
+              <Divider style={{ margin: '16px 0' }} />
+              
+              <Card 
+                title={
+                  <Space>
+                    <CreditCard size={18} />
+                    <span>Thanh toán</span>
+                  </Space>
+                }
+                size="small"
+                style={{ marginTop: '8px' }}
+              >
+                <Space direction="vertical" style={{ width: '100%' }} size="middle">
+                  <Descriptions size="small" column={1} bordered>
+                    <Descriptions.Item 
+                      label="Số tiền cần thanh toán"
+                      labelStyle={{ fontWeight: 'bold' }}
+                      contentStyle={{ textAlign: 'right' }}
+                    >
+                      <span style={{ fontSize: '18px', fontWeight: 'bold', color: '#ff4d4f' }}>
+                        {financialInfo.remaining.toLocaleString('vi-VN')} đ
+                      </span>
+                    </Descriptions.Item>
+                  </Descriptions>
+
+                  <div>
+                    <div style={{ marginBottom: '8px', fontWeight: 'bold' }}>
+                      Chọn phương thức thanh toán:
+                    </div>
+                    <Radio.Group 
+                      value={paymentMethod} 
+                      onChange={(e) => setPaymentMethod(e.target.value)}
+                      style={{ width: '100%' }}
+                    >
+                      <Space direction="vertical" style={{ width: '100%' }}>
+                        <Radio value={0} style={{ fontSize: '15px' }}>
+                          💵 Tiền mặt
+                        </Radio>
+                        <Radio value={1} style={{ fontSize: '15px' }}>
+                          🏦 Chuyển khoản ngân hàng
+                        </Radio>
+                      </Space>
+                    </Radio.Group>
+                  </div>
+                </Space>
+              </Card>
+            </>
+          )}
+
           {/* Action Buttons */}
-          <Space style={{ width: '100%', justifyContent: 'flex-end' }}>
+          <Space style={{ width: '100%', justifyContent: 'flex-end', marginTop: '16px' }}>
             {/* ✅ Nút tách hóa đơn - Chỉ hiện khi status = 0 hoặc 1 */}
             {onSplitInvoice && (invoiceDetail.status === 0 || invoiceDetail.status === 1) && (
               <Button
@@ -268,7 +374,6 @@ export const InvoiceDetailModal = ({
                 icon={<Split size={18} />}
                 onClick={() => {
                   onSplitInvoice(invoiceDetail)
-                  // Modal sẽ tự đóng khi user cancel hoặc complete split
                 }}
                 style={{
                   backgroundColor: '#722ed1',
@@ -282,22 +387,23 @@ export const InvoiceDetailModal = ({
               </Button>
             )}
 
+            {/* ✅ Nút thanh toán - Chỉ enable khi đã chọn phương thức */}
             {financialInfo.remaining > 0 && invoiceDetail.status !== 2 && (
               <Button
                 type="primary"
                 size="large"
                 icon={<CreditCard size={18} />}
-                onClick={() => {
-                  setShowPaymentModal(true)
-                }}
+                onClick={handlePayment}
+                disabled={paymentMethod === null}
+                loading={paymentMutation.isPending}
                 style={{
-                  backgroundColor: '#52c41a',
-                  borderColor: '#52c41a',
+                  backgroundColor: paymentMethod !== null ? '#52c41a' : undefined,
+                  borderColor: paymentMethod !== null ? '#52c41a' : undefined,
                   height: '44px',
                   fontSize: '15px'
                 }}
               >
-                Thanh toán {financialInfo.remaining.toLocaleString()} đ
+                {paymentMethod === null ? 'Chọn phương thức thanh toán' : `Thanh toán ${financialInfo.remaining.toLocaleString('vi-VN')} đ`}
               </Button>
             )}
 
@@ -305,30 +411,6 @@ export const InvoiceDetailModal = ({
               Đóng
             </Button>
           </Space>
-
-          {/* Payment Modal */}
-          {invoiceDetail && (
-            <PaymentDetailModal
-              open={showPaymentModal}
-              onClosePayment={() => {
-                setShowPaymentModal(false)
-                onClose()
-              }}
-              onCloseInvoice={() => {
-                setShowPaymentModal(false)
-                onClose()
-              }}
-              totalAmount={Number(invoiceDetail.total_amount)}
-              totalPercentage={0}
-              vat={Number(invoiceDetail.tax)}
-              finalAmount={Number(invoiceDetail.final_amount)}
-              listPromotionApply={null}
-              table_session_id={tableSessionId}
-              setHasSessionPending={setHasSessionPending}
-              detailInvoice={invoiceDetail}
-              idDiningTable={idDiningTable}
-            />
-          )}
         </Space>
       )}
     </Modal>

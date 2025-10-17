@@ -311,6 +311,7 @@ export default function SplitTableModal({
 
   return (
     <Modal
+    className="split-table-modal"
       title={
         <Space>
           <span className="text-xl font-bold">Tách bàn #{sourceTableNumber}</span>
@@ -319,6 +320,11 @@ export default function SplitTableModal({
       open={visible}
       onCancel={handleClose}
       width={1000}
+      centered
+      style={{
+        maxHeight: 'calc(100vh - 100px)', 
+        overflowY: 'auto',
+      }}
       footer={[
         <Button key="cancel" onClick={handleClose}>
           Hủy
@@ -374,7 +380,7 @@ export default function SplitTableModal({
           <Alert
             message="Lưu ý"
             description={
-              <ul style={{ margin: 0, paddingLeft: 20 }}>
+              <ul style={{ margin: 0, paddingLeft: 20, listStyleType: "disc" }}>
                 {validationErrors.map((error, index) => (
                   <li key={index}>{error}</li>
                 ))}

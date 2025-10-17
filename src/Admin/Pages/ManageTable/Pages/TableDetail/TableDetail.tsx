@@ -241,10 +241,9 @@ export default function TableDetail() {
 
   const dataTableSessionOrder = dataTableSessionOrderMerged
 
-  const [hasSessionPending, setHasSessionPending] = useState(true)
+  const [hasCurrentSession, setHasCurrentSession] = useState<boolean | null>(null)
   const [listTablePending, setListTablePending] = useState<HistoryTableSessionType[]>([])
 
-  // ✅ Query 3: Pending Sessions - Fresh data when needed
   const {
     data: dataListPendingTableSession,
     isFetching: isFetchingListPendingTableSession,
@@ -257,7 +256,7 @@ export default function TableDetail() {
       return tableSessionAPI.getListPendingTableSessionByIdTable(idDiningTable)
     },
     {
-      enabled: !hasSessionPending // chỉ chạy khi hasSessionPending = false
+      enabled: hasCurrentSession === false 
     }
   )
 
@@ -323,14 +322,19 @@ export default function TableDetail() {
     }
   }, [invoiceList])
 
+  // ✅ Effect 1: Xử lý khi Query 1 (detailTableSession) có kết quả
   useEffect(() => {
-    if (isError) {
+    if (data && !isError) {
+      // ✅ Có data → Có session hiện tại đang phục vụ
+      setHasCurrentSession(true)
+    } else if (isError) {
       const message = (error as any).response?.data.message
       if (message === "No session found for Dining Table: " + idDiningTable) {
-        setHasSessionPending(false)
+        // ✅ Error "No session found" → Không có session hiện tại
+        setHasCurrentSession(false)
       }
     }
-  }, [isError, error, idDiningTable])
+  }, [data, isError, error, idDiningTable])
 
   // ✅ Cleanup: Remove queries from cache when unmount to ensure fresh data on next visit
   useEffect(() => {
@@ -342,6 +346,7 @@ export default function TableDetail() {
     }
   }, [queryClient])
 
+  // ✅ Effect 2: Xử lý pending sessions list
   useEffect(() => {
     if (isErrorPendingTable) {
       setListTablePending([])
@@ -750,7 +755,7 @@ export default function TableDetail() {
             dataTableSessionDetail={dataTableSessionDetail}
             dataTableSessionOrder={dataTableSessionOrder as TableSessionOrderMerged}
           />
-          {hasSessionPending && (
+          {hasCurrentSession && (
             <>
               <Button
                 className="py-4 shadow-md"
@@ -836,7 +841,7 @@ export default function TableDetail() {
               </Button>
             </>
           )}
-          {!hasSessionPending && (
+          {hasCurrentSession === false && (
             <Button
               type="primary"
               icon={<Plus />}
@@ -873,7 +878,7 @@ export default function TableDetail() {
             overflowX: "hidden"
           }}
         >
-          {hasSessionPending ? (
+          {hasCurrentSession === true ? (
             isFetching ? (
               <div className="flex justify-center items-center flex-col h-[200px]">
                 <Spin tip="Đang tải dữ liệu..." size="large" spinning={isFetching}>
@@ -1191,24 +1196,38 @@ export default function TableDetail() {
                   invoiceId={selectedInvoiceForDetail?.id || null}
                   tableSessionId={dataTableSessionDetail?.session_id || ''}
                   idDiningTable={idDiningTable}
-                  setHasSessionPending={setHasSessionPending}
                   onSplitInvoice={(invoice) => {
-                    // ✅ Mở SplitInvoiceModal khi user click "Tách hóa đơn"
                     setSelectedInvoiceForDetail(invoice as any)
                     setShowSplitInvoiceModal(true)
+                  }}
+                  onPaymentSuccess={() => {
+                    queryClient.invalidateQueries({ queryKey: ['detailTableSession', idDiningTable] })
+                    queryClient.invalidateQueries({ 
+                      queryKey: ['listInvoicesForTableSession', dataTableSessionDetail?.session_id] 
+                    })
                   }}
                 />
               </div>
             )
-          ) : (
+          ) : hasCurrentSession === false ? (
             <div>
               <PendingTableSessionSelector
                 isFetchingListPendingTableSession={isFetchingListPendingTableSession}
                 listPendingTableSession={listTablePending}
-                hasSessionPending={hasSessionPending}
-                setHasSessionPending={setHasSessionPending}
+                hasSessionPending={false} // Không có session hiện tại
+                setHasSessionPending={(value) => {
+                  // Khi user chọn serve một session → Có session hiện tại
+                  setHasCurrentSession(value === true ? true : null)
+                }}
                 idDiningTable={idDiningTable}
               />
+            </div>
+          ) : (
+            // hasCurrentSession === null (đang loading)
+            <div className="flex justify-center items-center flex-col h-[200px]">
+              <Spin tip="Đang kiểm tra phiên bàn..." size="large" spinning>
+                <div style={{ minHeight: 100, width: 300, marginTop: 10 }} />
+              </Spin>
             </div>
           )}
         </Col>
