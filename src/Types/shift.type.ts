@@ -139,3 +139,25 @@ export const SHIFT_STATUS_COLORS = {
   [SHIFT_STATUS.ABSENT]: "#ff4d4f",
   [SHIFT_STATUS.EARLY_LEAVE]: "#1890ff"
 } as const
+
+// ========== BULK ASSIGN TYPES ==========
+export type BulkAssignRequest = {
+  shift_id: string
+  employee_ids: string[]
+  status?: number
+  notes?: string
+}
+
+export type BulkAssignResponse = {
+  shift_id: string
+  total_requested: number
+  total_assigned: number
+  total_skipped: number
+  assigned_employees: Array<{
+    id: string
+    employee_id: string
+    shift_id: string
+    status: number
+  }>
+  skipped_employees: string[]
+}

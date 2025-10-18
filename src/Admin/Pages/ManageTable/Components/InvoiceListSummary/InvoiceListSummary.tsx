@@ -1,48 +1,28 @@
-import { Card, Space, Tag, Typography, Empty, Button, Row, Col } from "antd"
+import { Card, Space, Tag, Typography, Empty, Button, Row, Col, Spin } from "antd"
 import { FileText, Eye } from "lucide-react"
-import { useMemo } from "react"
+import { useQuery } from "@tanstack/react-query"
+import { invoicePaymentAPI } from "src/Apis/Admin/invoicePayment.api"
 import type { Invoice } from "../../../../../Types/invoicePayment.type"
 
 const { Text } = Typography
 
 interface InvoiceListSummaryProps {
   invoices: Invoice[]
+  tableSessionId: string
   onViewDetail: (invoice: Invoice) => void
 }
 
-export const InvoiceListSummary = ({ invoices, onViewDetail }: InvoiceListSummaryProps) => {
-  // Calculate totals
-  const summary = useMemo(() => {
-    let totalAmount = 0
-    let totalRemaining = 0
-    let unpaidCount = 0
-    let partialPaidCount = 0
-    let paidCount = 0
+export const InvoiceListSummary = ({ invoices, tableSessionId, onViewDetail }: InvoiceListSummaryProps) => {
+  // ✅ Fetch invoice summary from backend API - Much simpler!
+  const { data: summaryData, isLoading: isLoadingSummary } = useQuery({
+    queryKey: ['invoiceSummary', tableSessionId],
+    queryFn: () => invoicePaymentAPI.getInvoiceSummary(tableSessionId),
+    enabled: Boolean(tableSessionId && invoices.length > 0),
+    staleTime: 10000, // 10s for realtime updates
+    refetchOnMount: true
+  })
 
-    invoices.forEach((inv) => {
-      totalAmount += Number(inv.final_amount)
-
-      // Note: Invoice type doesn't have payments, so we can't calculate remaining
-      // Will show final_amount as remaining for unpaid/partial invoices
-      if (inv.status === 0) {
-        unpaidCount++
-        totalRemaining += Number(inv.final_amount)
-      } else if (inv.status === 1) {
-        partialPaidCount++
-        totalRemaining += Number(inv.final_amount) // Approximation
-      } else if (inv.status === 2) {
-        paidCount++
-      }
-    })
-
-    return {
-      totalAmount,
-      totalRemaining,
-      unpaidCount,
-      partialPaidCount,
-      paidCount
-    }
-  }, [invoices])
+  const summary = summaryData?.data?.data?.summary
 
   // Get status info
   const getStatusInfo = (status: number) => {
@@ -62,6 +42,17 @@ export const InvoiceListSummary = ({ invoices, onViewDetail }: InvoiceListSummar
     return (
       <Card>
         <Empty description="Chưa có hóa đơn nào" />
+      </Card>
+    )
+  }
+
+  // Show loading state while fetching summary from backend
+  if (isLoadingSummary || !summary) {
+    return (
+      <Card>
+        <div style={{ textAlign: "center", padding: "40px 0" }}>
+          <Spin size="large" tip="Đang tải thông tin hóa đơn..." />
+        </div>
       </Card>
     )
   }
@@ -89,7 +80,7 @@ export const InvoiceListSummary = ({ invoices, onViewDetail }: InvoiceListSummar
                 Tổng hóa đơn
               </div>
               <div style={{ color: "#ffffff", fontSize: "32px", fontWeight: "bold", lineHeight: 1 }}>
-                {invoices.length}
+                {summary.total_invoices}
               </div>
               <div style={{ color: "rgba(255, 255, 255, 0.7)", fontSize: "12px", marginTop: "4px" }}>
                 hóa đơn
@@ -103,7 +94,7 @@ export const InvoiceListSummary = ({ invoices, onViewDetail }: InvoiceListSummar
                 Tổng tiền
               </div>
               <div style={{ color: "#ffffff", fontSize: "28px", fontWeight: "bold", lineHeight: 1 }}>
-                {summary.totalAmount.toLocaleString()}
+                {summary.total_amount.toLocaleString()}
               </div>
               <div style={{ color: "rgba(255, 255, 255, 0.7)", fontSize: "12px", marginTop: "4px" }}>
                 VNĐ
@@ -118,14 +109,14 @@ export const InvoiceListSummary = ({ invoices, onViewDetail }: InvoiceListSummar
               </div>
               <div 
                 style={{ 
-                  color: summary.totalRemaining > 0 ? "#ffd666" : "#95de64",
+                  color: summary.total_remaining > 0 ? "#ffd666" : "#95de64",
                   fontSize: "28px", 
                   fontWeight: "bold",
                   lineHeight: 1,
                   textShadow: "0 2px 4px rgba(0,0,0,0.2)"
                 }}
               >
-                {summary.totalRemaining.toLocaleString()}
+                {summary.total_remaining.toLocaleString()}
               </div>
               <div style={{ color: "rgba(255, 255, 255, 0.7)", fontSize: "12px", marginTop: "4px" }}>
                 VNĐ
@@ -138,17 +129,17 @@ export const InvoiceListSummary = ({ invoices, onViewDetail }: InvoiceListSummar
         <Row gutter={12} style={{ marginTop: "16px", paddingTop: "16px", borderTop: "1px solid rgba(255,255,255,0.2)" }}>
           <Col span={8}>
             <div style={{ textAlign: "center", color: "rgba(255, 255, 255, 0.9)", fontSize: "13px" }}>
-              <span style={{ color: "#ff4d4f", fontWeight: "bold", fontSize: "18px" }}>{summary.unpaidCount}</span> Chưa thanh toán
+              <span style={{ color: "#ff4d4f", fontWeight: "bold", fontSize: "18px" }}>{summary.unpaid_count}</span> Chưa thanh toán
             </div>
           </Col>
           <Col span={8}>
             <div style={{ textAlign: "center", color: "rgba(255, 255, 255, 0.9)", fontSize: "13px" }}>
-              <span style={{ color: "#faad14", fontWeight: "bold", fontSize: "18px" }}>{summary.partialPaidCount}</span> Thanh toán 1 phần
+              <span style={{ color: "#faad14", fontWeight: "bold", fontSize: "18px" }}>{summary.partially_paid_count}</span> Thanh toán 1 phần
             </div>
           </Col>
           <Col span={8}>
             <div style={{ textAlign: "center", color: "rgba(255, 255, 255, 0.9)", fontSize: "13px" }}>
-              <span style={{ color: "#52c41a", fontWeight: "bold", fontSize: "18px" }}>{summary.paidCount}</span> Hoàn tất thanh toán
+              <span style={{ color: "#52c41a", fontWeight: "bold", fontSize: "18px" }}>{summary.paid_count}</span> Hoàn tất thanh toán
             </div>
           </Col>
         </Row>

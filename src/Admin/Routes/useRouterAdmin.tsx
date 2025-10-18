@@ -22,6 +22,7 @@ const MenuDetail = lazy(() => import("../Pages/ManageDished/Pages/MenuDetail"))
 const ManageCustomer = lazy(() => import("../Pages/ManageCustomer"))
 const ManageEmployee = lazy(() => import("../Pages/ManageEmployee"))
 const ManageShift = lazy(() => import("../Pages/ManageShift"))
+const ShiftAssignmentDetail = lazy(() => import("../Pages/ManageShift/components/ShiftAssignmentDetail"))
 const ManagePayroll = lazy(() => import("../Pages/ManagePayroll"))
 const PayrollDetail = lazy(() => import("../Pages/ManagePayroll/PayrollDetail"))
 const ManageReservation = lazy(() => import("../Pages/ManageTable/Pages/ManageReservation"))
@@ -162,6 +163,14 @@ export default function useRouterAdmin() {
                   element: (
                     <Suspense>
                       <ManageShift />
+                    </Suspense>
+                  )
+                },
+                {
+                  path: path.AdminShiftDetail,
+                  element: (
+                    <Suspense>
+                      <ShiftAssignmentDetail />
                     </Suspense>
                   )
                 },

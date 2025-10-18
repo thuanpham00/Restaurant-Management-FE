@@ -6,7 +6,8 @@ import {
   InvoicePaymentPayload,
   InvoicePaymentUpdatePayload,
   SplitInvoiceRequest,
-  SplitInvoiceResponse
+  SplitInvoiceResponse,
+  InvoiceSummary
 } from "src/Types/invoicePayment.type"
 import { queryParamConfigInvoice } from "src/Types/queryParams.type"
 import { PaginatedResponse, SuccessResponse } from "src/Types/utils.type"
@@ -25,6 +26,11 @@ export const invoicePaymentAPI = {
 
   getDetailInvoiceFromIdTableSession: (idTableSession: string) => {
     return Http.get<SuccessResponse<InvoiceDetail>>(`/api/invoices/table-session/${idTableSession}`)
+  },
+
+  // ✅ NEW: Get invoice summary for table session
+  getInvoiceSummary: (tableSessionId: string) => {
+    return Http.get<SuccessResponse<InvoiceSummary>>(`/api/table-sessions/${tableSessionId}/invoice-summary`)
   },
 
   create: (payload: InvoicePaymentPayload) => {

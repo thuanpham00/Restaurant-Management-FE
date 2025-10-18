@@ -361,7 +361,7 @@ export default function ManageCustomer() {
 
           <Form.Item className="mb-0">
             <Button icon={<RotateCcw size={16} />} onClick={resetFilterForm}>
-              Reset
+              Đặt lại
             </Button>
           </Form.Item>
         </Form>
