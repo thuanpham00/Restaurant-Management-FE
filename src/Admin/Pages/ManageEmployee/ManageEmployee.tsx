@@ -18,7 +18,7 @@ import {
 } from "antd"
 import { isUndefined, omitBy } from "lodash"
 import { Users, Edit, Trash2, Plus, Filter, RotateCcw } from "lucide-react"
-import { Fragment, useState, useEffect } from "react"
+import { Fragment, useState, useEffect, useMemo } from "react"
 import { Helmet } from "react-helmet-async"
 import { createSearchParams, useNavigate, useSearchParams } from "react-router-dom"
 import { toast } from "react-toastify"
@@ -30,7 +30,9 @@ import { path } from "src/Constants/path"
 import { cleanObject } from "src/Helpers/common"
 import useQueryParams from "src/Hook/useQueryParams"
 import { PaginatedResponse } from "src/Types/utils.type"
-import { Employee, EmployeeCreateInput, queryParamConfigEmployee } from "src/Types/employee.type"
+import { Employee, EmployeeCreateInput, EmployeeFormInput, queryParamConfigEmployee } from "src/Types/employee.type"
+import InputFileImage from "src/Components/InputFileImage"
+import { assets } from "src/Assets/assets"
 
 const { Option } = Select
 
@@ -61,6 +63,29 @@ export default function ManageEmployee() {
   const [form] = Form.useForm()
   const [createForm] = Form.useForm()
   const [filterForm] = Form.useForm()
+  const [createAvatarFile, setCreateAvatarFile] = useState<File | null>(null)
+  const [editAvatarFile, setEditAvatarFile] = useState<File | null>(null)
+  const defaultAvatar = assets.rectangles.chef3
+
+  const createAvatarPreview = useMemo(
+    () => (createAvatarFile ? URL.createObjectURL(createAvatarFile) : ""),
+    [createAvatarFile]
+  )
+  const editAvatarPreview = useMemo(() => (editAvatarFile ? URL.createObjectURL(editAvatarFile) : ""), [editAvatarFile])
+
+  useEffect(() => {
+    if (!createAvatarPreview) return
+    return () => {
+      URL.revokeObjectURL(createAvatarPreview)
+    }
+  }, [createAvatarPreview])
+
+  useEffect(() => {
+    if (!editAvatarPreview) return
+    return () => {
+      URL.revokeObjectURL(editAvatarPreview)
+    }
+  }, [editAvatarPreview])
 
   // ========== QUERY ==========
   const { data, isFetching } = useQuery({
@@ -119,6 +144,7 @@ export default function ManageEmployee() {
       queryClient.invalidateQueries({ queryKey: ["listEmployees"] })
       setIsCreateModalOpen(false)
       createForm.resetFields()
+      setCreateAvatarFile(null)
     },
     onError: (error: any) => {
       toast.error(error?.response?.data?.message || "Thêm nhân viên thất bại", { autoClose: 1500 })
@@ -126,7 +152,7 @@ export default function ManageEmployee() {
   })
 
   const updateMutation = useMutation({
-    mutationFn: (values: any) => {
+    mutationFn: (values: EmployeeFormInput) => {
       return employeesAPI.update(selectedEmployee?.id as string, values)
     },
     onSuccess: () => {
@@ -135,6 +161,7 @@ export default function ManageEmployee() {
       queryClient.invalidateQueries({ queryKey: ["employeeDetail", selectedEmployee?.id] })
       setIsEditMode(false)
       setHasChanges(false)
+      setEditAvatarFile(null)
     },
     onError: (error: any) => {
       toast.error(error?.response?.data?.message || "Cập nhật thất bại", { autoClose: 1500 })
@@ -151,22 +178,6 @@ export default function ManageEmployee() {
       toast.error(error?.response?.data?.message || "Xóa nhân viên thất bại", { autoClose: 1500 })
     }
   })
-
-  const toggleActiveMutation = useMutation({
-    mutationFn: ({ id, is_active }: { id: string; is_active: boolean }) => employeesAPI.toggleActive(id, is_active),
-    onSuccess: () => {
-      toast.success("Cập nhật trạng thái thành công!", { autoClose: 1500 })
-      queryClient.invalidateQueries({ queryKey: ["listEmployees"] })
-      queryClient.invalidateQueries({ queryKey: ["employeeDetail", selectedEmployee?.id] })
-      setIsDetailModalOpen(false)
-      setIsEditMode(false)
-      setSelectedEmployee(null)
-    },
-    onError: (error: any) => {
-      toast.error(error?.response?.data?.message || "Cập nhật trạng thái thất bại", { autoClose: 1500 })
-    }
-  })
-
   const { data: detailData, isFetching: isFetchingDetail } = useQuery({
     queryKey: ["employeeDetail", selectedEmployee?.id],
     queryFn: () => employeesAPI.getDetail(selectedEmployee?.id as string),
@@ -180,16 +191,41 @@ export default function ManageEmployee() {
     if (isEditMode && employeeDetail) {
       const currentValues = form.getFieldsValue()
       const isChanged = JSON.stringify(currentValues) !== JSON.stringify(initialFormValues)
-      setHasChanges(isChanged)
+      setHasChanges(isChanged || !!editAvatarFile)
     }
-  }, [form, isEditMode, employeeDetail, initialFormValues])
+  }, [form, isEditMode, employeeDetail, initialFormValues, editAvatarFile])
 
   // ========== HANDLERS ==========
+  const handleCreateAvatarChange = (file?: File) => {
+    setCreateAvatarFile(file || null)
+  }
+
+  const handleRemoveCreateAvatar = () => {
+    setCreateAvatarFile(null)
+  }
+
+  const handleEditAvatarChange = (file?: File) => {
+    const nextFile = file || null
+    setEditAvatarFile(nextFile)
+    if (nextFile) {
+      setHasChanges(true)
+    } else if (isEditMode) {
+      const currentValues = form.getFieldsValue()
+      const isChanged = JSON.stringify(currentValues) !== JSON.stringify(initialFormValues)
+      setHasChanges(isChanged)
+    }
+  }
+
+  const handleRemoveEditAvatar = () => {
+    handleEditAvatarChange(undefined)
+  }
+
   const handleRowClick = (record: Employee) => {
     setSelectedEmployee(record)
     setIsDetailModalOpen(true)
     setIsEditMode(false)
     setHasChanges(false)
+    setEditAvatarFile(null)
 
     const values = {
       full_name: record.full_name,
@@ -226,11 +262,13 @@ export default function ManageEmployee() {
     }
     setIsEditMode(true)
     setHasChanges(false)
+    setEditAvatarFile(null)
   }
 
   const handleCancelEdit = () => {
     setIsEditMode(false)
     setHasChanges(false)
+    setEditAvatarFile(null)
     if (initialFormValues) {
       form.setFieldsValue(initialFormValues)
     }
@@ -245,7 +283,11 @@ export default function ManageEmployee() {
       const cleanedValues = Object.fromEntries(
         Object.entries(submitValues).filter(([_, v]) => v !== null && v !== undefined && v !== "")
       )
-      updateMutation.mutate(cleanedValues)
+      const payload: EmployeeFormInput = cleanedValues as EmployeeFormInput
+      if (editAvatarFile) {
+        payload.avatar = editAvatarFile
+      }
+      updateMutation.mutate(payload)
     })
   }
 
@@ -256,7 +298,11 @@ export default function ManageEmployee() {
         hire_date: values.hire_date ? dayjs(values.hire_date).format("YYYY-MM-DD") : undefined,
         base_salary: values.base_salary?.toString() || "0"
       }
-      createMutation.mutate(submitValues as EmployeeCreateInput)
+      const payload: EmployeeCreateInput = submitValues as EmployeeCreateInput
+      if (createAvatarFile) {
+        payload.avatar = createAvatarFile
+      }
+      createMutation.mutate(payload)
     })
   }
 
@@ -266,11 +312,13 @@ export default function ManageEmployee() {
     setSelectedEmployee(null)
     setHasChanges(false)
     setInitialFormValues(null)
+    setEditAvatarFile(null)
     form.resetFields()
   }
 
   const handleCloseCreateModal = () => {
     setIsCreateModalOpen(false)
+    setCreateAvatarFile(null)
     createForm.resetFields()
   }
 
@@ -535,15 +583,32 @@ export default function ManageEmployee() {
           </div>
         }
         width={700}
+        centered
         styles={{
           body: {
-            maxHeight: "calc(100vh - 250px)",
+            maxHeight: "calc(100vh - 150px)",
             overflowY: "auto",
             overflowX: "hidden"
           }
         }}
       >
         <Form form={createForm} layout="vertical" className="mt-4">
+          <Form.Item label="Ảnh đại diện">
+            <div className="flex flex-col items-center gap-3">
+              <img
+                src={createAvatarPreview || defaultAvatar}
+                alt="employee avatar preview"
+                className="w-24 h-24 rounded-full object-cover border"
+              />
+              <InputFileImage onChange={handleCreateAvatarChange} />
+              {createAvatarFile && (
+                <Button size="small" onClick={handleRemoveCreateAvatar}>
+                  Bỏ chọn
+                </Button>
+              )}
+            </div>
+          </Form.Item>
+
           <Form.Item
             name="full_name"
             label="Tên nhân viên"
@@ -710,9 +775,10 @@ export default function ManageEmployee() {
           </div>
         }
         width={700}
+        centered
         styles={{
           body: {
-            maxHeight: "calc(100vh - 250px)",
+            maxHeight: "calc(100vh - 150px)",
             overflowY: "auto",
             overflowX: "hidden"
           }
@@ -725,67 +791,141 @@ export default function ManageEmployee() {
         ) : employeeDetail ? (
           !isEditMode ? (
             // View Mode - Descriptions
-            <Descriptions bordered column={1}>
-              <Descriptions.Item label="Tên nhân viên">{employeeDetail.full_name}</Descriptions.Item>
-              <Descriptions.Item label="Email">{employeeDetail.user.email}</Descriptions.Item>
-              <Descriptions.Item label="Số điện thoại">
-                {employeeDetail.phone || <i className="text-gray-400">Chưa cập nhật</i>}
-              </Descriptions.Item>
-              <Descriptions.Item label="Giới tính">
-                {employeeDetail.gender
-                  ? GENDER_OPTIONS.find((opt) => opt.value === employeeDetail.gender)?.label
-                  : "Chưa xác định"}
-              </Descriptions.Item>
-              <Descriptions.Item label="Địa chỉ">
-                {employeeDetail.address || <i className="text-gray-400">Chưa cập nhật</i>}
-              </Descriptions.Item>
-              <Descriptions.Item label="Số tài khoản">
-                {employeeDetail.bank_account || <i className="text-gray-400">Chưa cập nhật</i>}
-              </Descriptions.Item>
-              <Descriptions.Item label="Loại hợp đồng">
-                <Tag color={CONTRACT_TYPES[employeeDetail.contract_type as keyof typeof CONTRACT_TYPES].color}>
-                  {CONTRACT_TYPES[employeeDetail.contract_type as keyof typeof CONTRACT_TYPES].label}
-                </Tag>
-              </Descriptions.Item>
-              <Descriptions.Item label="Lương cơ bản">
-                <span className="font-medium">{parseFloat(employeeDetail.base_salary).toLocaleString("vi-VN")} đ</span>
-              </Descriptions.Item>
-              <Descriptions.Item label="Ngày tuyển dụng">
-                {employeeDetail.hire_date ? (
-                  dayjs(employeeDetail.hire_date).format("DD/MM/YYYY")
-                ) : (
-                  <i className="text-gray-400">Chưa cập nhật</i>
-                )}
-              </Descriptions.Item>
-              <Descriptions.Item label="Trạng thái">
-                <Badge
-                  status={employeeDetail.is_active ? "success" : "error"}
-                  text={employeeDetail.is_active ? "Hoạt động" : "Ngừng hoạt động"}
+            <div>
+              <div className="flex flex-col items-center gap-3 mb-4">
+                <img
+                  src={editAvatarPreview || employeeDetail.user.avatar || defaultAvatar}
+                  alt="employee avatar"
+                  className="w-24 h-24 rounded-full object-cover border"
                 />
-              </Descriptions.Item>
-              <Descriptions.Item label="Trạng thái tài khoản">
-                <Badge
-                  status={employeeDetail.user.status === 1 ? "success" : "error"}
-                  text={employeeDetail.user.status_label}
-                />
-              </Descriptions.Item>
-              <Descriptions.Item label="Avatar">
-                {employeeDetail.user.avatar ? (
-                  <img src={employeeDetail.user.avatar} alt="Avatar" className="w-16 h-16 rounded-full" />
-                ) : (
-                  <i className="text-gray-400">Không có</i>
-                )}
-              </Descriptions.Item>
-              <Descriptions.Item label="Ngày tạo">
-                {new Date(employeeDetail.created_at).toLocaleString("vi-VN")}
-              </Descriptions.Item>
-              <Descriptions.Item label="Cập nhật lần cuối">
-                {new Date(employeeDetail.updated_at).toLocaleString("vi-VN")}
-              </Descriptions.Item>
-            </Descriptions>
+              </div>
+              <Descriptions bordered column={1}>
+                <Descriptions.Item label="Tên nhân viên">{employeeDetail.full_name}</Descriptions.Item>
+                <Descriptions.Item label="Email">{employeeDetail.user.email}</Descriptions.Item>
+                <Descriptions.Item label="Số điện thoại">
+                  {employeeDetail.phone || <i className="text-gray-400">Chưa cập nhật</i>}
+                </Descriptions.Item>
+                <Descriptions.Item label="Giới tính">
+                  {employeeDetail.gender
+                    ? GENDER_OPTIONS.find((opt) => opt.value === employeeDetail.gender)?.label
+                    : "Chưa xác định"}
+                </Descriptions.Item>
+                <Descriptions.Item label="Địa chỉ">
+                  {employeeDetail.address || <i className="text-gray-400">Chưa cập nhật</i>}
+                </Descriptions.Item>
+                <Descriptions.Item label="Số tài khoản">
+                  {employeeDetail.bank_account || <i className="text-gray-400">Chưa cập nhật</i>}
+                </Descriptions.Item>
+                <Descriptions.Item label="Loại hợp đồng">
+                  <Tag color={CONTRACT_TYPES[employeeDetail.contract_type as keyof typeof CONTRACT_TYPES].color}>
+                    {CONTRACT_TYPES[employeeDetail.contract_type as keyof typeof CONTRACT_TYPES].label}
+                  </Tag>
+                </Descriptions.Item>
+                <Descriptions.Item label="Lương cơ bản">
+                  <span className="font-medium">
+                    {parseFloat(employeeDetail.base_salary).toLocaleString("vi-VN")} đ
+                  </span>
+                </Descriptions.Item>
+                <Descriptions.Item label="Ngày tuyển dụng">
+                  {employeeDetail.hire_date ? (
+                    dayjs(employeeDetail.hire_date).format("DD/MM/YYYY")
+                  ) : (
+                    <i className="text-gray-400">Chưa cập nhật</i>
+                  )}
+                </Descriptions.Item>
+                <Descriptions.Item label="Trạng thái">
+                  <Badge
+                    status={employeeDetail.is_active ? "success" : "error"}
+                    text={employeeDetail.is_active ? "Hoạt động" : "Ngừng hoạt động"}
+                  />
+                </Descriptions.Item>
+                <Descriptions.Item label="Trạng thái tài khoản">
+                  <Badge
+                    status={employeeDetail.user.status === 1 ? "success" : "error"}
+                    text={employeeDetail.user.status_label}
+                  />
+                </Descriptions.Item>
+
+                <Descriptions.Item label="Ngày tạo">
+                  {new Date(employeeDetail.created_at).toLocaleString("vi-VN")}
+                </Descriptions.Item>
+                <Descriptions.Item label="Cập nhật lần cuối">
+                  {new Date(employeeDetail.updated_at).toLocaleString("vi-VN")}
+                </Descriptions.Item>
+              </Descriptions>
+              <Descriptions bordered column={1}>
+                <Descriptions.Item label="Tên nhân viên">{employeeDetail.full_name}</Descriptions.Item>
+                <Descriptions.Item label="Email">{employeeDetail.user.email}</Descriptions.Item>
+                <Descriptions.Item label="Số điện thoại">
+                  {employeeDetail.phone || <i className="text-gray-400">Chưa cập nhật</i>}
+                </Descriptions.Item>
+                <Descriptions.Item label="Giới tính">
+                  {employeeDetail.gender
+                    ? GENDER_OPTIONS.find((opt) => opt.value === employeeDetail.gender)?.label
+                    : "Chưa xác định"}
+                </Descriptions.Item>
+                <Descriptions.Item label="Địa chỉ">
+                  {employeeDetail.address || <i className="text-gray-400">Chưa cập nhật</i>}
+                </Descriptions.Item>
+                <Descriptions.Item label="Số tài khoản">
+                  {employeeDetail.bank_account || <i className="text-gray-400">Chưa cập nhật</i>}
+                </Descriptions.Item>
+                <Descriptions.Item label="Loại hợp đồng">
+                  <Tag color={CONTRACT_TYPES[employeeDetail.contract_type as keyof typeof CONTRACT_TYPES].color}>
+                    {CONTRACT_TYPES[employeeDetail.contract_type as keyof typeof CONTRACT_TYPES].label}
+                  </Tag>
+                </Descriptions.Item>
+                <Descriptions.Item label="Lương cơ bản">
+                  <span className="font-medium">
+                    {parseFloat(employeeDetail.base_salary).toLocaleString("vi-VN")} đ
+                  </span>
+                </Descriptions.Item>
+                <Descriptions.Item label="Ngày tuyển dụng">
+                  {employeeDetail.hire_date ? (
+                    dayjs(employeeDetail.hire_date).format("DD/MM/YYYY")
+                  ) : (
+                    <i className="text-gray-400">Chưa cập nhật</i>
+                  )}
+                </Descriptions.Item>
+                <Descriptions.Item label="Trạng thái">
+                  <Badge
+                    status={employeeDetail.is_active ? "success" : "error"}
+                    text={employeeDetail.is_active ? "Hoạt động" : "Ngừng hoạt động"}
+                  />
+                </Descriptions.Item>
+                <Descriptions.Item label="Trạng thái tài khoản">
+                  <Badge
+                    status={employeeDetail.user.status === 1 ? "success" : "error"}
+                    text={employeeDetail.user.status_label}
+                  />
+                </Descriptions.Item>
+                <Descriptions.Item label="Ngày tạo">
+                  {new Date(employeeDetail.created_at).toLocaleString("vi-VN")}
+                </Descriptions.Item>
+                <Descriptions.Item label="Cập nhật lần cuối">
+                  {new Date(employeeDetail.updated_at).toLocaleString("vi-VN")}
+                </Descriptions.Item>
+              </Descriptions>
+            </div>
           ) : (
             // Edit Mode - Form
             <Form form={form} layout="vertical" className="mt-4" onValuesChange={() => setHasChanges(true)}>
+              <Form.Item label="Ảnh đại diện">
+                <div className="flex flex-col items-center gap-3">
+                  <img
+                    src={editAvatarPreview || employeeDetail.user.avatar || defaultAvatar}
+                    alt="employee avatar"
+                    className="w-24 h-24 rounded-full object-cover border"
+                  />
+                  <InputFileImage onChange={handleEditAvatarChange} />
+                  {editAvatarFile && (
+                    <Button size="small" onClick={handleRemoveEditAvatar}>
+                      Bỏ chọn
+                    </Button>
+                  )}
+                </div>
+              </Form.Item>
+
               <Form.Item
                 name="full_name"
                 label="Tên nhân viên"
