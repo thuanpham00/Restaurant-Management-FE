@@ -10,7 +10,7 @@ import { schemaAuth, SchemaAuthType } from "src/Helpers/rule"
 import { yupResolver } from "@hookform/resolvers/yup"
 import { useMutation } from "@tanstack/react-query"
 import { authAPI } from "src/Apis/Admin"
-import { isError422 } from "src/Helpers/utils"
+import { isError401, isError422 } from "src/Helpers/utils"
 import { ErrorResponse } from "src/Types/utils.type"
 import { useAppStore } from "src/StateGlobal/zustand"
 import { toast } from "react-toastify"
@@ -59,6 +59,12 @@ export default function AdminLogin() {
               message: (formError.password as any).msg
             })
           }
+        }
+        if (isError401<ErrorResponse<FormData>>(error)) {
+          const message = error.response?.data.message
+          setError("password", {
+            message: message
+          })
         }
       }
     })

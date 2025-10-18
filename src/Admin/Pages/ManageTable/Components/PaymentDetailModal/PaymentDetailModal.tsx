@@ -78,7 +78,7 @@ const PaymentDetailModal = ({
       // dành cho trả 1 phần trước đó
       const payload: InvoicePaymentUpdatePayload = {
         table_session_id: table_session_id,
-        amount: remainingAmount, 
+        amount: remainingAmount,
         method: paymentMethod,
         status_payment: 1,
         employee_id: employeeId as string
@@ -167,7 +167,7 @@ const PaymentDetailModal = ({
         employee_id: employeeId,
         method: paymentMethod,
         status_payment: 1,
-        isDraft: false, 
+        isDraft: false,
         ...(paymentBefore ? { paymentBefore } : {})
       }
 
@@ -211,7 +211,7 @@ const PaymentDetailModal = ({
             {totalAmount.toLocaleString("vi-VN")} đ
           </Descriptions.Item>
           <Descriptions.Item label="Giảm giá">{totalPercentage} %</Descriptions.Item>
-          <Descriptions.Item label="Thuế VAT">{vat}%</Descriptions.Item>
+          <Descriptions.Item label="Thuế VAT">{vat} %</Descriptions.Item>
           <Descriptions.Item label="Tổng tiền" contentStyle={{ color: "red", fontWeight: 500 }}>
             <b>{paymentBefore ? paymentBefore.toLocaleString("vi-VN") : finalAmount.toLocaleString("vi-VN")} đ</b>
           </Descriptions.Item>
@@ -252,14 +252,10 @@ const PaymentDetailModal = ({
           {Number(detailInvoice.final_amount).toLocaleString("vi-VN")} đ
         </Descriptions.Item>
         <Descriptions.Item label="Hoàn tất thanh toán">
-          <span className="text-green-600 font-semibold">
-            {totalPaid.toLocaleString("vi-VN")} đ
-          </span>
+          <span className="text-green-600 font-semibold">{totalPaid.toLocaleString("vi-VN")} đ</span>
         </Descriptions.Item>
         <Descriptions.Item label="Còn lại" contentStyle={{ color: "red", fontWeight: 500 }}>
-          <span className="text-red-600 font-semibold text-base">
-            {remainingAmount.toLocaleString("vi-VN")} đ
-          </span>
+          <span className="text-red-600 font-semibold text-base">{remainingAmount.toLocaleString("vi-VN")} đ</span>
         </Descriptions.Item>
         <Descriptions.Item label="Phương thức thanh toán">
           <Radio.Group value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value)}>

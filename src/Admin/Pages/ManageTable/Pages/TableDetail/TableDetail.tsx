@@ -427,6 +427,10 @@ export default function TableDetail() {
         },
         {
           onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["invoiceSummary", dataTableSessionDetail?.session_id] })
+            queryClient.invalidateQueries({
+              queryKey: ["listInvoicesForTableSession", dataTableSessionDetail?.session_id]
+            })
             queryClient.invalidateQueries({ queryKey: ["detailDetailInvoice", dataTableSessionDetail?.session_id] })
           }
         }
@@ -651,6 +655,10 @@ export default function TableDetail() {
           },
           {
             onSuccess: () => {
+              queryClient.invalidateQueries({ queryKey: ["invoiceSummary", dataTableSessionDetail?.session_id] })
+              queryClient.invalidateQueries({
+                queryKey: ["listInvoicesForTableSession", dataTableSessionDetail?.session_id]
+              })
               queryClient.invalidateQueries({
                 queryKey: ["detailDetailInvoice", dataTableSessionDetail?.session_id]
               })

@@ -612,7 +612,9 @@ export default function TableSessionHistoryDetail() {
           <Descriptions.Item label="Giảm giá">
             {Number(detailInvoice?.discount ?? 0).toLocaleString("vi-VN")} %
           </Descriptions.Item>
-          <Descriptions.Item label="Thuế VAT">{Number(detailInvoice?.tax ?? 0)} %</Descriptions.Item>
+          <Descriptions.Item label="Thuế VAT">
+            {Number(detailInvoice?.tax ?? 0).toLocaleString("vi-VN")} %
+          </Descriptions.Item>
           <Descriptions.Item label="Thành tiền">
             <b>{Number(detailInvoice?.final_amount ?? 0).toLocaleString("vi-VN")} đ</b>
           </Descriptions.Item>

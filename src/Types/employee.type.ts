@@ -47,6 +47,7 @@ export type EmployeeFormInput = {
   password?: string
   password_confirmation?: string
   role_id?: string
+  avatar?: File | null
 }
 
 export type EmployeeCreateInput = {
@@ -64,6 +65,7 @@ export type EmployeeCreateInput = {
   password: string
   password_confirmation: string
   role_id: string
+  avatar?: File | null
 }
 
 export type queryParamConfigEmployee = {

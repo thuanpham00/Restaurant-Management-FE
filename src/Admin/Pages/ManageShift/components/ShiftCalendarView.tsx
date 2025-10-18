@@ -440,6 +440,11 @@ export default function ShiftCalendarView() {
         onCancel={handleCloseDetailModal}
         footer={null}
         width={900}
+        centered
+        style={{
+          maxHeight : "calc(100vh - 50px)",
+          overflowY: "auto",
+        }}
       >
         {isFetchingShiftDetail ? (
           <div className="flex justify-center py-10">

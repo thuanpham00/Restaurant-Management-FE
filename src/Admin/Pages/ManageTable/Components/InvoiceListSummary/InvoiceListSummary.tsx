@@ -15,7 +15,7 @@ interface InvoiceListSummaryProps {
 export const InvoiceListSummary = ({ invoices, tableSessionId, onViewDetail }: InvoiceListSummaryProps) => {
   // ✅ Fetch invoice summary from backend API - Much simpler!
   const { data: summaryData, isLoading: isLoadingSummary } = useQuery({
-    queryKey: ['invoiceSummary', tableSessionId],
+    queryKey: ["invoiceSummary", tableSessionId],
     queryFn: () => invoicePaymentAPI.getInvoiceSummary(tableSessionId),
     enabled: Boolean(tableSessionId && invoices.length > 0),
     staleTime: 10000, // 10s for realtime updates
@@ -60,9 +60,9 @@ export const InvoiceListSummary = ({ invoices, tableSessionId, onViewDetail }: I
   return (
     <Space direction="vertical" style={{ width: "100%" }} size="middle">
       {/* Summary Statistics - Enhanced Design */}
-      <Card 
-        size="small" 
-        style={{ 
+      <Card
+        size="small"
+        style={{
           background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
           borderRadius: "12px",
           boxShadow: "0 4px 12px rgba(102, 126, 234, 0.3)"
@@ -76,41 +76,43 @@ export const InvoiceListSummary = ({ invoices, tableSessionId, onViewDetail }: I
         <Row gutter={[24, 16]} align="middle">
           <Col span={8}>
             <div style={{ textAlign: "center" }}>
-              <div style={{ color: "rgba(255, 255, 255, 0.85)", fontSize: "14px", marginBottom: "8px", fontWeight: 500 }}>
+              <div
+                style={{ color: "rgba(255, 255, 255, 0.85)", fontSize: "14px", marginBottom: "8px", fontWeight: 500 }}
+              >
                 Tổng hóa đơn
               </div>
               <div style={{ color: "#ffffff", fontSize: "32px", fontWeight: "bold", lineHeight: 1 }}>
                 {summary.total_invoices}
               </div>
-              <div style={{ color: "rgba(255, 255, 255, 0.7)", fontSize: "12px", marginTop: "4px" }}>
-                hóa đơn
-              </div>
+              <div style={{ color: "rgba(255, 255, 255, 0.7)", fontSize: "12px", marginTop: "4px" }}>hóa đơn</div>
             </div>
           </Col>
-          
+
           <Col span={8}>
             <div style={{ textAlign: "center" }}>
-              <div style={{ color: "rgba(255, 255, 255, 0.85)", fontSize: "14px", marginBottom: "8px", fontWeight: 500 }}>
+              <div
+                style={{ color: "rgba(255, 255, 255, 0.85)", fontSize: "14px", marginBottom: "8px", fontWeight: 500 }}
+              >
                 Tổng tiền
               </div>
               <div style={{ color: "#ffffff", fontSize: "28px", fontWeight: "bold", lineHeight: 1 }}>
                 {summary.total_amount.toLocaleString()}
               </div>
-              <div style={{ color: "rgba(255, 255, 255, 0.7)", fontSize: "12px", marginTop: "4px" }}>
-                VNĐ
-              </div>
+              <div style={{ color: "rgba(255, 255, 255, 0.7)", fontSize: "12px", marginTop: "4px" }}>VNĐ</div>
             </div>
           </Col>
-          
+
           <Col span={8}>
             <div style={{ textAlign: "center" }}>
-              <div style={{ color: "rgba(255, 255, 255, 0.85)", fontSize: "14px", marginBottom: "8px", fontWeight: 500 }}>
+              <div
+                style={{ color: "rgba(255, 255, 255, 0.85)", fontSize: "14px", marginBottom: "8px", fontWeight: 500 }}
+              >
                 Còn lại
               </div>
-              <div 
-                style={{ 
+              <div
+                style={{
                   color: summary.total_remaining > 0 ? "#ffd666" : "#95de64",
-                  fontSize: "28px", 
+                  fontSize: "28px",
                   fontWeight: "bold",
                   lineHeight: 1,
                   textShadow: "0 2px 4px rgba(0,0,0,0.2)"
@@ -118,28 +120,34 @@ export const InvoiceListSummary = ({ invoices, tableSessionId, onViewDetail }: I
               >
                 {summary.total_remaining.toLocaleString()}
               </div>
-              <div style={{ color: "rgba(255, 255, 255, 0.7)", fontSize: "12px", marginTop: "4px" }}>
-                VNĐ
-              </div>
+              <div style={{ color: "rgba(255, 255, 255, 0.7)", fontSize: "12px", marginTop: "4px" }}>VNĐ</div>
             </div>
           </Col>
         </Row>
-        
+
         {/* Status breakdown */}
-        <Row gutter={12} style={{ marginTop: "16px", paddingTop: "16px", borderTop: "1px solid rgba(255,255,255,0.2)" }}>
+        <Row
+          gutter={12}
+          style={{ marginTop: "16px", paddingTop: "16px", borderTop: "1px solid rgba(255,255,255,0.2)" }}
+        >
           <Col span={8}>
             <div style={{ textAlign: "center", color: "rgba(255, 255, 255, 0.9)", fontSize: "13px" }}>
-              <span style={{ color: "#ff4d4f", fontWeight: "bold", fontSize: "18px" }}>{summary.unpaid_count}</span> Chưa thanh toán
+              <span style={{ color: "#ff4d4f", fontWeight: "bold", fontSize: "18px" }}>{summary.unpaid_count}</span>{" "}
+              Chưa thanh toán
             </div>
           </Col>
           <Col span={8}>
             <div style={{ textAlign: "center", color: "rgba(255, 255, 255, 0.9)", fontSize: "13px" }}>
-              <span style={{ color: "#faad14", fontWeight: "bold", fontSize: "18px" }}>{summary.partially_paid_count}</span> Thanh toán 1 phần
+              <span style={{ color: "#faad14", fontWeight: "bold", fontSize: "18px" }}>
+                {summary.partially_paid_count}
+              </span>{" "}
+              Thanh toán 1 phần
             </div>
           </Col>
           <Col span={8}>
             <div style={{ textAlign: "center", color: "rgba(255, 255, 255, 0.9)", fontSize: "13px" }}>
-              <span style={{ color: "#52c41a", fontWeight: "bold", fontSize: "18px" }}>{summary.paid_count}</span> Hoàn tất thanh toán
+              <span style={{ color: "#52c41a", fontWeight: "bold", fontSize: "18px" }}>{summary.paid_count}</span> Hoàn
+              tất thanh toán
             </div>
           </Col>
         </Row>
