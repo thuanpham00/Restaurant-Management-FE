@@ -23,12 +23,13 @@ import { Shield, Edit, Trash2, Plus, Filter, RotateCcw, Eye, Grid } from "lucide
 import { Fragment, useState } from "react"
 import { Helmet } from "react-helmet-async"
 import { toast } from "react-toastify"
-import { useNavigate } from "react-router-dom"
+import { createSearchParams, useNavigate } from "react-router-dom"
 import type { ColumnsType } from "antd/es/table"
 
 import NavigateBack from "src/Admin/Components/NavigateBack"
 import { rolesAPI, permissionsAPI } from "src/Apis/Admin"
 import { cleanObject } from "src/Helpers/common"
+import { path } from "src/Constants/path"
 import useQueryParams from "src/Hook/useQueryParams"
 import { PaginatedResponse } from "src/Types/utils.type"
 import { Role, queryParamConfigRole } from "src/Types/user.type"
@@ -219,29 +220,39 @@ export default function ManageRoles() {
   }
 
   const handleApplyFilter = (values: any) => {
-    const params = new URLSearchParams(window.location.search)
-    params.set("page", "1")
+    const params = cleanObject({
+      page: "1",
+      per_page: queryConfig.per_page || "15",
+      name: values.name?.trim(),
+      is_active: values.is_active
+    }) as queryParamConfigRole
 
-    Object.keys(values).forEach((key) => {
-      if (values[key] !== undefined && values[key] !== null && values[key] !== "") {
-        if (key === "is_active") {
-          params.set(key, values[key] ? "1" : "0")
-        } else {
-          params.set(key, values[key])
-        }
-      } else {
-        params.delete(key)
-      }
+    navigate({
+      pathname: path.AdminRoles,
+      search: createSearchParams(params as Record<string, string>).toString()
     })
-
-    window.history.pushState(null, "", `?${params.toString()}`)
-    window.location.reload()
   }
 
   const handleResetFilter = () => {
     filterForm.resetFields()
-    window.history.pushState(null, "", window.location.pathname)
-    window.location.reload()
+    navigate({
+      pathname: path.AdminRoles,
+      search: createSearchParams({ page: "1", per_page: queryConfig.per_page || "15" }).toString()
+    })
+  }
+
+  const handlePaginationChange = (page: number, pageSize: number) => {
+    const params = cleanObject({
+      page: page.toString(),
+      per_page: pageSize.toString(),
+      name: queryConfig.name,
+      is_active: queryConfig.is_active
+    }) as queryParamConfigRole
+
+    navigate({
+      pathname: path.AdminRoles,
+      search: createSearchParams(params as Record<string, string>).toString()
+    })
   }
 
   // ========== COLUMNS ==========
@@ -395,13 +406,7 @@ export default function ManageRoles() {
               total: paginated?.total || 0,
               showSizeChanger: true,
               showTotal: (total) => `Tổng ${total} vai trò`,
-              onChange: (page, pageSize) => {
-                const params = new URLSearchParams(window.location.search)
-                params.set("page", page.toString())
-                params.set("per_page", pageSize.toString())
-                window.history.pushState(null, "", `?${params.toString()}`)
-                window.location.reload()
-              }
+              onChange: handlePaginationChange
             }}
             scroll={{
               y: "calc(100vh - 400px)",
@@ -571,8 +576,8 @@ export default function ManageRoles() {
           ]}
           width={700}
           bodyStyle={{
-            maxHeight: "60vh", 
-            overflowY: "auto", 
+            maxHeight: "60vh",
+            overflowY: "auto",
             paddingRight: 12
           }}
         >

@@ -53,6 +53,7 @@ const CreateInvoiceModal = ({
       discountAmount,
       afterDiscount,
       taxAmount,
+      vatPercent,
       finalAmount
     }
   }, [totalAmount, totalPercentage, vat])
@@ -75,8 +76,8 @@ const CreateInvoiceModal = ({
     const payload: InvoicePaymentPayload = {
       table_session_id: tableSessionId,
       total_amount: financialCalculation.subtotal,
-      discount: financialCalculation.discountAmount,
-      tax: financialCalculation.taxAmount,
+      discount: financialCalculation.discountPercent,
+      tax: financialCalculation.vatPercent,
       final_amount: financialCalculation.finalAmount,
       status: 0, // ✅ Unpaid - Chưa thanh toán
       listPromotionApply,
@@ -107,8 +108,8 @@ const CreateInvoiceModal = ({
     const payload: InvoicePaymentPayload = {
       table_session_id: tableSessionId,
       total_amount: financialCalculation.subtotal,
-      discount: financialCalculation.discountAmount,
-      tax: financialCalculation.taxAmount,
+      discount: financialCalculation.discountPercent,
+      tax: financialCalculation.vatPercent,
       final_amount: financialCalculation.finalAmount,
       status: 2, // ✅ Paid - Đã thanh toán
       listPromotionApply,

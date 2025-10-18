@@ -2,10 +2,15 @@ import { Modal, Space, Button, Descriptions, Tag, Row, Col, Card, Radio, Divider
 import { FileText, CreditCard, Split } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { isAxiosError } from 'axios'
 import { invoicePaymentAPI } from 'src/Apis/Admin/invoicePayment.api'
 import { useAppStore } from 'src/StateGlobal/zustand'
 import { toast } from 'react-toastify'
-import type { InvoiceDetail, InvoicePaymentUpdatePayload } from '../../../../../Types/invoicePayment.type'
+import type {
+  InvoiceDetail,
+  InvoicePaymentUpdatePayload,
+  InvoicePromotion
+} from '../../../../../Types/invoicePayment.type'
 
 interface InvoiceDetailModalProps {
   open: boolean
@@ -40,18 +45,197 @@ export const InvoiceDetailModal = ({
 
   const invoiceDetail = invoiceDetailData?.data?.data as InvoiceDetail | undefined
 
+  const appliedPromotions = useMemo(() => {
+    if (!invoiceDetail) return [] as InvoicePromotion[]
+
+    const rawPromotions = invoiceDetail.invoice_promotions ?? []
+
+    return Array.isArray(rawPromotions) ? (rawPromotions as InvoicePromotion[]) : []
+  }, [invoiceDetail])
+
+  const toNumber = (value: string | number | null | undefined) => {
+    const numeric = Number(value ?? 0)
+    return Number.isNaN(numeric) ? 0 : numeric
+  }
+
+  const formatCurrency = (value: string | number | null | undefined) => {
+    return toNumber(value).toLocaleString('vi-VN', {
+      style: 'currency',
+      currency: 'VND'
+    })
+  }
+
+  const formatDateTime = (isoDate: string | null | undefined) => {
+    if (!isoDate) return 'Chưa xác định'
+
+    const date = new Date(isoDate)
+    if (Number.isNaN(date.getTime())) {
+      return isoDate
+    }
+
+    return date.toLocaleString('vi-VN')
+  }
+
+  const formatDateOnly = (isoDate: string | null | undefined) => {
+    if (!isoDate) return null
+
+    const date = new Date(isoDate)
+    if (Number.isNaN(date.getTime())) {
+      return null
+    }
+
+    return date.toLocaleDateString('vi-VN')
+  }
+
+  const formatPromotionDateRange = (start?: string | null, end?: string | null) => {
+    const startLabel = formatDateOnly(start)
+    const endLabel = formatDateOnly(end)
+
+    if (startLabel && endLabel) {
+      return `${startLabel} - ${endLabel}`
+    }
+
+    if (startLabel) {
+      return `Từ ${startLabel}`
+    }
+
+    if (endLabel) {
+      return `Đến ${endLabel}`
+    }
+
+    return 'Không xác định'
+  }
+
+  const getPaymentMethodLabel = (method: number) => {
+    switch (method) {
+      case 0:
+        return 'Tiền mặt'
+      case 1:
+        return 'Chuyển khoản'
+      default:
+        return 'Khác'
+    }
+  }
+
+  const getPaymentStatusMeta = (status: number) => {
+    switch (status) {
+      case 0:
+        return { text: 'Không thành công', color: 'error' as const }
+      case 1:
+        return { text: 'Thành công', color: 'success' as const }
+      default:
+        return { text: 'Không xác định', color: 'default' as const }
+    }
+  }
+
+  const resolveDiscountTypeName = (promotionInfo?: InvoicePromotion['promotion']) => {
+    if (!promotionInfo) return null
+
+    if (promotionInfo.discount_percent) {
+      return 'Giảm theo phần trăm'
+    }
+
+    return null
+  }
+
+  const getPromotionStatusMeta = (
+    status?: number | null,
+    endDate?: string | null,
+    isActive?: boolean | null
+  ) => {
+    if (endDate) {
+      const parsedEndDate = new Date(endDate)
+      if (!Number.isNaN(parsedEndDate.getTime()) && parsedEndDate.getTime() < Date.now()) {
+        return { text: 'Hết hạn', color: 'error' as const }
+      }
+    }
+
+    if (typeof isActive === 'boolean') {
+      return {
+        text: isActive ? 'Đang hoạt động' : 'Ngưng hoạt động',
+        color: isActive ? ('success' as const) : ('default' as const)
+      }
+    }
+
+    switch (status) {
+      case 1:
+        return { text: 'Đang hoạt động', color: 'success' as const }
+      case 0:
+        return { text: 'Ngưng hoạt động', color: 'default' as const }
+      case 2:
+        return { text: 'Hết hạn', color: 'warning' as const }
+      default:
+        return { text: 'Không xác định', color: 'default' as const }
+    }
+  }
+
+  const resolvePromotionDiscountLabel = (
+    discountValue: string,
+    promotionInfo?: InvoicePromotion['promotion']
+  ) => {
+    if (!discountValue) return formatCurrency(0)
+
+    const numericValue = toNumber(discountValue)
+
+    if (promotionInfo?.discount_percent) {
+      return `${numericValue.toLocaleString('vi-VN')}%`
+    }
+
+    return formatCurrency(numericValue)
+  }
+
   // Calculate financial info
   const financialInfo = useMemo(() => {
-    if (!invoiceDetail) return { totalPaid: 0, remaining: 0 }
+    if (!invoiceDetail) {
+      return {
+        subtotal: 0,
+        tax: 0,
+        finalAmount: 0,
+        discount: 0,
+        totalPaid: 0,
+        remaining: 0
+      }
+    }
 
-    const totalPaid = invoiceDetail.payments
-      ?.filter((p) => p.status === 1)
-      .reduce((sum, p) => sum + Number(p.amount), 0) || 0
+    const subtotal = toNumber(invoiceDetail.total_amount)
+    const discount = Math.max(toNumber(invoiceDetail.discount), 0)
+    const tax = Math.max(toNumber(invoiceDetail.tax), 0)
+    const finalAmount = toNumber(invoiceDetail.final_amount)
 
-    const remaining = Number(invoiceDetail.final_amount) - totalPaid
+    const totalPaid =
+      invoiceDetail.payments
+        ?.filter((payment) => payment.status === 1)
+        .reduce((sum, payment) => sum + toNumber(payment.amount), 0) || 0
 
-    return { totalPaid, remaining }
+    const remaining = Math.max(finalAmount - totalPaid, 0)
+
+    return { subtotal, tax, finalAmount, discount, totalPaid, remaining }
   }, [invoiceDetail])
+
+  const paymentStats = useMemo(() => {
+    const payments = invoiceDetail?.payments ?? []
+
+    if (payments.length === 0) {
+      return { total: 0, success: 0, failed: 0, pending: 0 }
+    }
+
+    return payments.reduce(
+      (acc, payment) => {
+        acc.total += 1
+
+        if (payment.status === 1) {
+          acc.success += 1
+        } else if (payment.status === 0) {
+          acc.failed += 1
+        } else {
+          acc.pending += 1
+        }
+
+        return acc
+      },
+      { total: 0, success: 0, failed: 0, pending: 0 }
+    )
+  }, [invoiceDetail?.payments])
 
   // ✅ Mutation thanh toán
   const paymentMutation = useMutation({
@@ -75,8 +259,12 @@ export const InvoiceDetailModal = ({
       // Đóng modal sau khi thanh toán thành công
       onClose()
     },
-    onError: (error: any) => {
-      toast.error(error?.response?.data?.message || 'Thanh toán thất bại. Vui lòng thử lại.', {
+    onError: (error: unknown) => {
+      const message = isAxiosError(error)
+        ? error.response?.data?.message || 'Thanh toán thất bại. Vui lòng thử lại.'
+        : 'Thanh toán thất bại. Vui lòng thử lại.'
+
+      toast.error(message, {
         autoClose: 2000
       })
     }
@@ -157,7 +345,7 @@ export const InvoiceDetailModal = ({
       {invoiceDetail && (
         <Space direction="vertical" style={{ width: '100%' }} size="large">
           {/* Summary Card */}
-          <Card 
+          <Card
             size="small"
             style={{
               background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
@@ -165,55 +353,85 @@ export const InvoiceDetailModal = ({
               boxShadow: '0 4px 12px rgba(102, 126, 234, 0.3)'
             }}
           >
-            <Row gutter={[16, 16]}>
-              <Col span={8}>
-                <div style={{ textAlign: 'center' }}>
-                  <div style={{ color: 'rgba(255, 255, 255, 0.85)', fontSize: '13px', marginBottom: '8px' }}>
-                    Tổng tiền
+            <Space direction="vertical" style={{ width: '100%' }} size="middle">
+              <Row gutter={[16, 16]}>
+                <Col span={8}>
+                  <div style={{ textAlign: 'center' }}>
+                    <div style={{ color: 'rgba(255, 255, 255, 0.85)', fontSize: '13px', marginBottom: '6px' }}>
+                      Tạm tính
+                    </div>
+                    <div style={{ color: '#ffffff', fontSize: '24px', fontWeight: 600 }}>
+                      {formatCurrency(financialInfo.subtotal)}
+                    </div>
                   </div>
-                  <div style={{ color: '#ffffff', fontSize: '26px', fontWeight: 'bold' }}>
-                    {Number(invoiceDetail.final_amount).toLocaleString()}
+                </Col>
+                <Col span={8}>
+                  <div style={{ textAlign: 'center' }}>
+                    <div style={{ color: 'rgba(255, 255, 255, 0.85)', fontSize: '13px', marginBottom: '6px' }}>
+                      Giảm giá
+                    </div>
+                    <div style={{ color: '#ffccc7', fontSize: '24px', fontWeight: 600 }}>
+                      {financialInfo.discount > 0
+                        ? `- ${formatCurrency(financialInfo.discount * financialInfo.subtotal / 100)}`
+                        : formatCurrency(0)}
+                    </div>
                   </div>
-                  <div style={{ color: 'rgba(255, 255, 255, 0.7)', fontSize: '12px', marginTop: '4px' }}>
-                    VNĐ
+                </Col>
+                <Col span={8}>
+                  <div style={{ textAlign: 'center' }}>
+                    <div style={{ color: 'rgba(255, 255, 255, 0.85)', fontSize: '13px', marginBottom: '6px' }}>
+                      Thuế VAT
+                    </div>
+                    <div style={{ color: '#bae7ff', fontSize: '24px', fontWeight: 600 }}>
+                      {financialInfo.tax > 0
+                        ? `+ ${formatCurrency(financialInfo.tax * financialInfo.subtotal / 100)}`
+                        : formatCurrency(0)}
+                    </div>
                   </div>
-                </div>
-              </Col>
-              
-              <Col span={8}>
-                <div style={{ textAlign: 'center' }}>
-                  <div style={{ color: 'rgba(255, 255, 255, 0.85)', fontSize: '13px', marginBottom: '8px' }}>
-                    Đã thanh toán
+                </Col>
+              </Row>
+
+              <Divider dashed style={{ borderColor: 'rgba(255, 255, 255, 0.25)', margin: '8px 0 4px' }} />
+
+              <Row gutter={[16, 16]}>
+                <Col span={8}>
+                  <div style={{ textAlign: 'center' }}>
+                    <div style={{ color: 'rgba(255, 255, 255, 0.85)', fontSize: '13px', marginBottom: '6px' }}>
+                      Tổng phải thu
+                    </div>
+                    <div style={{ color: '#ffffff', fontSize: '26px', fontWeight: 'bold' }}>
+                      {formatCurrency(financialInfo.finalAmount)}
+                    </div>
                   </div>
-                  <div style={{ color: '#95de64', fontSize: '26px', fontWeight: 'bold' }}>
-                    {financialInfo.totalPaid.toLocaleString()}
+                </Col>
+                <Col span={8}>
+                  <div style={{ textAlign: 'center' }}>
+                    <div style={{ color: 'rgba(255, 255, 255, 0.85)', fontSize: '13px', marginBottom: '6px' }}>
+                      Đã thanh toán
+                    </div>
+                    <div style={{ color: '#95de64', fontSize: '26px', fontWeight: 'bold' }}>
+                      {formatCurrency(financialInfo.totalPaid)}
+                    </div>
                   </div>
-                  <div style={{ color: 'rgba(255, 255, 255, 0.7)', fontSize: '12px', marginTop: '4px' }}>
-                    VNĐ
+                </Col>
+                <Col span={8}>
+                  <div style={{ textAlign: 'center' }}>
+                    <div style={{ color: 'rgba(255, 255, 255, 0.85)', fontSize: '13px', marginBottom: '6px' }}>
+                      Còn lại
+                    </div>
+                    <div
+                      style={{
+                        color: financialInfo.remaining > 0 ? '#ffd666' : '#b7eb8f',
+                        fontSize: '26px',
+                        fontWeight: 'bold'
+                      }}
+                    >
+                      {formatCurrency(financialInfo.remaining)}
+                    </div>
                   </div>
-                </div>
-              </Col>
-              
-              <Col span={8}>
-                <div style={{ textAlign: 'center' }}>
-                  <div style={{ color: 'rgba(255, 255, 255, 0.85)', fontSize: '13px', marginBottom: '8px' }}>
-                    Còn lại
-                  </div>
-                  <div 
-                    style={{ 
-                      color: financialInfo.remaining > 0 ? '#ffd666' : '#95de64',
-                      fontSize: '26px', 
-                      fontWeight: 'bold'
-                    }}
-                  >
-                    {financialInfo.remaining.toLocaleString()}
-                  </div>
-                  <div style={{ color: 'rgba(255, 255, 255, 0.7)', fontSize: '12px', marginTop: '4px' }}>
-                    VNĐ
-                  </div>
-                </div>
-              </Col>
-            </Row>
+                </Col>
+              </Row>
+            </Space>
           </Card>
 
           {/* Invoice Details */}
@@ -251,64 +469,206 @@ export const InvoiceDetailModal = ({
               </Descriptions.Item>
             )}
 
-            <Descriptions.Item label="Tạm tính">
+            {/* <Descriptions.Item label="Tạm tính">
               <span style={{ fontSize: '14px' }}>
-                {Number(invoiceDetail.total_amount).toLocaleString('vi-VN')} đ
+                {formatCurrency(financialInfo.subtotal)}
               </span>
             </Descriptions.Item>
 
             <Descriptions.Item label="Giảm giá">
               <span style={{ fontSize: '14px' }}>
-                {invoiceDetail.discount ? `${Number(invoiceDetail.discount).toLocaleString('vi-VN')} đ` : '0 đ'}
+                {financialInfo.discount} %
               </span>
             </Descriptions.Item>
 
             <Descriptions.Item label="Thuế VAT">
               <span style={{ fontSize: '14px' }}>
-                {invoiceDetail.tax ? `${Number(invoiceDetail.tax).toLocaleString('vi-VN')} đ` : '0 đ'}
+                {financialInfo.tax} %
               </span>
             </Descriptions.Item>
 
             <Descriptions.Item label="Tổng tiền cuối">
               <span style={{ fontWeight: 'bold', fontSize: '16px', color: '#1890ff' }}>
-                {Number(invoiceDetail.final_amount).toLocaleString('vi-VN')} đ
+                {formatCurrency(financialInfo.finalAmount)}
               </span>
-            </Descriptions.Item>
+            </Descriptions.Item> */}
           </Descriptions>
 
-          {/* Payment History */}
-          {invoiceDetail.payments && invoiceDetail.payments.length > 0 && (
-            <Card 
-              title="Lịch sử thanh toán" 
+          {appliedPromotions.length > 0 && (
+            <Card
+              title="Khuyến mãi áp dụng"
               size="small"
               style={{ marginTop: '16px' }}
             >
               <Space direction="vertical" style={{ width: '100%' }} size="small">
-                {invoiceDetail.payments.map((payment, index) => (
-                  <div 
-                    key={payment.id || index}
-                    style={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      padding: '8px 12px',
-                      backgroundColor: payment.status === 1 ? '#f6ffed' : '#fff1f0',
-                      borderRadius: '6px',
-                      border: `1px solid ${payment.status === 1 ? '#b7eb8f' : '#ffccc7'}`
-                    }}
-                  >
-                    <Space>
-                      <Tag color={payment.status === 1 ? 'success' : 'error'}>
-                        {payment.status === 1 ? 'Thành công' : 'Thất bại'}
-                      </Tag>
-                      <span style={{ fontSize: '13px', color: '#666' }}>
-                        {payment.method === 0 ? 'Tiền mặt' : payment.method === 1 ? 'Chuyển khoản' : 'Khác'}
-                      </span>
-                    </Space>
-                    <span style={{ fontWeight: 'bold', fontSize: '14px' }}>
-                      {Number(payment.amount).toLocaleString()} đ
-                    </span>
-                  </div>
-                ))}
+                {appliedPromotions.map((promotion) => {
+                  const discountLabel = resolvePromotionDiscountLabel(
+                    promotion.discount_value,
+                    promotion.promotion
+                  )
+
+                  const discountTypeName = resolveDiscountTypeName(promotion.promotion)
+
+                  const appliedAtLabel = formatDateTime(promotion.applied_at)
+
+                  const validityLabel = formatPromotionDateRange(
+                    promotion.promotion?.start_date,
+                    promotion.promotion?.end_date
+                  )
+
+                  const statusMeta = promotion.promotion
+                    ? getPromotionStatusMeta(
+                        undefined,
+                        promotion.promotion.end_date,
+                        promotion.promotion.is_active ?? null
+                      )
+                    : null
+
+                  return (
+                    <div
+                      key={promotion.id}
+                      style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '6px',
+                        padding: '10px 12px',
+                        borderRadius: '8px',
+                        border: '1px solid #f0f0f0',
+                        backgroundColor: '#fafafa'
+                      }}
+                    >
+                      <Space style={{ justifyContent: 'space-between', width: '100%' }}>
+                        <span style={{ fontWeight: 600 }}>
+                          {promotion.promotion?.code || `Khuyến mãi #${promotion.promotion_id}`}
+                        </span>
+                        <Tag color="processing">{discountLabel}</Tag>
+                      </Space>
+
+                      <Space size={8} wrap>
+                        {promotion.promotion?.code && <Tag color="blue">{promotion.promotion.code}</Tag>}
+                        {discountTypeName && <Tag color="geekblue">{discountTypeName}</Tag>}
+                        {statusMeta && <Tag color={statusMeta.color}>{statusMeta.text}</Tag>}
+                      </Space>
+
+                      <div style={{ fontSize: '12px', color: '#666' }}>Hiệu lực: {validityLabel}</div>
+
+                      <div style={{ fontSize: '12px', color: '#666' }}>Áp dụng: {appliedAtLabel}</div>
+
+                      {promotion.promotion?.description && (
+                        <div style={{ fontSize: '12px', color: '#8c8c8c', lineHeight: 1.5 }}>
+                          Mô tả: {promotion.promotion.description}
+                        </div>
+                      )}
+                    </div>
+                  )
+                })}
+              </Space>
+            </Card>
+          )}
+
+          {/* Payment History */}
+          {invoiceDetail.payments && invoiceDetail.payments.length > 0 && (
+            <Card
+              title="Lịch sử thanh toán"
+              size="small"
+              style={{ marginTop: '16px' }}
+            >
+              <Space direction="vertical" style={{ width: '100%' }} size="small">
+                <Row gutter={[16, 16]}>
+                  <Col span={6}>
+                    <div style={{ textAlign: 'center' }}>
+                      <div style={{ fontSize: '12px', color: '#8c8c8c', marginBottom: '4px' }}>
+                        Số giao dịch
+                      </div>
+                      <div style={{ fontSize: '18px', fontWeight: 600 }}>{paymentStats.total}</div>
+                    </div>
+                  </Col>
+                  <Col span={6}>
+                    <div style={{ textAlign: 'center' }}>
+                      <div style={{ fontSize: '12px', color: '#8c8c8c', marginBottom: '4px' }}>
+                        Thành công
+                      </div>
+                      <div style={{ fontSize: '18px', fontWeight: 600, color: '#52c41a' }}>
+                        {paymentStats.success}
+                      </div>
+                    </div>
+                  </Col>
+                  <Col span={6}>
+                    <div style={{ textAlign: 'center' }}>
+                      <div style={{ fontSize: '12px', color: '#8c8c8c', marginBottom: '4px' }}>
+                        Thất bại
+                      </div>
+                      <div style={{ fontSize: '18px', fontWeight: 600, color: '#ff4d4f' }}>
+                        {paymentStats.failed}
+                      </div>
+                    </div>
+                  </Col>
+                  <Col span={6}>
+                    <div style={{ textAlign: 'center' }}>
+                      <div style={{ fontSize: '12px', color: '#8c8c8c', marginBottom: '4px' }}>
+                        Tổng đã thanh toán
+                      </div>
+                      <div style={{ fontSize: '18px', fontWeight: 600, color: '#1677ff' }}>
+                        {formatCurrency(financialInfo.totalPaid)}
+                      </div>
+                    </div>
+                  </Col>
+                </Row>
+
+                <Divider style={{ margin: '8px 0' }} />
+
+                {invoiceDetail.payments.map((payment) => {
+                  const statusMeta = getPaymentStatusMeta(payment.status)
+                  return (
+                    <div
+                      key={payment.id}
+                      style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '6px',
+                        padding: '10px 12px',
+                        borderRadius: '6px',
+                        border: '1px solid #f0f0f0',
+                        backgroundColor: payment.status === 1 ? '#f6ffed' : '#fff1f0'
+                      }}
+                    >
+                      <Row align="middle" gutter={8}>
+                        <Col flex="auto">
+                          <Space>
+                            <Tag color={statusMeta.color}>{statusMeta.text}</Tag>
+                            <span style={{ fontSize: '13px', color: '#666' }}>
+                              {getPaymentMethodLabel(payment.method)}
+                            </span>
+                          </Space>
+                        </Col>
+                        <Col>
+                          <span style={{ fontWeight: 'bold', fontSize: '14px' }}>
+                            {formatCurrency(payment.amount)}
+                          </span>
+                        </Col>
+                      </Row>
+
+                      <Row gutter={[8, 8]}>
+                        <Col span={12}>
+                          <div style={{ fontSize: '12px', color: '#666' }}>
+                            Thời gian: {formatDateTime(payment.paid_at)}
+                          </div>
+                        </Col>
+                        <Col span={12} style={{ textAlign: 'right' }}>
+                          <div style={{ fontSize: '12px', color: '#666' }}>
+                            Nhân viên: {payment.employee?.full_name || 'Không xác định'}
+                          </div>
+                        </Col>
+                      </Row>
+
+                      {payment.desc_issue && (
+                        <div style={{ fontSize: '12px', color: '#8c8c8c' }}>
+                          Ghi chú: {payment.desc_issue}
+                        </div>
+                      )}
+                    </div>
+                  )
+                })}
               </Space>
             </Card>
           )}
@@ -336,7 +696,7 @@ export const InvoiceDetailModal = ({
                       contentStyle={{ textAlign: 'right' }}
                     >
                       <span style={{ fontSize: '18px', fontWeight: 'bold', color: '#ff4d4f' }}>
-                        {financialInfo.remaining.toLocaleString('vi-VN')} đ
+                        {formatCurrency(financialInfo.remaining)}
                       </span>
                     </Descriptions.Item>
                   </Descriptions>
@@ -403,7 +763,9 @@ export const InvoiceDetailModal = ({
                   fontSize: '15px'
                 }}
               >
-                {paymentMethod === null ? 'Chọn phương thức thanh toán' : `Thanh toán ${financialInfo.remaining.toLocaleString('vi-VN')} đ`}
+                {paymentMethod === null
+                  ? 'Chọn phương thức thanh toán'
+                  : `Thanh toán ${formatCurrency(financialInfo.remaining)}`}
               </Button>
             )}
 

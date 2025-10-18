@@ -26,6 +26,57 @@ export type InvoicePaymentUpdatePayload = {
   employee_id: string
 }
 
+export type InvoicePromotion = {
+  id: string
+  invoice_id: string
+  promotion_id: string
+  discount_value: string
+  applied_at: string
+  created_at: string
+  updated_at: string
+  promotion?: {
+    id: string
+    code?: string | null
+    description?: string | null
+    discount_percent?: string | null
+    start_date?: string | null
+    end_date?: string | null
+    usage_limit?: number | null
+    is_active?: boolean | null
+    created_at?: string | null
+    updated_at?: string | null
+  } | null
+}
+
+export type InvoicePaymentHistory = {
+  id: string
+  amount: string
+  method: number
+  status: number
+  paid_at: string | null
+  invoice_id: string
+  employee_id: string
+  desc_issue: string | null
+  created_at: string
+  updated_at: string
+  employee: {
+    id: string
+    full_name: string
+    phone: string | null
+    gender: string | null
+    address: string | null
+    bank_account: string | null
+    contract_type: number
+    base_salary: string
+    hire_date: string | null
+    is_active: boolean
+    user_id: string
+    created_at: string
+    updated_at: string
+    contract_label: string
+  } | null
+}
+
 export type Invoice = {
   id: string
   table_session_id: string
@@ -45,6 +96,8 @@ export type Invoice = {
   merged_invoice_id: string | null
   created_at: string
   updated_at: string
+  invoice_promotions?: InvoicePromotion[]
+  payments?: InvoicePaymentHistory[]
 }
 
 export type InvoiceDetail = {
@@ -66,34 +119,8 @@ export type InvoiceDetail = {
   merged_invoice_id: string | null
   created_at: string
   updated_at: string
-  payments: {
-    id: string
-    amount: string
-    method: number
-    status: number
-    paid_at: string
-    invoice_id: string
-    employee_id: string
-    desc_issue: null
-    created_at: string
-    updated_at: string
-    employee: {
-      id: string
-      full_name: string
-      phone: null
-      gender: null
-      address: null
-      bank_account: null
-      contract_type: number
-      base_salary: string
-      hire_date: null
-      is_active: boolean
-      user_id: string
-      created_at: string
-      updated_at: string
-      contract_label: string
-    }
-  }[]
+  invoice_promotions?: InvoicePromotion[]
+  payments: InvoicePaymentHistory[]
 }
 
 // Split Invoice Types
