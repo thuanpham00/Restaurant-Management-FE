@@ -128,47 +128,6 @@ export const InvoiceDetailModal = ({
     }
   }
 
-  const resolveDiscountTypeName = (promotionInfo?: InvoicePromotion['promotion']) => {
-    if (!promotionInfo) return null
-
-    if (promotionInfo.discount_percent) {
-      return 'Giảm theo phần trăm'
-    }
-
-    return null
-  }
-
-  const getPromotionStatusMeta = (
-    status?: number | null,
-    endDate?: string | null,
-    isActive?: boolean | null
-  ) => {
-    if (endDate) {
-      const parsedEndDate = new Date(endDate)
-      if (!Number.isNaN(parsedEndDate.getTime()) && parsedEndDate.getTime() < Date.now()) {
-        return { text: 'Hết hạn', color: 'error' as const }
-      }
-    }
-
-    if (typeof isActive === 'boolean') {
-      return {
-        text: isActive ? 'Đang hoạt động' : 'Ngưng hoạt động',
-        color: isActive ? ('success' as const) : ('default' as const)
-      }
-    }
-
-    switch (status) {
-      case 1:
-        return { text: 'Đang hoạt động', color: 'success' as const }
-      case 0:
-        return { text: 'Ngưng hoạt động', color: 'default' as const }
-      case 2:
-        return { text: 'Hết hạn', color: 'warning' as const }
-      default:
-        return { text: 'Không xác định', color: 'default' as const }
-    }
-  }
-
   const resolvePromotionDiscountLabel = (
     discountValue: string,
     promotionInfo?: InvoicePromotion['promotion']
@@ -343,7 +302,7 @@ export const InvoiceDetailModal = ({
       }}
     >
       {invoiceDetail && (
-        <Space direction="vertical" style={{ width: '100%' }} size="large">
+        <Space direction="vertical" style={{ width: '100%' }} size="small">
           {/* Summary Card */}
           <Card
             size="small"
@@ -391,7 +350,7 @@ export const InvoiceDetailModal = ({
                 </Col>
               </Row>
 
-              <Divider dashed style={{ borderColor: 'rgba(255, 255, 255, 0.25)', margin: '8px 0 4px' }} />
+              <Divider dashed style={{ borderColor: 'rgba(255, 255, 255, 0.25)', margin: '4px 0 2px' }} />
 
               <Row gutter={[16, 16]}>
                 <Col span={8}>
@@ -507,22 +466,12 @@ export const InvoiceDetailModal = ({
                     promotion.promotion
                   )
 
-                  const discountTypeName = resolveDiscountTypeName(promotion.promotion)
-
                   const appliedAtLabel = formatDateTime(promotion.applied_at)
 
                   const validityLabel = formatPromotionDateRange(
                     promotion.promotion?.start_date,
                     promotion.promotion?.end_date
                   )
-
-                  const statusMeta = promotion.promotion
-                    ? getPromotionStatusMeta(
-                        undefined,
-                        promotion.promotion.end_date,
-                        promotion.promotion.is_active ?? null
-                      )
-                    : null
 
                   return (
                     <div
@@ -542,12 +491,6 @@ export const InvoiceDetailModal = ({
                           {promotion.promotion?.code || `Khuyến mãi #${promotion.promotion_id}`}
                         </span>
                         <Tag color="processing">{discountLabel}</Tag>
-                      </Space>
-
-                      <Space size={8} wrap>
-                        {promotion.promotion?.code && <Tag color="blue">{promotion.promotion.code}</Tag>}
-                        {discountTypeName && <Tag color="geekblue">{discountTypeName}</Tag>}
-                        {statusMeta && <Tag color={statusMeta.color}>{statusMeta.text}</Tag>}
                       </Space>
 
                       <div style={{ fontSize: '12px', color: '#666' }}>Hiệu lực: {validityLabel}</div>
