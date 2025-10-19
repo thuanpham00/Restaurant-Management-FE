@@ -2,7 +2,7 @@ import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tansta
 import { Button, Form, Input, Modal, Table, DatePicker, TimePicker, Spin, Radio, Badge, Tag, Checkbox } from "antd"
 import { isUndefined, omitBy } from "lodash"
 import { Clock, Edit, Filter, Plus, RotateCcw, Trash2, Sun, Moon, Settings, Zap } from "lucide-react"
-import { Fragment, useState } from "react"
+import { Fragment, useCallback, useState } from "react"
 import { toast } from "react-toastify"
 import dayjs from "dayjs"
 import isoWeek from "dayjs/plugin/isoWeek"
@@ -55,6 +55,16 @@ const detectShiftType = (startTime: string | null, endTime: string | null): Shif
 export default function ShiftListTab() {
   const queryConfig: queryParamConfigShift = useQueryParams()
   const queryClient = useQueryClient()
+
+  const invalidateShiftRelatedQueries = useCallback(() => {
+    return Promise.all([
+      queryClient.invalidateQueries({ queryKey: ["shifts"] }),
+      queryClient.invalidateQueries({ queryKey: ["shifts-with-assignments"], exact: false }),
+      queryClient.invalidateQueries({ queryKey: ["employee-shifts-stats"], exact: false }),
+      queryClient.invalidateQueries({ queryKey: ["shift-detail"], exact: false }),
+      queryClient.invalidateQueries({ queryKey: ["shift-assignments"], exact: false })
+    ]).then(() => undefined)
+  }, [queryClient])
 
   // ========== STATE ==========
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -111,7 +121,7 @@ export default function ShiftListTab() {
     mutationFn: (values: ShiftFormInput) => shiftsAPI.create(values),
     onSuccess: () => {
       toast.success("Tạo ca làm việc thành công!", { autoClose: 1500 })
-      queryClient.invalidateQueries({ queryKey: ["shifts"] })
+      invalidateShiftRelatedQueries()
       handleCloseModal()
     },
     onError: (error: any) => {
@@ -123,7 +133,7 @@ export default function ShiftListTab() {
     mutationFn: ({ id, data }: { id: string; data: ShiftFormInput }) => shiftsAPI.update(id, data),
     onSuccess: () => {
       toast.success("Cập nhật ca thành công!", { autoClose: 1500 })
-      queryClient.invalidateQueries({ queryKey: ["shifts"] })
+      invalidateShiftRelatedQueries()
       handleCloseModal()
     },
     onError: (error: any) => {
@@ -135,7 +145,7 @@ export default function ShiftListTab() {
     mutationFn: (id: string) => shiftsAPI.delete(id),
     onSuccess: () => {
       toast.success("Xóa ca thành công!", { autoClose: 1500 })
-      queryClient.invalidateQueries({ queryKey: ["shifts"] })
+      invalidateShiftRelatedQueries()
     },
     onError: (error: any) => {
       toast.error(error?.response?.data?.message || "Xóa thất bại", { autoClose: 1500 })
@@ -331,7 +341,7 @@ export default function ShiftListTab() {
       }
 
       // Refresh data
-      await queryClient.invalidateQueries({ queryKey: ["shifts"] })
+  await invalidateShiftRelatedQueries()
 
       // Show result
       if (successCount > 0) {

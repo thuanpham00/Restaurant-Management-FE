@@ -78,12 +78,12 @@ export type EmployeeShiftFormInput = {
 }
 
 export type EmployeeShiftCheckIn = {
-  check_in_time?: string
+  check_in?: string
   notes?: string
 }
 
 export type EmployeeShiftCheckOut = {
-  check_out_time?: string
+  check_out?: string
   overtime_hours?: number
   notes?: string
 }
@@ -126,7 +126,7 @@ export const SHIFT_STATUS = {
 
 export const SHIFT_STATUS_LABELS = {
   [SHIFT_STATUS.SCHEDULED]: "Đã lên lịch",
-  [SHIFT_STATUS.PRESENT]: "Có mặt",
+  [SHIFT_STATUS.PRESENT]: "Đúng giờ",
   [SHIFT_STATUS.LATE]: "Đi muộn",
   [SHIFT_STATUS.ABSENT]: "Vắng mặt",
   [SHIFT_STATUS.EARLY_LEAVE]: "Về sớm"

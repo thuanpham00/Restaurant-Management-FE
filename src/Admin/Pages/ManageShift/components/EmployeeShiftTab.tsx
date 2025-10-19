@@ -33,7 +33,7 @@ import {
   RotateCcw,
   Eye
 } from "lucide-react"
-import { useState, useMemo } from "react"
+import { useState, useMemo, useCallback } from "react"
 import { useNavigate } from "react-router-dom"
 import { toast } from "react-toastify"
 import dayjs from "dayjs"
@@ -66,6 +66,16 @@ interface ShiftTableRecord extends ShiftWithAssignments {
 export default function EmployeeShiftTab() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
+
+  const invalidateShiftQueries = useCallback(() => {
+    return Promise.all([
+      queryClient.invalidateQueries({ queryKey: ["shifts"] }),
+      queryClient.invalidateQueries({ queryKey: ["shifts-with-assignments"], exact: false }),
+      queryClient.invalidateQueries({ queryKey: ["employee-shifts-stats"], exact: false }),
+      queryClient.invalidateQueries({ queryKey: ["shift-detail"], exact: false }),
+      queryClient.invalidateQueries({ queryKey: ["shift-assignments"], exact: false })
+    ]).then(() => undefined)
+  }, [queryClient])
 
   // ========== STATE ==========
   const [isBulkAssignModalOpen, setIsBulkAssignModalOpen] = useState(false)
@@ -176,8 +186,7 @@ export default function EmployeeShiftTab() {
         `Phân công thành công ${result.total_assigned} nhân viên${result.total_skipped > 0 ? ` (Bỏ qua ${result.total_skipped} đã tồn tại)` : ""}`,
         { autoClose: 3000 }
       )
-      queryClient.invalidateQueries({ queryKey: ["shifts-with-assignments"] })
-      queryClient.invalidateQueries({ queryKey: ["employee-shifts-stats"] })
+      invalidateShiftQueries()
       setSelectedShifts([])
       setSelectedEmployees([])
       setIsBulkAssignModalOpen(false)
@@ -524,7 +533,7 @@ export default function EmployeeShiftTab() {
             <div className="text-center p-4 bg-green-50 rounded-lg">
               <div className="text-3xl font-bold text-green-600">{statistics.statusCounts.present}</div>
               <Tag color="green" className="mt-2">
-                Có mặt
+                Đúng giờ
               </Tag>
             </div>
           </Col>

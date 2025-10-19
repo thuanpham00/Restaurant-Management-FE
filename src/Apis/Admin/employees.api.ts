@@ -52,7 +52,7 @@ export const employeesAPI = {
   },
 
   update: (id: string, data: EmployeeFormInput) => {
-    const payload = { ...data, _method: "PUT" }
+    const payload = { ...data }
     const formData = buildEmployeeFormData(payload as Record<string, unknown>)
     return Http.post<SuccessResponse<Employee>>(`/api/employees/${id}`, formData, {
       headers: { "Content-Type": "multipart/form-data" }

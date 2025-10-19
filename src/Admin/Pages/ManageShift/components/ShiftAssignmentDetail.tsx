@@ -1,7 +1,7 @@
-import { useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
 import { useNavigate, useParams } from "react-router-dom"
 import { Helmet } from "react-helmet-async"
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import {
   Button,
   Card,
@@ -23,6 +23,7 @@ import {
   Alert
 } from "antd"
 import type { ColumnsType } from "antd/es/table"
+import type { AxiosResponse } from "axios"
 import dayjs from "dayjs"
 import { toast } from "react-toastify"
 import NavigateBack from "src/Admin/Components/NavigateBack"
@@ -35,17 +36,8 @@ import {
   SHIFT_STATUS_LABELS,
   Shift
 } from "src/Types/shift.type"
-import { PaginatedResponse } from "src/Types/utils.type"
-import {
-  Calendar,
-  Clock,
-  Users,
-  Plus,
-  Trash2,
-  CheckCircle,
-  XCircle,
-  Edit
-} from "lucide-react"
+import { PaginatedResponse, SuccessResponse } from "src/Types/utils.type"
+import { Calendar, Clock, Users, Plus, Trash2, CheckCircle, XCircle, Edit } from "lucide-react"
 
 interface AssignFormValues {
   employee_ids: string[]
@@ -57,6 +49,20 @@ interface CheckFormValues {
   time: dayjs.Dayjs
   notes?: string
   overtime_hours?: number
+}
+
+type BulkMode = "check-in" | "check-out"
+
+type CheckMutationPayload = {
+  id: string
+  values: CheckFormValues
+  previousStatus: number
+}
+
+interface BulkCheckPayload {
+  assignments: EmployeeShift[]
+  mode: BulkMode
+  values: CheckFormValues
 }
 
 interface EmployeeOption {
@@ -82,21 +88,33 @@ export default function ShiftAssignmentDetail() {
   const [checkInForm] = Form.useForm<CheckFormValues>()
   const [checkOutForm] = Form.useForm<CheckFormValues>()
   const [statusForm] = Form.useForm<{ status: number; notes?: string }>()
+  const [bulkForm] = Form.useForm<CheckFormValues>()
+
+  const shiftDetailQueryKey = useMemo(() => ["shift-detail", shiftId] as const, [shiftId])
+  const assignmentsQueryKey = useMemo(() => ["shift-assignments", shiftId] as const, [shiftId])
 
   // ===== QUERIES =====
   const { data: shiftDetailData, isFetching: isFetchingShift, isError: isShiftError } = useQuery({
-    queryKey: ["shift-detail", shiftId],
+    queryKey: shiftDetailQueryKey,
     enabled: Boolean(shiftId),
-    queryFn: () => shiftsAPI.getDetail(shiftId)
+    queryFn: () => shiftsAPI.getDetail(shiftId),
+    staleTime: 60_000,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false
   })
 
-  const { data: assignmentsData, isFetching: isFetchingAssignments } = useQuery({
-    queryKey: ["shift-assignments", shiftId],
+  const { data: assignmentsData, isFetching: isFetchingAssignments, refetch: refetchAssignments } = useQuery({
+    queryKey: assignmentsQueryKey,
     enabled: Boolean(shiftId),
     queryFn: () => {
       const controller = new AbortController()
       return employeeShiftsAPI.getList({ per_page: "999", shift_id: shiftId }, controller.signal)
-    }
+    },
+    staleTime: 30_000,
+    gcTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    placeholderData: keepPreviousData
   })
 
   const { data: employeesData, isFetching: isFetchingEmployees } = useQuery({
@@ -108,10 +126,159 @@ export default function ShiftAssignmentDetail() {
     staleTime: 5 * 60 * 1000
   })
 
+  const [selectedAssignmentIds, setSelectedAssignmentIds] = useState<string[]>([])
+  const [bulkMode, setBulkMode] = useState<BulkMode | null>(null)
+  const [isBulkModalOpen, setIsBulkModalOpen] = useState(false)
+
   const shift = shiftDetailData?.data?.data as Shift | undefined
   const assignmentsPaginated = assignmentsData?.data?.data as PaginatedResponse<EmployeeShift> | undefined
   const assignments = assignmentsPaginated?.data || []
   const employees: EmployeeOption[] = (employeesData?.data?.data as any)?.data || []
+
+  const selectedAssignments = useMemo(
+    () => assignments.filter((assignment) => selectedAssignmentIds.includes(assignment.id)),
+    [assignments, selectedAssignmentIds]
+  )
+
+  useEffect(() => {
+    if (selectedAssignmentIds.length === 0) return
+    setSelectedAssignmentIds((prev) => {
+      const validIds = prev.filter((id) => assignments.some((assignment) => assignment.id === id))
+      return validIds.length === prev.length ? prev : validIds
+    })
+  }, [assignments, selectedAssignmentIds.length])
+
+  const normalizeTimeToMinutes = useCallback((input: dayjs.Dayjs | string | null | undefined): number | null => {
+    if (!input) return null
+    if (dayjs.isDayjs(input)) {
+      return input.hour() * 60 + input.minute()
+    }
+
+    const parsed = dayjs(input, ["HH:mm:ss", "HH:mm"], true)
+    if (parsed.isValid()) {
+      return parsed.hour() * 60 + parsed.minute()
+    }
+
+    const fallback = dayjs(input)
+    if (fallback.isValid()) {
+      return fallback.hour() * 60 + fallback.minute()
+    }
+
+    return null
+  }, [])
+
+  const computeStatusAfterCheckIn = useCallback(
+    (checkTime: dayjs.Dayjs, shiftStart?: string | null): number => {
+      const checkMinutes = normalizeTimeToMinutes(checkTime)
+      const startMinutes = normalizeTimeToMinutes(shiftStart ?? null)
+
+      if (checkMinutes === null || startMinutes === null) {
+        return SHIFT_STATUS.PRESENT
+      }
+
+      return checkMinutes > startMinutes ? SHIFT_STATUS.LATE : SHIFT_STATUS.PRESENT
+    },
+    [normalizeTimeToMinutes]
+  )
+
+  const computeStatusAfterCheckOut = useCallback(
+    (previousStatus: number, checkTime: dayjs.Dayjs, shiftEnd?: string | null): number => {
+      const checkMinutes = normalizeTimeToMinutes(checkTime)
+      const endMinutes = normalizeTimeToMinutes(shiftEnd ?? null)
+
+      if (checkMinutes === null || endMinutes === null) {
+        return previousStatus
+      }
+
+      if (checkMinutes < endMinutes) {
+        return SHIFT_STATUS.EARLY_LEAVE
+      }
+
+      return previousStatus === SHIFT_STATUS.LATE ? SHIFT_STATUS.LATE : SHIFT_STATUS.PRESENT
+    },
+    [normalizeTimeToMinutes]
+  )
+
+  const updateAssignmentsInCache = useCallback(
+    (updated: EmployeeShift | EmployeeShift[]) => {
+      const updates = Array.isArray(updated) ? updated : [updated]
+      if (updates.length === 0) return
+
+      const updatesMap = new Map<string, EmployeeShift>(updates.map((item) => [item.id, item]))
+
+      queryClient.setQueryData<
+        AxiosResponse<SuccessResponse<PaginatedResponse<EmployeeShift>>> | undefined
+      >(assignmentsQueryKey, (old) => {
+        if (!old) return old
+
+        const responseBody = old.data
+        const paginated = responseBody?.data
+        const currentList = paginated?.data
+
+        if (!responseBody || !paginated || !currentList) {
+          return old
+        }
+
+        const nextList = currentList.map((assignment) => updatesMap.get(assignment.id) ?? assignment)
+
+        return {
+          ...old,
+          data: {
+            ...responseBody,
+            data: {
+              ...paginated,
+              data: nextList
+            }
+          }
+        }
+      })
+    },
+    [assignmentsQueryKey, queryClient]
+  )
+
+  const removeAssignmentsFromCache = useCallback(
+    (ids: string | string[]) => {
+      const removalIds = Array.isArray(ids) ? ids : [ids]
+      if (removalIds.length === 0) return
+
+      const removalSet = new Set(removalIds)
+
+      queryClient.setQueryData<
+        AxiosResponse<SuccessResponse<PaginatedResponse<EmployeeShift>>> | undefined
+      >(assignmentsQueryKey, (old) => {
+        if (!old) return old
+
+        const responseBody = old.data
+        const paginated = responseBody?.data
+        const currentList = paginated?.data
+
+        if (!responseBody || !paginated || !currentList) {
+          return old
+        }
+
+        const nextList = currentList.filter((assignment) => !removalSet.has(assignment.id))
+        const removedCount = currentList.length - nextList.length
+
+        if (removedCount === 0) {
+          return old
+        }
+
+        return {
+          ...old,
+          data: {
+            ...responseBody,
+            data: {
+              ...paginated,
+              data: nextList,
+              total: Math.max(paginated.total - removedCount, nextList.length),
+              to: Math.max(paginated.to - removedCount, nextList.length)
+            }
+          }
+        }
+      })
+    },
+    [assignmentsQueryKey, queryClient]
+  )
 
   const availableEmployees = useMemo(() => {
     const assignedIds = new Set(assignments.map((assignment) => assignment.employee_id))
@@ -129,13 +296,34 @@ export default function ShiftAssignmentDetail() {
     }
   }, [assignments])
 
-  // ===== MUTATIONS =====
-  const invalidateShiftQueries = () => {
-    queryClient.invalidateQueries({ queryKey: ["shift-assignments", shiftId] })
-    queryClient.invalidateQueries({ queryKey: ["shift-detail", shiftId] })
+  const canBulkCheckIn = useMemo(
+    () => selectedAssignments.length > 0 && selectedAssignments.every((assignment) => !assignment.check_in),
+    [selectedAssignments]
+  )
+
+  const canBulkCheckOut = useMemo(
+    () =>
+      selectedAssignments.length > 0 &&
+      selectedAssignments.every((assignment) => assignment.check_in && !assignment.check_out),
+    [selectedAssignments]
+  )
+
+  const markShiftAggregatesStale = useCallback(() => {
     queryClient.invalidateQueries({ queryKey: ["shifts-with-assignments"], exact: false })
     queryClient.invalidateQueries({ queryKey: ["employee-shifts-stats"], exact: false })
-  }
+  }, [queryClient])
+
+  const persistStatusSilently = useCallback(async (assignmentId: string, status: number) => {
+    try {
+      await employeeShiftsAPI.updateStatus(assignmentId, { status })
+      return true
+    } catch (error) {
+      console.error("Không thể đồng bộ trạng thái của nhân viên", error)
+      return false
+    }
+  }, [])
+
+  // ===== MUTATIONS =====
 
   const bulkAssignMutation = useMutation({
     mutationFn: (payload: AssignFormValues) =>
@@ -145,11 +333,13 @@ export default function ShiftAssignmentDetail() {
         status: payload.status,
         notes: payload.notes
       }),
-    onSuccess: (response) => {
+    onSuccess: async (response) => {
       const result = response.data.data
       const skippedMessage = result.total_skipped > 0 ? ` (Bỏ qua ${result.total_skipped})` : ""
-      toast.success(`✅ Đã phân công ${result.total_assigned} nhân viên${skippedMessage}`, { autoClose: 2500 })
-      invalidateShiftQueries()
+      toast.success(`Đã phân công ${result.total_assigned} nhân viên${skippedMessage}`, { autoClose: 2500 })
+      await refetchAssignments()
+      queryClient.invalidateQueries({ queryKey: shiftDetailQueryKey })
+      markShiftAggregatesStale()
       setIsAssignModalOpen(false)
       assignForm.resetFields()
     },
@@ -160,9 +350,13 @@ export default function ShiftAssignmentDetail() {
 
   const deleteMutation = useMutation({
     mutationFn: (assignmentId: string) => employeeShiftsAPI.delete(assignmentId),
-    onSuccess: () => {
+    onSuccess: async (_, assignmentId) => {
       toast.success("Đã xóa phân công", { autoClose: 2000 })
-      invalidateShiftQueries()
+      removeAssignmentsFromCache(assignmentId)
+      setSelectedAssignmentIds((prev) => prev.filter((id) => id !== assignmentId))
+      queryClient.invalidateQueries({ queryKey: shiftDetailQueryKey })
+      markShiftAggregatesStale()
+      await refetchAssignments()
     },
     onError: (error: any) => {
       toast.error(error?.response?.data?.message || "Không thể xóa phân công", { autoClose: 2000 })
@@ -170,17 +364,31 @@ export default function ShiftAssignmentDetail() {
   })
 
   const checkInMutation = useMutation({
-    mutationFn: ({ id: assignmentId, data }: { id: string; data: CheckFormValues }) =>
-      employeeShiftsAPI.checkIn(assignmentId, {
-        check_in_time: dayjs(data.time).format("HH:mm:ss"),
-        notes: data.notes
+    mutationFn: ({ id, values }: CheckMutationPayload) =>
+      employeeShiftsAPI.checkIn(id, {
+        check_in: dayjs(values.time).format("HH:mm:ss"),
+        notes: values.notes
       }),
-    onSuccess: () => {
+    onSuccess: async (response, variables) => {
+      const assignment = response.data.data
+      const computedStatus = computeStatusAfterCheckIn(variables.values.time, shift?.start_time)
+      const updatedAssignment = { ...assignment, status: computedStatus }
+
       toast.success("Check-in thành công", { autoClose: 2000 })
-      invalidateShiftQueries()
+      updateAssignmentsInCache(updatedAssignment)
+      markShiftAggregatesStale()
       setIsCheckInModalOpen(false)
       setSelectedAssignment(null)
       checkInForm.resetFields()
+      setSelectedAssignmentIds((prev) => prev.filter((id) => id !== assignment.id))
+
+      if (assignment.status !== computedStatus) {
+        const persisted = await persistStatusSilently(assignment.id, computedStatus)
+        if (!persisted) {
+          toast.error("Không thể đồng bộ trạng thái, dữ liệu sẽ được tải lại", { autoClose: 2500 })
+          await refetchAssignments()
+        }
+      }
     },
     onError: (error: any) => {
       toast.error(error?.response?.data?.message || "Check-in thất bại", { autoClose: 2000 })
@@ -188,18 +396,36 @@ export default function ShiftAssignmentDetail() {
   })
 
   const checkOutMutation = useMutation({
-    mutationFn: ({ id: assignmentId, data }: { id: string; data: CheckFormValues }) =>
-      employeeShiftsAPI.checkOut(assignmentId, {
-        check_out_time: dayjs(data.time).format("HH:mm:ss"),
-        overtime_hours: data.overtime_hours,
-        notes: data.notes
+    mutationFn: ({ id, values }: CheckMutationPayload) =>
+      employeeShiftsAPI.checkOut(id, {
+        check_out: dayjs(values.time).format("HH:mm:ss"),
+        overtime_hours: values.overtime_hours,
+        notes: values.notes
       }),
-    onSuccess: () => {
+    onSuccess: async (response, variables) => {
+      const assignment = response.data.data
+      const computedStatus = computeStatusAfterCheckOut(
+        variables.previousStatus,
+        variables.values.time,
+        shift?.end_time
+      )
+      const updatedAssignment = { ...assignment, status: computedStatus }
+
       toast.success("Check-out thành công", { autoClose: 2000 })
-      invalidateShiftQueries()
+      updateAssignmentsInCache(updatedAssignment)
+      markShiftAggregatesStale()
       setIsCheckOutModalOpen(false)
       setSelectedAssignment(null)
       checkOutForm.resetFields()
+      setSelectedAssignmentIds((prev) => prev.filter((id) => id !== assignment.id))
+
+      if (assignment.status !== computedStatus) {
+        const persisted = await persistStatusSilently(assignment.id, computedStatus)
+        if (!persisted) {
+          toast.error("Không thể đồng bộ trạng thái, dữ liệu sẽ được tải lại", { autoClose: 2500 })
+          await refetchAssignments()
+        }
+      }
     },
     onError: (error: any) => {
       toast.error(error?.response?.data?.message || "Check-out thất bại", { autoClose: 2000 })
@@ -209,15 +435,95 @@ export default function ShiftAssignmentDetail() {
   const updateStatusMutation = useMutation({
     mutationFn: ({ id: assignmentId, data }: { id: string; data: { status: number; notes?: string } }) =>
       employeeShiftsAPI.updateStatus(assignmentId, data),
-    onSuccess: () => {
+    onSuccess: (response) => {
       toast.success("Cập nhật trạng thái thành công", { autoClose: 2000 })
-      invalidateShiftQueries()
+      updateAssignmentsInCache(response.data.data)
+      markShiftAggregatesStale()
       setIsStatusModalOpen(false)
       setSelectedAssignment(null)
       statusForm.resetFields()
     },
     onError: (error: any) => {
       toast.error(error?.response?.data?.message || "Cập nhật thất bại", { autoClose: 2000 })
+    }
+  })
+
+  const bulkCheckMutation = useMutation({
+    mutationFn: async ({ assignments: targets, mode, values }: BulkCheckPayload) => {
+      if (targets.length === 0) return [] as PromiseSettledResult<AxiosResponse<SuccessResponse<EmployeeShift>>>[]
+
+      const requests = targets.map((assignment) =>
+        mode === "check-in"
+          ? employeeShiftsAPI.checkIn(assignment.id, {
+              check_in: dayjs(values.time).format("HH:mm:ss"),
+              notes: values.notes
+            })
+          : employeeShiftsAPI.checkOut(assignment.id, {
+              check_out: dayjs(values.time).format("HH:mm:ss"),
+              overtime_hours: values.overtime_hours,
+              notes: values.notes
+            })
+      )
+
+      return Promise.allSettled(requests)
+    },
+    onSuccess: async (results, variables) => {
+      const successfulAssignments: EmployeeShift[] = []
+      const statusUpdates: Array<{ id: string; status: number }> = []
+
+      results.forEach((result, index) => {
+        if (result.status !== "fulfilled") {
+          return
+        }
+
+        const assignment = result.value.data.data
+        const sourceAssignment = variables.assignments[index]
+        const previousStatus = sourceAssignment?.status ?? assignment.status
+        const computedStatus =
+          variables.mode === "check-in"
+            ? computeStatusAfterCheckIn(variables.values.time, shift?.start_time)
+            : computeStatusAfterCheckOut(previousStatus, variables.values.time, shift?.end_time)
+
+        successfulAssignments.push({ ...assignment, status: computedStatus })
+
+        if (assignment.status !== computedStatus) {
+          statusUpdates.push({ id: assignment.id, status: computedStatus })
+        }
+      })
+
+      if (successfulAssignments.length > 0) {
+        updateAssignmentsInCache(successfulAssignments)
+        markShiftAggregatesStale()
+        toast.success(
+          `Đã ${variables.mode === "check-in" ? "check-in" : "check-out"} ${successfulAssignments.length} nhân viên`,
+          { autoClose: 2200 }
+        )
+      }
+
+      const failedCount = results.length - successfulAssignments.length
+      if (failedCount > 0) {
+        toast.warning(`${failedCount} nhân viên chưa cập nhật được, vui lòng thử lại`, { autoClose: 2600 })
+      }
+
+      if (statusUpdates.length > 0) {
+        const persistResults = await Promise.all(statusUpdates.map((item) => persistStatusSilently(item.id, item.status)))
+        if (persistResults.some((success) => !success)) {
+          toast.error("Một số trạng thái chưa được đồng bộ, dữ liệu sẽ được tải lại", { autoClose: 2600 })
+          await refetchAssignments()
+        }
+      }
+
+      setIsBulkModalOpen(false)
+      setBulkMode(null)
+      bulkForm.resetFields()
+      if (successfulAssignments.length > 0) {
+        setSelectedAssignmentIds((prev) =>
+          prev.filter((id) => !successfulAssignments.some((assignment) => assignment.id === id))
+        )
+      }
+    },
+    onError: () => {
+      toast.error("Không thể cập nhật hàng loạt, vui lòng thử lại", { autoClose: 2600 })
     }
   })
 
@@ -249,7 +555,11 @@ export default function ShiftAssignmentDetail() {
   const handleSubmitCheckIn = () => {
     if (!selectedAssignment) return
     checkInForm.validateFields().then((values) => {
-      checkInMutation.mutate({ id: selectedAssignment.id, data: values })
+      checkInMutation.mutate({
+        id: selectedAssignment.id,
+        values,
+        previousStatus: selectedAssignment.status
+      })
     })
   }
 
@@ -266,7 +576,11 @@ export default function ShiftAssignmentDetail() {
   const handleSubmitCheckOut = () => {
     if (!selectedAssignment) return
     checkOutForm.validateFields().then((values) => {
-      checkOutMutation.mutate({ id: selectedAssignment.id, data: values })
+      checkOutMutation.mutate({
+        id: selectedAssignment.id,
+        values,
+        previousStatus: selectedAssignment.status
+      })
     })
   }
 
@@ -284,6 +598,64 @@ export default function ShiftAssignmentDetail() {
     statusForm.validateFields().then((values) => {
       updateStatusMutation.mutate({ id: selectedAssignment.id, data: values })
     })
+  }
+
+  const handleOpenBulkModal = (mode: BulkMode) => {
+    if (selectedAssignments.length === 0) {
+      toast.warning("Vui lòng chọn ít nhất 1 nhân viên", { autoClose: 2000 })
+      return
+    }
+
+    if (mode === "check-in" && !canBulkCheckIn) {
+      toast.warning("Chỉ có thể check-in hàng loạt cho các nhân viên chưa check-in", { autoClose: 2200 })
+      return
+    }
+
+    if (mode === "check-out" && !canBulkCheckOut) {
+      toast.warning("Chỉ có thể check-out hàng loạt cho nhân viên đã check-in và chưa check-out", { autoClose: 2200 })
+      return
+    }
+
+    setBulkMode(mode)
+    bulkForm.resetFields()
+    const defaults: CheckFormValues = {
+      time: dayjs(),
+      notes: undefined,
+      overtime_hours: mode === "check-out" ? undefined : undefined
+    }
+    bulkForm.setFieldsValue(defaults)
+    setIsBulkModalOpen(true)
+  }
+
+  const handleSubmitBulk = () => {
+    if (!bulkMode) return
+    if (selectedAssignments.length === 0) {
+      toast.warning("Vui lòng chọn ít nhất 1 nhân viên", { autoClose: 2000 })
+      setIsBulkModalOpen(false)
+      setBulkMode(null)
+      return
+    }
+
+    if (bulkMode === "check-in" && !canBulkCheckIn) {
+      toast.warning("Một số nhân viên đã check-in, không thể thực hiện hàng loạt", { autoClose: 2200 })
+      setIsBulkModalOpen(false)
+      setBulkMode(null)
+      return
+    }
+
+    if (bulkMode === "check-out" && !canBulkCheckOut) {
+      toast.warning("Chỉ thực hiện check-out hàng loạt cho nhân viên đã check-in và chưa check-out", { autoClose: 2200 })
+      setIsBulkModalOpen(false)
+      setBulkMode(null)
+      return
+    }
+
+    bulkForm
+      .validateFields()
+      .then((values) => {
+        bulkCheckMutation.mutate({ assignments: selectedAssignments, mode: bulkMode, values })
+      })
+      .catch(() => null)
   }
 
   const handleDeleteAssignment = (record: EmployeeShift) => {
@@ -447,7 +819,7 @@ export default function ShiftAssignmentDetail() {
                 </Descriptions>
               </Col>
               <Col xs={24} md={6}>
-                <div className="flex flex-col gap-2">
+                <Space direction="vertical" className="w-full">
                   <Button
                     type="primary"
                     icon={<Plus size={16} />}
@@ -456,37 +828,58 @@ export default function ShiftAssignmentDetail() {
                   >
                     Thêm phân công
                   </Button>
+                  <Button
+                    icon={<CheckCircle size={16} />}
+                    onClick={() => handleOpenBulkModal("check-in")}
+                    disabled={!canBulkCheckIn || bulkCheckMutation.isPending}
+                    loading={bulkCheckMutation.isPending && bulkMode === "check-in"}
+                  >
+                    Check-in hàng loạt
+                  </Button>
+                  <Button
+                    icon={<XCircle size={16} />}
+                    danger
+                    onClick={() => handleOpenBulkModal("check-out")}
+                    disabled={!canBulkCheckOut || bulkCheckMutation.isPending}
+                    loading={bulkCheckMutation.isPending && bulkMode === "check-out"}
+                  >
+                    Check-out hàng loạt
+                  </Button>
                   <Button onClick={() => navigate(-1)}>Quay lại danh sách</Button>
-                </div>
+                </Space>
               </Col>
             </Row>
           </Card>
 
           <Row gutter={[16, 16]}>
-            <Col xs={12} sm={6}>
+            <Col xs={12} sm={6} md={6} lg={4} xl={4}>
               <Card className="border-l-4 border-blue-500 shadow-sm">
                 <div className="text-sm text-gray-500">Đã lên lịch</div>
                 <div className="text-2xl font-bold text-blue-600">{statusSummary.scheduled}</div>
               </Card>
             </Col>
-            <Col xs={12} sm={6}>
+            <Col xs={12} sm={6} md={6} lg={4} xl={4}>
               <Card className="border-l-4 border-green-500 shadow-sm">
-                <div className="text-sm text-gray-500">Có mặt</div>
+                <div className="text-sm text-gray-500">Đúng giờ</div>
                 <div className="text-2xl font-bold text-green-600">{statusSummary.present}</div>
               </Card>
             </Col>
-            <Col xs={12} sm={6}>
+            <Col xs={12} sm={6} md={6} lg={4} xl={4}>
               <Card className="border-l-4 border-orange-500 shadow-sm">
                 <div className="text-sm text-gray-500">Đi muộn</div>
                 <div className="text-2xl font-bold text-orange-500">{statusSummary.late}</div>
               </Card>
             </Col>
-            <Col xs={12} sm={6}>
+            <Col xs={12} sm={6} md={6} lg={4} xl={4}>
               <Card className="border-l-4 border-red-500 shadow-sm">
-                <div className="text-sm text-gray-500">Vắng mặt / Về sớm</div>
-                <div className="text-2xl font-bold text-red-500">
-                  {statusSummary.absent + statusSummary.earlyLeave}
-                </div>
+                <div className="text-sm text-gray-500">Vắng mặt</div>
+                <div className="text-2xl font-bold text-red-500">{statusSummary.absent}</div>
+              </Card>
+            </Col>
+            <Col xs={12} sm={6} md={6} lg={4} xl={4}>
+              <Card className="border-l-4 border-cyan-500 shadow-sm">
+                <div className="text-sm text-gray-500">Về sớm</div>
+                <div className="text-2xl font-bold text-cyan-600">{statusSummary.earlyLeave}</div>
               </Card>
             </Col>
           </Row>
@@ -502,11 +895,32 @@ export default function ShiftAssignmentDetail() {
               </div>
             </div>
 
+            {selectedAssignments.length > 0 && (
+              <div className="mb-3 text-sm text-blue-600">
+                Đã chọn {selectedAssignments.length} nhân viên để thao tác nhanh.
+                {!canBulkCheckIn && (
+                  <span className="block text-xs text-orange-500">
+                    Một số nhân viên đã check-in, không thể check-in hàng loạt.
+                  </span>
+                )}
+                {!canBulkCheckOut && (
+                  <span className="block text-xs text-orange-500">
+                    Chỉ nhân viên đã check-in và chưa check-out mới có thể check-out hàng loạt.
+                  </span>
+                )}
+              </div>
+            )}
+
             <Table
               rowKey="id"
               columns={columns}
               dataSource={assignments}
               loading={isFetchingAssignments}
+              rowSelection={{
+                selectedRowKeys: selectedAssignmentIds,
+                onChange: (keys) => setSelectedAssignmentIds(keys as string[]),
+                preserveSelectedRowKeys: true
+              }}
               pagination={{ pageSize: 10, showSizeChanger: true, pageSizeOptions: [10, 20, 50] }}
               locale={{
                 emptyText: (
@@ -691,6 +1105,46 @@ export default function ShiftAssignmentDetail() {
               </Form.Item>
               <Form.Item name="notes" label="Ghi chú">
                 <Input.TextArea rows={3} placeholder="Ghi chú (nếu có)..." />
+              </Form.Item>
+            </Form>
+          </Modal>
+
+          <Modal
+            title={bulkMode === "check-in" ? "Check-in hàng loạt" : "Check-out hàng loạt"}
+            open={isBulkModalOpen}
+            onCancel={() => {
+              setIsBulkModalOpen(false)
+              setBulkMode(null)
+              bulkForm.resetFields()
+            }}
+            onOk={handleSubmitBulk}
+            okText={bulkMode === "check-in" ? "Check-in" : "Check-out"}
+            cancelText="Hủy"
+            confirmLoading={bulkCheckMutation.isPending}
+            destroyOnClose
+          >
+            <Alert
+              type="info"
+              showIcon
+              className="mb-3"
+              message={`${selectedAssignments.length} nhân viên sẽ được ${bulkMode === "check-in" ? "check-in" : "check-out"}`}
+              description="Các thông tin dưới đây sẽ áp dụng cho tất cả nhân viên đã chọn."
+            />
+            <Form form={bulkForm} layout="vertical">
+              <Form.Item
+                name="time"
+                label="Thời gian"
+                rules={[{ required: true, message: "Vui lòng chọn thời gian" }]}
+              >
+                <TimePicker className="w-full" format="HH:mm" placeholder="Chọn giờ" />
+              </Form.Item>
+              {bulkMode === "check-out" && (
+                <Form.Item name="overtime_hours" label="Số giờ tăng ca">
+                  <InputNumber className="w-full" min={0} max={12} step={0.5} placeholder="VD: 1.5" />
+                </Form.Item>
+              )}
+              <Form.Item name="notes" label="Ghi chú chung">
+                <Input.TextArea rows={3} placeholder="Ghi chú áp dụng cho tất cả nhân viên..." />
               </Form.Item>
             </Form>
           </Modal>
