@@ -14,5 +14,10 @@ export const diningTableAPI = {
   getListReservationTableSessionByIdTable: (idDiningTable: string) => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return Http.get<SuccessResponse<any>>(`/api/dining-tables/${idDiningTable}/reservations`)
+  },
+
+  getListReservationAndOfflineTableSessionByIdTable: (idDiningTable: string) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return Http.get<SuccessResponse<any>>(`/api/dining-tables/${idDiningTable}/reservations-offline`)
   }
 }

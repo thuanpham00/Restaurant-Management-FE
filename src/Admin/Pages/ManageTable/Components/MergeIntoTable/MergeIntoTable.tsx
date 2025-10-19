@@ -7,6 +7,8 @@ import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { tableSessionAPI } from "src/Apis"
 import { useAppStore } from "src/StateGlobal/zustand"
 import { queryParamConfigTableSessions } from "src/Types/queryParams.type"
+import { isError400 } from "src/Helpers/utils"
+import { ErrorResponse } from "src/Types/utils.type"
 
 export default function MergeIntoTable({
   listTableSessionActiveData,
@@ -32,8 +34,10 @@ export default function MergeIntoTable({
       setMergedTable(false)
       queryClient.invalidateQueries({ queryKey: ["listTableSession", queryConfig] })
     },
-    onError: () => {
-      message.error("Gộp bàn thất bại ❌")
+    onError: (error) => {
+      if (isError400<ErrorResponse<any>>(error)) {
+        message.error(error.response?.data.message + " ❌")
+      }
     }
   })
 

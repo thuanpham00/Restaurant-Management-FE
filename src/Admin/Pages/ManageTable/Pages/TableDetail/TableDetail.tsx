@@ -37,7 +37,6 @@ import HistoryTableSession from "../../Components/HistoryTableSession/HistoryTab
 import { ChefHat, CookingPot, HandCoins, Plus, Split } from "lucide-react"
 import { toast } from "react-toastify"
 import { ColumnsType } from "antd/es/table"
-import PendingTableSessionSelector from "../../Components/PendingTableSessionSelector"
 import SplitTableModal from "../../Components/SplitTableModal"
 import { SplitInvoiceModal } from "../../Components/SplitInvoiceModal"
 import { InvoiceListSummary } from "src/Admin/Pages/ManageTable/Components/InvoiceListSummary"
@@ -48,6 +47,7 @@ import { isError422 } from "src/Helpers/utils"
 import { useAppStore } from "src/StateGlobal/zustand"
 import { useRealtimeQuery } from "src/Hook/useRealtimeQuery"
 import type { Invoice } from "src/Types/invoicePayment.type"
+import PendingTableSessionSelector from "../../Components/PendingTableSessionSelector"
 
 const { Search } = Input
 const { Title } = Typography
@@ -334,7 +334,6 @@ export default function TableDetail() {
     }
   }, [data, isError, error, idDiningTable])
 
-  // ✅ Cleanup: Remove queries from cache when unmount to ensure fresh data on next visit
   useEffect(() => {
     return () => {
       queryClient.removeQueries({ queryKey: ["detailTableSession"], exact: false })
@@ -344,7 +343,6 @@ export default function TableDetail() {
     }
   }, [queryClient])
 
-  // ✅ Effect 2: Xử lý pending sessions list
   useEffect(() => {
     if (isErrorPendingTable) {
       setListTablePending([])
@@ -1039,7 +1037,9 @@ export default function TableDetail() {
                           rowKey="order_item_id"
                           pagination={false}
                           rowHoverable={false} // ⬅️ Tắt hover mặc định
-                          dataSource={dataTableSessionOrder?.items}
+                          dataSource={dataTableSessionOrder?.items.sort(
+                            (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+                          )}
                           columns={[
                             {
                               title: "Món ăn",
@@ -1077,16 +1077,19 @@ export default function TableDetail() {
                               dataIndex: "quantity",
                               key: "quantity",
                               align: "center",
-                              render: (val: number, record: any) => (
-                                <InputNumber
-                                  min={1}
-                                  className="text-right"
-                                  value={updateOrderItemList[record.order_item_id]?.quantity ?? val}
-                                  onChange={(newValueChange) =>
-                                    handleChangeItem(record.order_item_id, "quantity", newValueChange || 0)
-                                  }
-                                />
-                              )
+                              render: (val: number, record: any) => {
+                                return (
+                                  <InputNumber
+                                    min={1}
+                                    className="text-right"
+                                    value={updateOrderItemList[record.order_item_id]?.quantity ?? val}
+                                    onChange={(newValueChange) =>
+                                      handleChangeItem(record.order_item_id, "quantity", newValueChange || 0)
+                                    }
+                                    disabled={record.item_status !== 0}
+                                  />
+                                )
+                              }
                             },
                             {
                               title: "Đơn giá",
@@ -1146,6 +1149,9 @@ export default function TableDetail() {
                           rowClassName={(record, index) => {
                             if (record.item_status === 4) {
                               return "bg-red-200 text-red-700 font-medium"
+                            }
+                            if (record.item_status === 3) {
+                              return "bg-green-200 text-green-700 font-medium"
                             }
                             return index % 2 === 0 ? "bg-[#f2f2f2]" : "bg-white"
                           }}
@@ -1220,7 +1226,6 @@ export default function TableDetail() {
                 listPendingTableSession={listTablePending}
                 hasSessionPending={false} // Không có session hiện tại
                 setHasSessionPending={(value) => {
-                  // Khi user chọn serve một session → Có session hiện tại
                   setHasCurrentSession(value === true ? true : null)
                 }}
                 idDiningTable={idDiningTable}

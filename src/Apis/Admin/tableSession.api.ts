@@ -25,6 +25,10 @@ export const tableSessionAPI = {
     return Http.put<SuccessResponse<any>>(`/api/table-sessions/${idTableSession}`)
   },
 
+  updateStatusCancelTableSession: (idTableSession: string) => {
+    return Http.put<SuccessResponse<any>>(`/api/table-sessions/${idTableSession}/cancel`)
+  },
+
   createTableSessionTypeReservation: (body: {
     customer_id: string
     employee_id: string

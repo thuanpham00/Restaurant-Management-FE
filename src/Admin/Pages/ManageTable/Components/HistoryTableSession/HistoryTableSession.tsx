@@ -5,10 +5,11 @@ import { useEffect, useRef, useState } from "react"
 import FullCalendar from "@fullcalendar/react"
 import timeGridPlugin from "@fullcalendar/timegrid"
 import interactionPlugin from "@fullcalendar/interaction"
-import { keepPreviousData, useQuery } from "@tanstack/react-query"
+import { useQuery } from "@tanstack/react-query"
 import { diningTableAPI } from "src/Apis"
 import { useNavigate } from "react-router-dom"
 import { toast } from "react-toastify"
+import "./HistoryTableSession.css"
 
 export default function HistoryTableSession({
   idDiningTable,
@@ -34,33 +35,38 @@ export default function HistoryTableSession({
     queryFn: () => {
       const controller = new AbortController()
       setTimeout(() => controller.abort(), 10000)
-      return diningTableAPI.getListReservationTableSessionByIdTable(idDiningTable)
+      return diningTableAPI.getListReservationAndOfflineTableSessionByIdTable(idDiningTable)
     },
     retry: 0,
-    staleTime: 3 * 60 * 1000,
-    placeholderData: keepPreviousData,
     enabled: Boolean(viewCalendar)
   })
 
   const listReservationFromTable = data?.data.data
 
-  const calendarEvents = listReservationFromTable?.map((r: any) => ({
-    title: `${r.customer_name || "Khách"} - ${r.number_of_people} người`,
-    start: r.reserved_at,
-    end: r.ended_at || r.reserved_at,
-    color:
-      r.table_session_status === 1
-        ? "#4CAF50" // Active
-        : r.table_session_status === 2
-          ? "#2196F3" // Completed
-          : r.table_session_status === 3
-            ? "#f44336" // Cancelled
-            : "#ff9800", // Pending
-    extendedProps: {
-      session_id: r.table_session_id,
-      status_table_session: r.table_session_status
+  const calendarEvents = listReservationFromTable?.map((r: any) => {
+    const isOffline = r.type === "offline"
+    const title = isOffline
+      ? `${r.customer_name || "Khách"} - ${r.type}`
+      : `${r.customer_name || "Khách"} - ${r.number_of_people} người - ${r.type}`
+
+    return {
+      title,
+      start: r.reserved_at ? r.reserved_at : r.started_at,
+      end: r.ended_at || r.reserved_at,
+      color:
+        r.table_session_status === 1
+          ? "#4CAF50" // Active
+          : r.table_session_status === 2
+            ? "#2196F3" // Completed
+            : r.table_session_status === 3
+              ? "#f44336" // Cancelled
+              : "#ff9800", // Pending
+      extendedProps: {
+        session_id: r.table_session_id,
+        status_table_session: r.table_session_status
+      }
     }
-  }))
+  })
 
   const handleEventClick = (info: any) => {
     const event = info.event

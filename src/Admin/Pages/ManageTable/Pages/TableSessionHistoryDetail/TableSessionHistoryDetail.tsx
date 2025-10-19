@@ -154,7 +154,7 @@ export default function TableSessionHistoryDetail() {
       key: "notes"
     },
     {
-      title: "Thao tác",
+      title: <div className="text-center">Thao tác</div>,
       render: (_: any, item: any) => (
         <div className="flex items-center justify-center">
           <Button
@@ -616,7 +616,7 @@ export default function TableSessionHistoryDetail() {
             {Number(detailInvoice?.tax ?? 0).toLocaleString("vi-VN")} %
           </Descriptions.Item>
           <Descriptions.Item label="Thành tiền">
-            <b>{Number(detailInvoice?.final_amount ?? 0).toLocaleString("vi-VN")} đ</b>
+            <b className="text-red-500">{Number(detailInvoice?.final_amount ?? 0).toLocaleString("vi-VN")} đ</b>
           </Descriptions.Item>
         </Descriptions>
 

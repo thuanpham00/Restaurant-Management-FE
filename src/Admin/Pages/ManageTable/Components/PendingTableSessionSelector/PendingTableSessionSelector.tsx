@@ -15,7 +15,7 @@ type Props = {
   idDiningTable: string
 }
 
-export default function PendingTableSessionSelector({
+function PendingTableSessionSelector({
   listPendingTableSession,
   hasSessionPending,
   setHasSessionPending,
@@ -29,26 +29,41 @@ export default function PendingTableSessionSelector({
     }
   })
 
-  const handleServeClick = (idTableSession: string) => {
+  const updateStatusTableSessionCancelMutation = useMutation({
+    mutationFn: (idTS: string) => {
+      return tableSessionAPI.updateStatusCancelTableSession(idTS)
+    }
+  })
+
+  const handleUpdateTableSessionStatus = (idTableSession: string, type: "serve" | "cancel") => {
+    const isServe = type === "serve"
+
     Modal.confirm({
-      title: "Xác nhận phục vụ",
-      content: "Bạn có chắc chắn muốn phục vụ phiên bàn này không?",
+      title: isServe ? "Xác nhận phục vụ" : "Xác nhận hủy phiên",
+      content: isServe
+        ? "Bạn có chắc chắn muốn phục vụ phiên bàn này không?"
+        : "Bạn có chắc chắn muốn hủy phiên bàn này không?",
       okText: "Xác nhận",
       cancelText: "Hủy",
       maskClosable: true,
       onOk: () => {
-        updateStatusTableSessionMutation.mutate(idTableSession, {
+        const mutation = isServe ? updateStatusTableSessionMutation : updateStatusTableSessionCancelMutation
+
+        mutation.mutate(idTableSession, {
           onSuccess: () => {
-            toast.success("Cập nhật phiên bàn thành công", {
+            toast.success(isServe ? "Cập nhật phiên bàn thành công" : "Hủy phiên bàn thành công", {
               autoClose: 1500
             })
-            setHasSessionPending(true)
-            queryClient.invalidateQueries({ queryKey: ["detailTableSession", idDiningTable] })
+            if (isServe) setHasSessionPending(true)
+
+            queryClient.invalidateQueries({ queryKey: ["detailTableSession", idDiningTable] }) // cập nhật chi tiết phiên bàn
+            queryClient.invalidateQueries({ queryKey: ["listPendingTableSession", idDiningTable] }) // danh sách hàng chờ phiên
+            queryClient.invalidateQueries({ queryKey: ["listReservationTableByIdTable", idDiningTable] }) // reload danh sách phiên (lịch đặt bàn khi xếp bàn)
           }
         })
       },
       onCancel: () => {
-        console.log("Hủy phục vụ")
+        console.log(isServe ? "Hủy phục vụ" : "Hủy thao tác hủy phiên")
       }
     })
   }
@@ -138,46 +153,54 @@ export default function PendingTableSessionSelector({
                           : "N/A"}
                       </p>
 
-                      <div className="flex items-center justify-end gap-2 mt-2">
-                        <Button
-                          type="primary"
-                          style={{
-                            backgroundColor: "#ef233c",
-                            borderColor: "#ef233c"
-                          }}
-                        >
-                          <Link
-                            to={`/admin/tables/${idDiningTable}/session/${session.session_id}`}
-                            state={{
-                              idDiningTable,
-                              idTableSession: session.session_id
-                            }}
+                      <div className="flex items-center justify-between gap-2 mt-2">
+                        <div>
+                          <Button type="primary">
+                            <Link
+                              to={`/admin/tables/${idDiningTable}/session/${session.session_id}`}
+                              state={{
+                                idDiningTable,
+                                idTableSession: session.session_id
+                              }}
+                              style={{
+                                color: "white",
+                                display: "block"
+                              }}
+                            >
+                              Chi tiết
+                            </Link>
+                          </Button>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            type="primary"
                             style={{
-                              color: "white",
-                              display: "block"
+                              backgroundColor: "#ef233c",
+                              borderColor: "#ef233c"
+                            }}
+                            onClick={() => handleUpdateTableSessionStatus(session.session_id, "cancel")}
+                          >
+                            Hủy phiên
+                          </Button>
+                          <Button
+                            type="primary"
+                            style={{
+                              backgroundColor: "#38b000",
+                              borderColor: "#38b000"
+                            }}
+                            onClick={() => handleUpdateTableSessionStatus(session.session_id, "serve")}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.backgroundColor = "#70d444"
+                              e.currentTarget.style.borderColor = "#70d444"
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.backgroundColor = "#38b000"
+                              e.currentTarget.style.borderColor = "#38b000"
                             }}
                           >
-                            Chi tiết
-                          </Link>
-                        </Button>
-                        <Button
-                          type="primary"
-                          style={{
-                            backgroundColor: "#38b000",
-                            borderColor: "#38b000"
-                          }}
-                          onClick={() => handleServeClick(session.session_id)}
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.backgroundColor = "#70d444"
-                            e.currentTarget.style.borderColor = "#70d444"
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.backgroundColor = "#38b000"
-                            e.currentTarget.style.borderColor = "#38b000"
-                          }}
-                        >
-                          Phục vụ
-                        </Button>
+                            Phục vụ
+                          </Button>
+                        </div>
                       </div>
                     </Card>
                   </List.Item>
@@ -190,3 +213,5 @@ export default function PendingTableSessionSelector({
     </div>
   )
 }
+
+export default PendingTableSessionSelector

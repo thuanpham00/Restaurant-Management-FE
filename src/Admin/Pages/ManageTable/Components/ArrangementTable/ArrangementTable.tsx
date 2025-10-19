@@ -1,8 +1,22 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { Alert, Button, Col, DatePicker, Descriptions, Empty, Form, Input, Modal, Row, Spin, Tag } from "antd"
+import {
+  Alert,
+  Button,
+  Col,
+  DatePicker,
+  Descriptions,
+  Empty,
+  Form,
+  Input,
+  InputNumber,
+  Modal,
+  Row,
+  Spin,
+  Tag
+} from "antd"
 import dayjs from "dayjs"
-import { Fragment, useEffect, useState } from "react"
+import { Fragment, useEffect, useMemo, useState } from "react"
 import { tableSessionAPI } from "src/Apis"
 import { DiningTable } from "src/Types/diningTable.type"
 import { queryParamConfigTableSessions } from "src/Types/queryParams.type"
@@ -60,6 +74,8 @@ export default function ArrangementTable({
   const queryClient = useQueryClient()
   const { employeeId } = useAppStore()
   const [selectedReservation, setSelectedReservation] = useState<SelectReservation | null>(null)
+  const [filters, setFilters] = useState({ number: "", minCapacity: null as number | null })
+  const [filteredTables, setFilteredTables] = useState<DiningTable[]>([])
 
   const {
     data: dataListTableArrangement,
@@ -79,7 +95,13 @@ export default function ArrangementTable({
     enabled: Boolean(selectedReservation)
   })
 
-  const listTableArrangement = (dataListTableArrangement?.data.data || []) as DiningTable[]
+  const listTableArrangement = useMemo(() => {
+    return (dataListTableArrangement?.data.data || []) as DiningTable[]
+  }, [dataListTableArrangement])
+
+  useEffect(() => {
+    setFilteredTables(listTableArrangement)
+  }, [listTableArrangement])
 
   useEffect(() => {
     if (arrangement !== null) {
@@ -123,6 +145,8 @@ export default function ArrangementTable({
         autoClose: 1500
       })
       setArrangement(null)
+      setSelectedTableId(null)
+      queryClient.invalidateQueries({ queryKey: ["listDataTableArrangement", selectedReservation] })
       queryClient.invalidateQueries({ queryKey: ["listReservation", queryConfig] })
       queryClient.invalidateQueries({ queryKey: ["listCheckAssignedTables", queryConfig] })
     },
@@ -209,6 +233,7 @@ export default function ArrangementTable({
 
   const [form] = Form.useForm()
 
+  // update reservation
   const handleUpdate = () => {
     const values = form.getFieldsValue()
     const { id, reserved_at, number_of_people } = values
@@ -230,6 +255,23 @@ export default function ArrangementTable({
     )
   }
 
+  const handleFilter = () => {
+    const filtered = listTableArrangement.filter((table) => {
+      const matchNumber =
+        filters.number === "" ||
+        (table.table_number && table.table_number.toString().includes(filters.number.toString()))
+      const matchCapacity = !filters.minCapacity || (table.capacity && table.capacity >= filters.minCapacity)
+      return matchNumber && matchCapacity
+    })
+    setFilteredTables(filtered)
+  }
+
+  // lọc bàn
+  const handleReset = () => {
+    setFilters({ number: "", minCapacity: null })
+    setFilteredTables(listTableArrangement)
+  }
+
   return (
     <Fragment>
       <Modal
@@ -239,7 +281,7 @@ export default function ArrangementTable({
         open={arrangement !== null}
         onCancel={() => setArrangement(null)}
         footer={null}
-        style={{ top: 50 }}
+        style={{ top: 15, overflow: "hidden" }}
       >
         <Row gutter={12}>
           <Col span={12}>
@@ -373,6 +415,37 @@ export default function ArrangementTable({
           <Col span={12}>
             <span className="text-blue-500 text-lg font-semibold">Lọc bàn tự động dựa trên thông tin đặt bàn</span>
 
+            <Form layout="inline" className="mt-2 mb-4 flex gap-2">
+              <Form.Item label="Số bàn">
+                <Input
+                  placeholder="Nhập số bàn"
+                  value={filters.number}
+                  onChange={(e) => setFilters((prev) => ({ ...prev, number: e.target.value }))}
+                  style={{ width: 120 }}
+                />
+              </Form.Item>
+
+              <Form.Item label="Sức chứa tối thiểu">
+                <InputNumber
+                  placeholder="VD: 4"
+                  min={1}
+                  value={filters.minCapacity}
+                  onChange={(val) => setFilters((prev) => ({ ...prev, minCapacity: val }))}
+                  style={{ width: 120 }}
+                />
+              </Form.Item>
+
+              <Form.Item>
+                <Button type="primary" onClick={handleFilter}>
+                  Lọc
+                </Button>
+              </Form.Item>
+
+              <Form.Item>
+                <Button onClick={handleReset}>Xóa lọc</Button>
+              </Form.Item>
+            </Form>
+
             {isFetching ? (
               <div
                 style={{
@@ -389,11 +462,11 @@ export default function ArrangementTable({
               </div>
             ) : isError ? (
               <Empty description="Không thể tải danh sách bàn" className="mt-16" />
-            ) : listTableArrangement.length === 0 ? (
+            ) : filteredTables.length === 0 ? (
               <Empty description="Không có bàn hợp lệ" className="mt-16" />
             ) : (
               <Row gutter={[24, 24]} className="h-[500px] overflow-y-auto mt-2">
-                {listTableArrangement.map((table, index) => (
+                {filteredTables.map((table, index) => (
                   <Fragment key={table.id}>
                     <ArrangementTableItem
                       table={table}

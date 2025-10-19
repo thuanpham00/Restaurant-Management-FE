@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 export type TableSession = {
   dining_table_id: string
   table_number: number
@@ -43,6 +44,7 @@ export type TableSessionOrder = {
     notes: string
     prepared_by: string
     served_at: null
+    created_at: string
     cancelled_reason: null
     dish: {
       dish_id: string

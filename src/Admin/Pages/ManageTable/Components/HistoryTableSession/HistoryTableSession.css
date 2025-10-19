@@ -1,0 +1,14 @@
+/* Tăng chiều cao ô event trong timeGrid */
+.fc-timegrid-event {
+  min-height: 60px !important; /* chiều cao tối thiểu */
+  white-space: normal !important; /* cho phép xuống dòng */
+  line-height: 1.4;
+  display: flex;
+  align-items: center;
+}
+
+/* Tùy chỉnh phần nội dung text */
+.fc-event-title {
+  white-space: normal !important; /* cho phép hiển thị nhiều dòng */
+  overflow: visible !important;
+}
