@@ -70,10 +70,7 @@ export default function Sidebar() {
     warehouseOut: { name: "Xuất kho", icon: FileOutput, path: path.AdminWarehouseOut },
     inventoryLoss: { name: "Hao hụt kiểm kê", icon: Scale, path: path.AdminInventoryLoss },
     invoices: { name: "Quản lý hóa đơn", icon: Receipt, path: path.AdminInvoices },
-    expenses: { name: "Quản lý chi phí", icon: DollarSign, path: path.AdminExpenses },
     promotions: { name: "Quản lý khuyến mãi", icon: Tag, path: path.AdminPromotions },
-    reports: { name: "Báo cáo doanh thu lợi nhuận", icon: BarChart3, path: path.AdminReports },
-    users: { name: "Quản lý người dùng", icon: UserCog, path: path.AdminUsers },
     roles: { name: "Quản lý vai trò", icon: Shield, path: path.AdminRoles },
     permissionMatrix: { name: "Ma trận phân quyền", icon: Grid, path: path.AdminPermissionMatrix }
   }
@@ -223,16 +220,8 @@ export default function Sidebar() {
           label: createSidebarItem("invoices")
         },
         {
-          key: path.AdminExpenses,
-          label: createSidebarItem("expenses")
-        },
-        {
           key: path.AdminPromotions,
           label: createSidebarItem("promotions")
-        },
-        {
-          key: path.AdminReports,
-          label: createSidebarItem("reports")
         }
       ]
     },
@@ -243,10 +232,6 @@ export default function Sidebar() {
       key: "sub7",
       label: <div className="font-semibold text-[15px] text-white">Cấu hình & Bảo mật</div>,
       children: [
-        {
-          key: path.AdminUsers,
-          label: createSidebarItem("users")
-        },
         {
           key: path.AdminRoles,
           label: createSidebarItem("roles")

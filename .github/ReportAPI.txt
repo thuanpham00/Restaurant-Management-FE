@@ -1,0 +1,482 @@
+"/api/reports/revenue": {
+            "get": {
+                "tags": [
+                    "Reports"
+                ],
+                "summary": "Revenue timeline",
+                "description": "Return aggregated revenue amounts grouped by day, week, or month within a date range.",
+                "operationId": "getRevenueReport",
+                "parameters": [
+                    {
+                        "name": "start_date",
+                        "in": "query",
+                        "description": "Start date (YYYY-MM-DD)",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "end_date",
+                        "in": "query",
+                        "description": "End date (YYYY-MM-DD)",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "group_by",
+                        "in": "query",
+                        "description": "Grouping type: day, week, month",
+                        "schema": {
+                            "type": "string",
+                            "default": "day",
+                            "enum": [
+                                "day",
+                                "week",
+                                "month"
+                            ]
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Revenue dataset retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Revenue dataset retrieved"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "range": {
+                                                    "properties": {
+                                                        "start": {
+                                                            "type": "string",
+                                                            "example": "2025-10-01"
+                                                        },
+                                                        "end": {
+                                                            "type": "string",
+                                                            "example": "2025-10-31"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "group_by": {
+                                                    "type": "string",
+                                                    "example": "day"
+                                                },
+                                                "total_amount": {
+                                                    "type": "number",
+                                                    "format": "float",
+                                                    "example": 12500000.5
+                                                },
+                                                "transaction_count": {
+                                                    "type": "integer",
+                                                    "example": 123
+                                                },
+                                                "dataset": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "period_start": {
+                                                                "type": "string",
+                                                                "example": "2025-10-01 00:00:00"
+                                                            },
+                                                            "period_end": {
+                                                                "type": "string",
+                                                                "example": "2025-10-01 23:59:59"
+                                                            },
+                                                            "label": {
+                                                                "type": "string",
+                                                                "example": "2025-10-01"
+                                                            },
+                                                            "total_amount": {
+                                                                "type": "number",
+                                                                "example": 523000.5
+                                                            },
+                                                            "transaction_count": {
+                                                                "type": "integer",
+                                                                "example": 18
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/reports/top-dishes": {
+            "get": {
+                "tags": [
+                    "Reports"
+                ],
+                "summary": "Top selling dishes",
+                "description": "Return best-selling dishes in the selected period with quantity and revenue.",
+                "operationId": "getTopDishesReport",
+                "parameters": [
+                    {
+                        "name": "start_date",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "end_date",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "default": 5,
+                            "maximum": 50,
+                            "minimum": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Top dishes retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Top dishes retrieved"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "total_gross_revenue": {
+                                                    "type": "number",
+                                                    "example": 15000000
+                                                },
+                                                "total_discount_considered": {
+                                                    "type": "number",
+                                                    "example": 1200000
+                                                },
+                                                "dataset": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "dish_id": {
+                                                                "type": "string",
+                                                                "example": "DSH001"
+                                                            },
+                                                            "dish_name": {
+                                                                "type": "string",
+                                                                "example": "Gà chiên mắm"
+                                                            },
+                                                            "category_name": {
+                                                                "type": "string",
+                                                                "example": "Món chính"
+                                                            },
+                                                            "total_quantity": {
+                                                                "type": "integer",
+                                                                "example": 120
+                                                            },
+                                                            "gross_revenue": {
+                                                                "type": "number",
+                                                                "example": 4200000
+                                                            },
+                                                            "estimated_discount_share": {
+                                                                "type": "number",
+                                                                "example": 320000
+                                                            },
+                                                            "estimated_net_revenue": {
+                                                                "type": "number",
+                                                                "example": 3880000
+                                                            },
+                                                            "average_unit_price": {
+                                                                "type": "number",
+                                                                "example": 35000
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/reports/category-profit": {
+            "get": {
+                "tags": [
+                    "Reports"
+                ],
+                "summary": "Profit share by category",
+                "description": "Return gross revenue, estimated profit, and ratio per dish category.",
+                "operationId": "getCategoryProfitReport",
+                "responses": {
+                    "200": {
+                        "description": "Category profit dataset retrieved",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Category profit dataset retrieved"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "total_gross_revenue": {
+                                                    "type": "number",
+                                                    "example": 18500000
+                                                },
+                                                "total_estimated_profit": {
+                                                    "type": "number",
+                                                    "example": 16500000
+                                                },
+                                                "dataset": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "category_id": {
+                                                                "type": "string",
+                                                                "example": "CAT001"
+                                                            },
+                                                            "category_name": {
+                                                                "type": "string",
+                                                                "example": "Đồ uống"
+                                                            },
+                                                            "gross_revenue": {
+                                                                "type": "number",
+                                                                "example": 4500000
+                                                            },
+                                                            "estimated_profit": {
+                                                                "type": "number",
+                                                                "example": 4200000
+                                                            },
+                                                            "profit_ratio_percent": {
+                                                                "type": "number",
+                                                                "example": 25.3
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/reports/payment-methods": {
+            "get": {
+                "tags": [
+                    "Reports"
+                ],
+                "summary": "Payment method distribution",
+                "description": "Return total amount and percentage by payment method for completed payments.",
+                "operationId": "getPaymentMethodsReport",
+                "responses": {
+                    "200": {
+                        "description": "Payment method distribution retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Payment method distribution retrieved"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "total_amount": {
+                                                    "type": "number",
+                                                    "example": 9500000
+                                                },
+                                                "dataset": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "method": {
+                                                                "type": "integer",
+                                                                "example": 1
+                                                            },
+                                                            "method_label": {
+                                                                "type": "string",
+                                                                "example": "Cash"
+                                                            },
+                                                            "transaction_count": {
+                                                                "type": "integer",
+                                                                "example": 80
+                                                            },
+                                                            "total_amount": {
+                                                                "type": "number",
+                                                                "example": 5800000
+                                                            },
+                                                            "percentage": {
+                                                                "type": "number",
+                                                                "example": 61.05
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/reports/promotions": {
+            "get": {
+                "tags": [
+                    "Reports"
+                ],
+                "summary": "Promotion usage and totals",
+                "description": "Return total discount value applied and breakdown per promotion.",
+                "operationId": "getPromotionsReport",
+                "responses": {
+                    "200": {
+                        "description": "Promotion summary retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Promotion summary retrieved"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "total_discount": {
+                                                    "type": "number",
+                                                    "example": 1200000
+                                                },
+                                                "dataset": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "promotion_id": {
+                                                                "type": "string",
+                                                                "example": "PROMO001"
+                                                            },
+                                                            "code": {
+                                                                "type": "string",
+                                                                "example": "SALE10"
+                                                            },
+                                                            "description": {
+                                                                "type": "string",
+                                                                "example": "Giảm 10% cho hóa đơn trên 200k"
+                                                            },
+                                                            "applied_count": {
+                                                                "type": "integer",
+                                                                "example": 35
+                                                            },
+                                                            "total_discount": {
+                                                                "type": "number",
+                                                                "example": 350000
+                                                            },
+                                                            "percentage": {
+                                                                "type": "number",
+                                                                "example": 29.16
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },

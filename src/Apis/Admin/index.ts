@@ -26,6 +26,7 @@ export { ingredientsAPI } from "./ingredients.api"
 export { stockImportsAPI } from "./stockImports.api"
 export { stockExportsAPI } from "./stockExports.api"
 export { stockLossesAPI } from "./stockLosses.api"
+export { reportsAPI } from "./reports.api"
 
 import { authAPI } from "./auth.api"
 import { diningTableAPI } from "./diningTable.api"
@@ -47,6 +48,7 @@ import { ingredientsAPI } from "./ingredients.api"
 import { stockImportsAPI } from "./stockImports.api"
 import { stockExportsAPI } from "./stockExports.api"
 import { stockLossesAPI } from "./stockLosses.api"
+import { reportsAPI } from "./reports.api"
 
 export const adminAPI = {
   auth: authAPI,
@@ -69,5 +71,6 @@ export const adminAPI = {
   ingredients: ingredientsAPI,
   stockImports: stockImportsAPI,
   stockExports: stockExportsAPI,
-  stockLosses: stockLossesAPI
+  stockLosses: stockLossesAPI,
+  reports: reportsAPI
 }
