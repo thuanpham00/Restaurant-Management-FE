@@ -4,6 +4,6 @@ import { Reservation, ReservationCreate } from "src/Types/reservation.type"
 
 export const reservationAPI = {
   create: (payload: ReservationCreate) => {
-    return Http.post<SuccessResponse<Reservation>>("/api/auth/reservations", payload)
+    return Http.post<SuccessResponse<Reservation>>("/api/reservations", payload)
   }
 }

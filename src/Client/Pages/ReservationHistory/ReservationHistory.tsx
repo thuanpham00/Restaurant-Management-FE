@@ -79,8 +79,16 @@ const ReservationHistory: React.FC = () => {
   const [items, setItems] = useState<Reservation[]>([])
   const [page, setPage] = useState(1)
   const [lastPage, setLastPage] = useState(1)
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [isAuthenticated, setIsAuthenticated] = useState(Boolean(localStorage.getItem("access_token")))
+
+  // Theo dõi thay đổi access_token để cập nhật trạng thái đăng nhập
+  useEffect(() => {
+    const handler = () => setIsAuthenticated(Boolean(localStorage.getItem("access_token")))
+    window.addEventListener("storage", handler)
+    return () => window.removeEventListener("storage", handler)
+  }, [])
 
   const load = async (p = 1) => {
     setLoading(true)
@@ -100,7 +108,6 @@ const ReservationHistory: React.FC = () => {
       if (isAxiosError(err)) {
         if (err.response?.status === 401) {
           setError("Vui lòng đăng nhập để xem lịch sử đặt bàn.")
-          navigate("/login")
         } else {
           setError(err.response?.data?.message || "Không thể tải lịch sử đặt bàn.")
         }
@@ -113,8 +120,15 @@ const ReservationHistory: React.FC = () => {
   }
 
   useEffect(() => {
-    load(1)
-  }, [])
+    if (isAuthenticated) {
+      load(1)
+    } else {
+      setLoading(false)
+      setItems([])
+      setError(null)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthenticated])
 
   return (
     <div className="bg-gray-900 text-white min-h-screen">
@@ -130,15 +144,40 @@ const ReservationHistory: React.FC = () => {
         </div>
 
         {/* Loading State */}
-        {loading && (
+        {loading && isAuthenticated && (
           <div className="flex flex-col items-center justify-center py-20">
             <Loader2 className="w-12 h-12 text-orange-400 animate-spin mb-4" />
             <p className="text-gray-400 text-lg">Đang tải dữ liệu...</p>
           </div>
         )}
 
+        {/* Login Alert */}
+        {!isAuthenticated && (
+          <div className="mb-8 group">
+            <div className="bg-gradient-to-br from-orange-500/20 to-orange-600/10 border-2 border-orange-500/50 rounded-2xl p-6 backdrop-blur-sm transition-all duration-300 hover:shadow-2xl hover:shadow-orange-500/20">
+              <div className="flex items-start gap-4">
+                <AlertCircle className="w-6 h-6 text-orange-400 flex-shrink-0 mt-0.5" />
+                <div className="flex-1">
+                  <p className="text-orange-400 font-semibold text-lg mb-2">Yêu cầu đăng nhập</p>
+                  <p className="text-orange-300/90 mb-3">Bạn cần đăng nhập để xem lịch sử đặt bàn</p>
+                  <button
+                    onClick={() => {
+                      sessionStorage.setItem("redirectAfterLogin", window.location.pathname)
+                      navigate("/login")
+                    }}
+                    className="inline-flex items-center gap-2 px-5 py-2.5 bg-orange-500 hover:bg-orange-600 text-white font-semibold rounded-lg transition-all duration-300 hover:shadow-lg hover:shadow-orange-500/50"
+                  >
+                    <CheckCircle className="w-4 h-4" />
+                    Đăng nhập ngay
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Error State */}
-        {error && (
+        {error && isAuthenticated && (
           <div className="bg-gradient-to-br from-red-500/10 to-red-600/5 border-2 border-red-500/30 rounded-2xl p-6 mb-6 max-w-2xl backdrop-blur-sm">
             <div className="flex items-start gap-4">
               <XCircle className="w-6 h-6 text-red-400 flex-shrink-0 mt-0.5" />
@@ -151,7 +190,7 @@ const ReservationHistory: React.FC = () => {
         )}
 
         {/* Empty State */}
-        {!loading && !error && items.length === 0 && (
+        {!loading && !error && items.length === 0 && isAuthenticated && (
           <div className="text-center py-20">
             <div className="inline-flex items-center justify-center w-24 h-24 rounded-full bg-gray-800/50 border-2 border-gray-700 mb-6">
               <Calendar className="w-12 h-12 text-gray-500" />
@@ -249,7 +288,7 @@ const ReservationHistory: React.FC = () => {
         </div>
 
         {/* Pagination */}
-        {lastPage > 1 && (
+        {lastPage > 1 && isAuthenticated && (
           <div className="flex items-center justify-center gap-4 mt-10">
             <button
               className="flex items-center gap-2 px-5 py-3 rounded-xl bg-gradient-to-br from-gray-800 to-gray-900 border-2 border-gray-700 text-white font-medium transition-all duration-300 hover:border-orange-500/50 hover:shadow-lg hover:shadow-orange-500/20 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:border-gray-700 disabled:hover:shadow-none"

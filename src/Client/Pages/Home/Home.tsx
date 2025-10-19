@@ -9,6 +9,7 @@ import { Dish } from "src/Types/dish.type"
 import { CategoryDishByMenu } from "src/Types/dishCategory.type"
 import { Chef } from "src/Types/utils.type"
 import { Promotion } from "src/Types/promotion.type"
+import dayjs from "dayjs"
 import {
   Sparkles,
   Users,
@@ -299,10 +300,11 @@ const Home = () => {
                         </p>
                         <div className="flex flex-col md:flex-row gap-4 items-center justify-center mb-2">
                           <span className="text-sm text-gray-400">
-                            Hiệu lực: {promotion.created_at?.slice(0, 10)} - {promotion.end_date?.slice(0, 10)}
+                            Hiệu lực: {promotion.created_at ? dayjs(promotion.created_at).format("DD/MM/YYYY") : "—"} -{" "}
+                            {promotion.end_date ? dayjs(promotion.end_date).format("DD/MM/YYYY") : "—"}
                           </span>
                           <span className="inline-block px-4 py-1 rounded-full bg-orange-500/80 text-white font-semibold text-base shadow">
-                            {promotion.discount_percent > 0
+                            {Number(promotion.discount_percent) > 0
                               ? `Giảm ${promotion.discount_percent}%`
                               : "Miễn phí vận chuyển"}
                           </span>

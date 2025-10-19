@@ -9,8 +9,8 @@ export type Promotion = {
   end_date: Dayjs | null
   usage_limit: number
   is_active: boolean
-  created_at: null
-  updated_at: null
+  created_at: string | null
+  updated_at: string | null
   used_count: number
 }
 

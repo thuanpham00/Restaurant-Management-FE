@@ -10,10 +10,10 @@ export const clientAPI = {
     return Http.get<SuccessResponse<Statistics>>("/api/home/statistics")
   },
   getPopularDishes: () => {
-    return Http.get<SuccessResponse<Dish[]>>("/api/auth/dishes/popular")
+    return Http.get<SuccessResponse<Dish[]>>("/api/dishes/popular")
   },
   getMenuCategories: () => {
-    return Http.get<SuccessResponse<CategoryDishByMenu[]>>("/api/auth/menus/active/categories")
+    return Http.get<SuccessResponse<CategoryDishByMenu[]>>("/api/menus/active/categories")
   },
   getChefs: () => {
     return Http.get<SuccessResponse<Chef[]>>("/api/employees/find/chefs")

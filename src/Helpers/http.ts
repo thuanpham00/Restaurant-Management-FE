@@ -57,7 +57,7 @@ class http {
           setNameUserToLS(data.data.user.name)
           setRoleToLS(data.data.user.role.name)
           setAvatarImageToLS(data.data.user.avatar as string)
-          setEmployeeIdToLS(data.data.user.employee_profile.id)
+          setEmployeeIdToLS(data.data.user.employee_profile?.id ?? "")
         }
         if (response.config.url === "/api/auth/logout") {
           clearLS()
@@ -85,8 +85,7 @@ class http {
         // 401 Unauthorized
         if (isError401(error)) {
           const originalRequest =
-            (error.response?.config as InternalAxiosRequestConfig) ||
-            ({ headers: {} } as InternalAxiosRequestConfig)
+            (error.response?.config as InternalAxiosRequestConfig) || ({ headers: {} } as InternalAxiosRequestConfig)
           const { url } = originalRequest
           // Access token hết hạn -> refresh
           if (isAxiosExpiredTokenError<MessageResponse>(error, "Unauthenticated.") && url !== "/api/auth/refresh") {
@@ -101,9 +100,11 @@ class http {
 
           // Refresh token hết hạn/invalid
           if (isAxiosExpiredTokenError<MessageResponse>(error, "Invalid or expired refresh token")) {
+            if (this.accessToken) {
+              toast.error("Phiên làm việc hết hạn", { autoClose: 1500 })
+            }
             this.accessToken = ""
             clearLS()
-            toast.error("Phiên làm việc hết hạn", { autoClose: 1500 })
           }
         }
 

@@ -107,7 +107,10 @@ const Header = () => {
         LocalStorageEventTarget.dispatchEvent(new Event("ClearLS"))
         reset()
         setUserLocal(null)
-        navigate(path.Login)
+        // Chuyển hướng ngay lập tức, không để người dùng bấm lại
+        navigate(path.Login, { replace: true })
+        // Hoặc dùng window.location.href nếu muốn reload toàn bộ app:
+        // window.location.href = path.Login
       },
       onError: (error) => {
         toast.error("Đăng xuất thất bại", { autoClose: 2000 })
@@ -203,7 +206,7 @@ const Header = () => {
                     const t = e.target as HTMLImageElement
                     t.src = defaultAvatar
                   }}
-                  className="w-10 h-10 rounded-full object-cover border-2 border-orange-400"
+                  className="w-10 h-10 rounded-full object-cover "
                 />
                 <span className="text-white font-semibold">{user?.name || "Tài khoản"}</span>
               </button>
@@ -237,6 +240,7 @@ const Header = () => {
                       <button
                         role="menuitem"
                         className="text-white w-full text-left px-4 py-2 rounded-lg hover:bg-orange-500/20 transition-colors"
+                        disabled={logoutMutation.isPending}
                         onClick={handleLogout}
                       >
                         Đăng xuất

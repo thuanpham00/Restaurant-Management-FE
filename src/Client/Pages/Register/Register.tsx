@@ -173,9 +173,10 @@ const Register = () => {
             </div>
             <button
               type="submit"
+              disabled={registerMutation.isPending}
               className="w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-bold py-3 px-4 rounded-xl shadow-lg transition duration-300 text-lg"
             >
-              Đăng ký
+              {registerMutation.isPending ? "Đang đăng ký..." : "Đăng ký"}
             </button>
           </form>
 

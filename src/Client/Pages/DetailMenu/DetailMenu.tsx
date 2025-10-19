@@ -184,7 +184,7 @@ const ProductDetail: React.FC = () => {
                   </div>
                   <div>
                     <p className="text-xs text-gray-500">Thời gian</p>
-                    <p className="text-sm font-semibold text-gray-300">15-20 phút</p>
+                    <p className="text-sm font-semibold text-gray-300">{dish.cooking_time} phút</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3 p-3 bg-gray-900/40 rounded-lg">

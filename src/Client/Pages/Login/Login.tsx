@@ -75,15 +75,27 @@ const Login = () => {
   const loginMutation = useMutation({
     mutationFn: (body: FormData) => clientAPI.loginClient(body),
     onSuccess: (response) => {
+      const user = response.data?.data?.user
+      if (user?.role?.name !== "Customer") {
+        toast.error("Chỉ tài khoản khách hàng mới được phép đăng nhập!", { autoClose: 2500 })
+        return
+      }
       toast.success(response.data.message, { autoClose: 1000 })
       setIsAuthenticated(true)
-      setAvatar(response.data.data.user.avatar)
-      setNameUser(response.data.data.user.name)
-      setRole(response.data.data.user.role.name)
-      setUserId(response.data.data.user.id)
-      navigate("/")
+      setAvatar(user?.avatar ?? "")
+      setNameUser(user?.name ?? "")
+      setRole(user?.role?.name ?? "")
+      setUserId(user?.id ?? "")
+      if (user?.id) {
+        localStorage.setItem("userId", user.id)
+        localStorage.setItem("user", JSON.stringify(user))
+      }
+      setTimeout(() => {
+        navigate("/")
+      }, 300)
     },
     onError: (error: unknown) => {
+      console.error("🔥 [loginMutation] Lỗi khi đăng nhập:", error)
       if (isAxiosError<ErrorResponse<FormData>>(error)) {
         const status = error.response?.status
         const responseData = error.response?.data
@@ -109,7 +121,6 @@ const Login = () => {
         // Các lỗi khác
         toast.error("Có lỗi xảy ra khi đăng nhập. Vui lòng thử lại sau.", { autoClose: 2000 })
       } else {
-        // Lỗi không thuộc Axios (ví dụ network hoặc runtime)
         toast.error("Lỗi không xác định. Vui lòng thử lại.", { autoClose: 2000 })
       }
     }
@@ -198,6 +209,7 @@ const Login = () => {
             </div>
             <button
               type="submit"
+              disabled={loginMutation.isPending}
               className="w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-bold py-3 px-4 rounded-xl shadow-lg transition duration-300 text-lg"
             >
               Đăng nhập
