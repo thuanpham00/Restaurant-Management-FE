@@ -59,5 +59,9 @@ export const dishesAPI = {
 
   delete: (id: string) => {
     return Http.delete(`/api/dishes/${id}`)
+  },
+
+  getIngredientNotOnDish: (id: string) => {
+    return Http.get<SuccessResponse<any>>(`/api/dishes/${id}/available-ingredients`)
   }
 }

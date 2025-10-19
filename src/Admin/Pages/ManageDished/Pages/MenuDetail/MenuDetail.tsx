@@ -63,7 +63,6 @@ export default function MenuDetail() {
   })
 
   const listItemInMenu = data?.data.data.items
-  console.log(listItemInMenu)
 
   useEffect(() => {
     form.setFieldsValue({

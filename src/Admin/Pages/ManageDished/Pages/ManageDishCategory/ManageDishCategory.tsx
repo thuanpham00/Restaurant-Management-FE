@@ -194,10 +194,10 @@ export default function ManageDishCategory() {
       render: (value) => <div className="text-left">{new Date(value).toLocaleString()}</div>
     },
     {
-      title: <div className="text-left">Hành động</div>,
+      title: <div className="text-center">Hành động</div>,
       key: "actions",
       render: (_, record) => (
-        <div className="text-left">
+        <div className="text-center">
           <Button type="link" onClick={() => handleEdit(record)}>
             Sửa
           </Button>

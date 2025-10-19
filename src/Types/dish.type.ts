@@ -5,7 +5,7 @@ export type Dish = {
   desc: string
   category_id: string
   cooking_time: number
-  image: null
+  image: string | null
   is_active: boolean
   created_at: string
   updated_at: string

@@ -13,6 +13,7 @@ import { AuthResponse, MessageResponse, SuccessResponse } from "src/Types/utils.
 import { isAxiosExpiredTokenError, isError401, isError403, isError404 } from "./utils"
 import { toast } from "react-toastify"
 import { HttpStatusCode } from "src/Constants/httpStatus"
+import { EmployeeProfile } from "src/Types/user.type"
 
 class http {
   instance: AxiosInstance
@@ -51,13 +52,17 @@ class http {
     this.instance.interceptors.response.use(
       (response) => {
         if (response.config.url === "/api/auth/login") {
+          const currentPath = window.location.pathname // => ví dụ: "/admin/login"
           const data = response.data as SuccessResponse<AuthResponse>
-          this.accessToken = data.data.access_token
-          setAccessTokenToLS(this.accessToken)
-          setNameUserToLS(data.data.user.name)
-          setRoleToLS(data.data.user.role.name)
-          setAvatarImageToLS(data.data.user.avatar as string)
-          setEmployeeIdToLS(data.data.user.employee_profile.id)
+          const user = data.data.user
+          if (currentPath === "/admin/login" && user.employee_profile) {
+            this.accessToken = data.data.access_token
+            setAccessTokenToLS(this.accessToken)
+            setNameUserToLS(user.name)
+            setRoleToLS(user.role.name)
+            setAvatarImageToLS(user.avatar as string)
+            setEmployeeIdToLS((user.employee_profile as EmployeeProfile).id)
+          }
         }
         if (response.config.url === "/api/auth/logout") {
           clearLS()
@@ -85,8 +90,7 @@ class http {
         // 401 Unauthorized
         if (isError401(error)) {
           const originalRequest =
-            (error.response?.config as InternalAxiosRequestConfig) ||
-            ({ headers: {} } as InternalAxiosRequestConfig)
+            (error.response?.config as InternalAxiosRequestConfig) || ({ headers: {} } as InternalAxiosRequestConfig)
           const { url } = originalRequest
           // Access token hết hạn -> refresh
           if (isAxiosExpiredTokenError<MessageResponse>(error, "Unauthenticated.") && url !== "/api/auth/refresh") {

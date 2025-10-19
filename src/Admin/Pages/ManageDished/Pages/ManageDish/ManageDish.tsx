@@ -20,7 +20,7 @@ import { isUndefined, omit, omitBy } from "lodash"
 import { Beef, Filter, RotateCcw } from "lucide-react"
 import { Fragment, useMemo, useState } from "react"
 import { Helmet } from "react-helmet-async"
-import { createSearchParams, useNavigate, useSearchParams } from "react-router-dom"
+import { createSearchParams, Link, useNavigate, useSearchParams } from "react-router-dom"
 import { toast } from "react-toastify"
 import NavigateBack from "src/Admin/Components/NavigateBack"
 import { dishesAPI, dishCategoryAPI } from "src/Apis/Admin"
@@ -28,7 +28,6 @@ import { assets } from "src/Assets/assets"
 import InputFileImage from "src/Components/InputFileImage"
 import { path } from "src/Constants/path"
 import { cleanObject } from "src/Helpers/common"
-import { isError400 } from "src/Helpers/utils"
 import useQueryParams from "src/Hook/useQueryParams"
 import { Dish } from "src/Types/dish.type"
 import { queryParamConfigCategoryDish, queryParamConfigDish } from "src/Types/queryParams.type"
@@ -64,7 +63,7 @@ export default function ManageDish() {
   })
 
   const getListDishCategory = useQuery({
-    queryKey: ["listNameDishCategory", queryConfig],
+    queryKey: ["listNameDishCategory"],
     queryFn: () => {
       const controller = new AbortController()
       setTimeout(() => controller.abort(), 10000)
@@ -81,7 +80,6 @@ export default function ManageDish() {
   const listNameDishCategory = getListDishCategory.data?.data?.data || ([] as { id: string; name: string }[])
 
   const [isModalOpen, setIsModalOpen] = useState(false)
-  const [editingId, setEditingId] = useState<string | null | boolean>(null)
   const [form] = Form.useForm<Dish>()
 
   const [file, setFile] = useState<File | undefined>(undefined)
@@ -94,33 +92,6 @@ export default function ManageDish() {
   const handleChangeImage = (file?: File) => {
     setFile(file as File)
   }
-
-  // Update API
-  const updateMutation = useMutation({
-    mutationFn: (values: {
-      name?: string
-      desc?: string
-      price?: string
-      cooking_time?: number
-      category_id?: string
-      is_active?: boolean
-      image?: File
-    }) => {
-      return dishesAPI.update(editingId as string, values)
-    },
-    onSuccess: () => {
-      toast.success("Cập nhật món ăn thành công!", {
-        autoClose: 1500
-      })
-      queryClient.invalidateQueries({ queryKey: ["listDish"] })
-      setIsModalOpen(false)
-    },
-    onError: () => {
-      toast.error("Cập nhật món ăn thất bại", {
-        autoClose: 1500
-      })
-    }
-  })
 
   const createMutation = useMutation({
     mutationFn: (values: {
@@ -154,31 +125,16 @@ export default function ManageDish() {
       form.setFieldsValue({
         name: "",
         desc: "",
-        price: "",
+        price: 0,
         cooking_time: 0,
         category_id: "",
         is_active: true
       })
-      setEditingId(true)
       setFile(undefined)
       setPreviewOldImage("")
-    } else {
-      form.setFieldsValue({
-        name: record.name,
-        desc: record.desc,
-        price: record.price,
-        cooking_time: record.cooking_time,
-        category_id: record.category_id,
-        is_active: record.is_active
-      })
-      setFile(undefined) // reset lại file để tránh lưu giá trị rác
-      setPreviewOldImage(record.image) // 🟢 hiển thị ảnh cũ
-      setEditingId(record.id)
     }
     setIsModalOpen(true)
   }
-
-  console.log(file)
 
   const handleUpdate = () => {
     form.validateFields().then(async (values) => {
@@ -190,42 +146,37 @@ export default function ManageDish() {
         payload.image = file
       }
 
-      if (editingId === true) {
-        await createMutation.mutateAsync(payload)
-      } else {
-        console.log(payload)
-        await updateMutation.mutateAsync(payload)
-      }
+      await createMutation.mutateAsync(payload)
     })
   }
 
-  const deleteMutation = useMutation({
-    mutationFn: (id: string) => dishesAPI.delete(id),
-    onSuccess: () => {
-      toast.success("Xóa món ăn thành công!", {
-        autoClose: 1500
-      })
-      queryClient.invalidateQueries({ queryKey: ["listDish"] })
-    },
-    onError: (error) => {
-      if (isError400<any>(error)) {
-        toast.error(error.response?.data?.message, {
-          autoClose: 1500
-        })
-      }
-    }
-  })
+  // const deleteMutation = useMutation({
+  //   mutationFn: (id: string) => dishesAPI.delete(id),
+  //   onSuccess: () => {
+  //     toast.success("Xóa món ăn thành công!", {
+  //       autoClose: 1500
+  //     })
+  //     queryClient.invalidateQueries({ queryKey: ["listDish"] })
+  //   },
+  //   onError: (error) => {
+  //     if (isError400<any>(error)) {
+  //       toast.error(error.response?.data?.message, {
+  //         autoClose: 1500
+  //       })
+  //     }
+  //   }
+  // })
 
-  const handleDelete = (id: string) => {
-    Modal.confirm({
-      title: "Bạn có chắc muốn xóa?",
-      content: "Món ăn sẽ bị xóa vĩnh viễn.",
-      okText: "Xóa",
-      okType: "danger",
-      cancelText: "Hủy",
-      onOk: () => deleteMutation.mutate(id)
-    })
-  }
+  // const handleDelete = (id: string) => {
+  //   Modal.confirm({
+  //     title: "Bạn có chắc muốn xóa?",
+  //     content: "Món ăn sẽ bị xóa vĩnh viễn.",
+  //     okText: "Xóa",
+  //     okType: "danger",
+  //     cancelText: "Hủy",
+  //     onOk: () => deleteMutation.mutate(id)
+  //   })
+  // }
 
   const columns = [
     {
@@ -297,13 +248,16 @@ export default function ManageDish() {
       title: <div className="text-center">Hành động</div>,
       key: "actions",
       render: (_: any, record: any) => (
-        <div className="text-left">
-          <Button type="link" onClick={() => handleEdit(record)}>
-            Sửa
-          </Button>
-          <Button danger type="link" onClick={() => handleDelete(record.id)}>
-            Xóa
-          </Button>
+        <div className="flex items-center justify-center">
+          <Link
+            to={`${path.AdminDish}/${record.id}`}
+            state={{
+              dataDish: record
+            }}
+            className="text-blue-500"
+          >
+            Xem chi tiết
+          </Link>
         </div>
       )
     }
@@ -558,8 +512,8 @@ export default function ManageDish() {
             <Button onClick={() => setIsModalOpen(false)} className="mr-2">
               Hủy
             </Button>
-            <Button type="primary" htmlType="submit" loading={updateMutation.isPending || createMutation.isPending}>
-              {typeof editingId === "string" ? "Cập nhật món ăn" : "Thêm món ăn"}
+            <Button type="primary" htmlType="submit" loading={createMutation.isPending}>
+              Thêm món ăn
             </Button>
           </div>
         </Form>
