@@ -173,6 +173,44 @@ export const statusColor: Record<number, "default" | "success" | "warning" | "er
   3: "default" // Cancelled -> xám
 }
 
+export const STATUS_OPEN = 0 // Order mới gọi
+export const STATUS_IN_PROGRESS = 1 // Order đang chế biến
+export const STATUS_SERVED = 2 // Order đã phục vụ
+export const STATUS_PAID = 3 // Order đã thanh toán
+export const STATUS_CANCELLED = 4 // Order đã hủy
+
+// orderItem.status mapping: 0-4
+export function computeMergedOrderStatusForSession(orders: TableSessionOrder[]): number {
+  const allStatuses = orders.flatMap((order) =>
+    order.items.map((item) => {
+      switch (item.item_status) {
+        case 0:
+          return STATUS_OPEN // Đã gọi món → mới gọi
+        case 1:
+          return STATUS_IN_PROGRESS // Đang chế biến → đang chế biến
+        case 2:
+          return STATUS_IN_PROGRESS // Đã chế biến → vẫn coi là đang chế biến
+        case 3:
+          return STATUS_SERVED // Đã phục vụ → trạng thái tổng = đã phục vụ
+        case 4:
+          return STATUS_CANCELLED // Đã hủy → hủy
+        default:
+          return STATUS_OPEN
+      }
+    })
+  )
+
+  if (allStatuses.every((s) => s === STATUS_CANCELLED)) return STATUS_CANCELLED
+  if (allStatuses.every((s) => s === STATUS_SERVED)) return STATUS_SERVED
+  if (allStatuses.includes(STATUS_SERVED) && allStatuses.every((s) => [STATUS_SERVED, STATUS_CANCELLED].includes(s)))
+    return STATUS_SERVED
+  if (allStatuses.includes(STATUS_IN_PROGRESS)) return STATUS_IN_PROGRESS
+  if (allStatuses.every((s) => s === STATUS_OPEN)) return STATUS_OPEN
+
+  // Pha trộn khác → đang chế biến
+  return STATUS_IN_PROGRESS
+}
+
 const { Panel } = Collapse
 type TableSessionOrderMerged = TableSessionOrder & { items: TableSessionOrder["items"]; total_amount: string }
 
@@ -239,6 +277,8 @@ export default function TableDetail() {
   })()
 
   const dataTableSessionOrder = dataTableSessionOrderMerged
+
+  const mergedStatus = computeMergedOrderStatusForSession(dataTableSessionOrderRes?.data?.data || [])
 
   const [hasCurrentSession, setHasCurrentSession] = useState<boolean | null>(null)
   const [listTablePending, setListTablePending] = useState<HistoryTableSessionType[]>([])
@@ -1021,7 +1061,8 @@ export default function TableDetail() {
                           }}
                         >
                           <Descriptions.Item label="Trạng thái đơn" span={2}>
-                            {renderOrderStatus((dataTableSessionOrder as TableSessionOrderMerged)?.order_status)}
+                            {/* {renderOrderStatus((dataTableSessionOrder as TableSessionOrderMerged)?.order_status)} */}
+                            {renderOrderStatus(mergedStatus)}
                           </Descriptions.Item>
                           <Descriptions.Item label="Tổng tiền" span={2}>
                             <span className="text-red-500 font-semibold">

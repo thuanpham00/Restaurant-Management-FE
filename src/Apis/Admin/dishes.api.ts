@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import Http from "src/Helpers/http"
 import { Dish } from "src/Types/dish.type"
+import { AddIngredientDishBody, IngredientDish } from "src/Types/ingredientDish.type"
 import { queryParamConfigDish } from "src/Types/queryParams.type"
 import { PaginatedResponse, SuccessResponse } from "src/Types/utils.type"
 
@@ -63,5 +64,21 @@ export const dishesAPI = {
 
   getIngredientNotOnDish: (id: string) => {
     return Http.get<SuccessResponse<any>>(`/api/dishes/${id}/available-ingredients`)
+  },
+
+  getListIngredientByIdDish: (id: string) => {
+    return Http.get<SuccessResponse<IngredientDish[]>>(`/api/dishes/${id}/ingredients`)
+  },
+
+  addIngredientDishByIdDish: (idDish: string, body: AddIngredientDishBody) => {
+    return Http.post<SuccessResponse<any>>(`/api/dishes/${idDish}/ingredients`, body)
+  },
+
+  updateIngredientDishByIdDish: (
+    idDish: string,
+    idIngredientDish: string,
+    body: { ingredient_id: string; quantity: string; notes: string }
+  ) => {
+    return Http.put<SuccessResponse<any>>(`/api/dishes/${idDish}/ingredients/${idIngredientDish}`, body)
   }
 }

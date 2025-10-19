@@ -17,6 +17,7 @@ import {
   Table
 } from "antd"
 import { ColumnsType } from "antd/es/table"
+import { Edit, Trash2 } from "lucide-react"
 import { useEffect, useMemo, useState } from "react"
 import { Helmet } from "react-helmet-async"
 import { useLocation, useNavigate } from "react-router-dom"
@@ -189,12 +190,14 @@ export default function MenuDetail() {
     {
       title: "Giá gốc món ăn",
       dataIndex: "price_base",
-      key: "price_base"
+      key: "price_base",
+      render: (text: number) => Number(text).toLocaleString("vi-VN") + " đ"
     },
     {
       title: "Giá (VNĐ)",
       dataIndex: "price",
-      key: "price"
+      key: "price",
+      render: (text: number) => Number(text).toLocaleString("vi-VN") + " đ"
     },
     {
       title: "Mô tả món ăn",
@@ -207,11 +210,11 @@ export default function MenuDetail() {
       align: "center",
       render: (record) => (
         <div className="flex justify-center gap-2">
-          <Button size="small" onClick={() => handleUpdateDish(record)}>
-            Sửa
+          <Button type="link" onClick={() => handleUpdateDish(record)}>
+            <Edit size={16} />
           </Button>
           <Button
-            size="small"
+            type="link"
             danger
             onClick={() => {
               Modal.confirm({
@@ -229,7 +232,7 @@ export default function MenuDetail() {
               })
             }}
           >
-            Xóa
+            <Trash2 size={16} />
           </Button>
         </div>
       )
@@ -270,7 +273,7 @@ export default function MenuDetail() {
       setEditing(false)
     } else if (typeof record === "object") {
       formAddMenuItem.setFieldsValue({
-        dish_id: record.dish_name,
+        dish_id: { value: record.dish_id, label: record.dish_name },
         price_base: record.price_base,
         price: record.price,
         notes: record.notes
@@ -312,13 +315,13 @@ export default function MenuDetail() {
       if (typeof editing === "string") {
         await updateDishToMenuMutation.mutateAsync({
           idMenuItem: editing,
-          dish_id: values.dish_id,
+          dish_id: values.dish_id.value,
           price: values.price,
           notes: values.notes
         })
       } else {
         await addDishToMenuMutation.mutateAsync({
-          dish_id: values.dish_id,
+          dish_id: values.dish_id.value,
           price: values.price,
           notes: values.notes
         })
@@ -463,6 +466,7 @@ export default function MenuDetail() {
                 rules={[{ required: true, message: "Vui lòng chọn món ăn!" }]}
               >
                 <Select
+                  labelInValue
                   showSearch
                   placeholder="Chọn món ăn chưa có trong menu"
                   options={(availableDishes as AddDishToMenu[])?.map((dish) => ({

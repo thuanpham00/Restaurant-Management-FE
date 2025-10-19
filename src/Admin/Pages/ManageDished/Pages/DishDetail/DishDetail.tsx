@@ -1,6 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { Button, Form, Input, InputNumber, Modal, Select, Spin, Switch } from "antd"
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { Button, Empty, Form, Input, InputNumber, Modal, Pagination, Select, Spin, Switch, Table } from "antd"
+import { ColumnsType } from "antd/es/table"
+import { Edit, Trash2 } from "lucide-react"
 import { useEffect, useMemo, useState } from "react"
 import { Helmet } from "react-helmet-async"
 import { useLocation, useNavigate } from "react-router-dom"
@@ -10,15 +12,17 @@ import { dishCategoryAPI, dishesAPI } from "src/Apis"
 import { assets } from "src/Assets/assets"
 import InputFileImage from "src/Components/InputFileImage"
 import { Dish } from "src/Types/dish.type"
+import { IngredientDish } from "src/Types/ingredientDish.type"
 
 export default function DishDetail() {
   const { state } = useLocation()
+  const detailDish = state?.dataDish as Dish
+
   const queryClient = useQueryClient()
   const navigate = useNavigate()
+
   const [checkUpdate, setCheckUpdate] = useState(false)
   const [loading, setLoading] = useState(false)
-
-  const detailDish = state?.dataDish as Dish
 
   const getListDishCategory = useQuery({
     queryKey: ["listNameDishCategory"],
@@ -106,16 +110,219 @@ export default function DishDetail() {
     })
   }
 
+  // danh sách nguyên liệu thuộc 1 món ăn
+  const { data, isFetching } = useQuery({
+    queryKey: ["listIngredientInDish", detailDish],
+    queryFn: () => {
+      const controller = new AbortController()
+      setTimeout(() => controller.abort(), 10000)
+      return dishesAPI.getListIngredientByIdDish(detailDish.id)
+    },
+    retry: 0,
+    staleTime: 3 * 60 * 1000,
+    placeholderData: keepPreviousData
+  })
+
+  const listIngredientInDish = data?.data.data
+
+  const [currentPage, setCurrentPage] = useState(1)
+  const [pageSize, setPageSize] = useState(5)
+
+  const paginatedData = useMemo(() => {
+    const start = (currentPage - 1) * pageSize
+    const end = start + pageSize
+    return (listIngredientInDish || []).slice(start, end)
+  }, [listIngredientInDish, currentPage, pageSize])
+
+  const columns: ColumnsType<IngredientDish> = [
+    {
+      title: "STT",
+      dataIndex: "index",
+      key: "index",
+      width: 70,
+      align: "center",
+      render: (_: any, __: any, index: number) => index + 1
+    },
+    {
+      title: "Tên nguyên liệu",
+      dataIndex: "name",
+      key: "name",
+      render: (text: string) => <b>{text}</b>
+    },
+    {
+      title: "Đơn vị",
+      dataIndex: "unit",
+      key: "unit",
+      align: "center",
+      width: 100
+    },
+    {
+      title: <div className="text-center">Số lượng</div>,
+      dataIndex: "quantity",
+      key: "quantity",
+      align: "right",
+      width: 120,
+      render: (value: string) => <span className="text-center block">{parseFloat(value).toFixed(2)}</span>
+    },
+    {
+      title: "Ghi chú",
+      dataIndex: "note",
+      key: "note",
+      ellipsis: true
+    },
+    {
+      title: "Ngày tạo",
+      dataIndex: "created_at",
+      key: "created_at",
+      width: 180,
+      render: (date: string) => new Date(date).toLocaleString("vi-VN")
+    },
+    {
+      title: "Hành động",
+      key: "action",
+      align: "center",
+      render: (record) => (
+        <div className="flex justify-center gap-2">
+          <Button type="link" onClick={() => handleUpdateDish(record)}>
+            <Edit size={16} />
+          </Button>
+          <Button
+            danger
+            type="link"
+            onClick={() => {
+              Modal.confirm({
+                title: "Xác nhận xóa",
+                content: `Bạn có chắc muốn xóa món "${record.dish_name}" khỏi thực đơn?`,
+                okText: "Xóa",
+                cancelText: "Hủy",
+                okType: "danger"
+                // onOk: () => {
+                //   deleteMenuItemMutation.mutate({
+                //     idMenu: detailMenu.id,
+                //     idMenuItem: record.id
+                //   })
+                // }
+              })
+            }}
+          >
+            <Trash2 size={16} />
+          </Button>
+        </div>
+      )
+    }
+  ]
+
+  const handlePaginationChange = (page: number, size: number) => {
+    setCurrentPage(page)
+    setPageSize(size)
+  }
+
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [formAddMenuItem] = Form.useForm()
 
   const { data: availableIngredientsData, isLoading: isLoadingDishes } = useQuery({
     queryKey: ["available-dishes", detailDish.id],
     queryFn: () => dishesAPI.getIngredientNotOnDish(detailDish.id),
-    // enabled: isModalOpen // chỉ load khi mở modal
+    enabled: isModalOpen // chỉ load khi mở modal
   })
 
   const availableIngredients = availableIngredientsData?.data?.data || []
+
+  const handleDishChange = (ingredientId: string) => {
+    const selectedIngredient = availableIngredients.find((eng: any) => eng.id === ingredientId)
+    console.log(ingredientId)
+    console.log(availableIngredients)
+    if (selectedIngredient) {
+      formAddMenuItem.setFieldsValue({
+        unit: selectedIngredient.unit,
+        current_stock: selectedIngredient.current_stock,
+        quantity: 0,
+        ingredient_id: ingredientId
+      })
+    }
+  }
+
+  const [editing, setEditing] = useState<boolean | string | null>(null)
+  const handleUpdateDish = (record: IngredientDish | boolean) => {
+    setIsModalOpen(true)
+    if (record === true) {
+      formAddMenuItem.setFieldsValue({
+        ingredient_id: "",
+        unit: "",
+        current_stock: "",
+        quantity: "",
+        notes: ""
+      })
+      setEditing(false)
+    } else if (typeof record === "object") {
+      formAddMenuItem.setFieldsValue({
+        ingredient_id: { value: record.ingredient_id, label: record.name },
+        unit: record.unit,
+        current_stock: record.current_stock,
+        quantity: record.quantity,
+        notes: record.note
+      })
+      setEditing(record.id)
+    }
+  }
+
+  const addIngredientToDishMutation = useMutation({
+    mutationFn: (body: { ingredient_id: string; quantity: string; notes?: string }) => {
+      return dishesAPI.addIngredientDishByIdDish(detailDish.id, body)
+    },
+    onSuccess: () => {
+      toast.success("Thêm nguyên liệu vào món ăn thành công!", {
+        autoClose: 1500
+      })
+      setIsModalOpen(false)
+      setEditing(null)
+      formAddMenuItem.resetFields()
+      queryClient.invalidateQueries({ queryKey: ["listIngredientInDish", detailDish] })
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || "Thêm nguyên liệu thất bại!", {
+        autoClose: 1500
+      })
+    }
+  })
+
+  const updateIngredientToDishMutation = useMutation({
+    mutationFn: (body: { ingredient_id: string; quantity: string; notes: string }) => {
+      return dishesAPI.updateIngredientDishByIdDish(detailDish.id, editing as string, body)
+    },
+    onSuccess: () => {
+      toast.success("Cập nhật món ăn vào menu thành công!", {
+        autoClose: 1500
+      })
+      setIsModalOpen(false)
+      setEditing(null)
+      formAddMenuItem.resetFields()
+      queryClient.invalidateQueries({ queryKey: ["listIngredientInDish", detailDish] })
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || "Cập nhật nguyên liệu thất bại!", {
+        autoClose: 1500
+      })
+    }
+  })
+
+  const handleUpdateForm = () => {
+    formAddMenuItem.validateFields().then(async (values) => {
+      const ingredientId = values.ingredient_id.value // <--- đây mới là id
+      const payload = {
+        ingredient_id: ingredientId,
+        quantity: values.quantity.toString(),
+        notes: values.notes
+      }
+
+      if (typeof editing === "string") {
+        await updateIngredientToDishMutation.mutateAsync(payload)
+      } else {
+        await addIngredientToDishMutation.mutateAsync(payload)
+      }
+    })
+  }
+
   console.log(availableIngredients)
 
   return (
@@ -208,17 +415,17 @@ export default function DishDetail() {
 
       <div className="mt-6 bg-white border border-gray-200 rounded-lg shadow-md p-4">
         <div className="flex justify-between items-center mb-4">
-          <h2 className="text-lg font-semibold text-gray-800">Danh sách món ăn trong thực đơn</h2>
+          <h2 className="text-lg font-semibold text-gray-800">Danh sách nguyên liệu trong món ăn</h2>
           <Button type="primary" onClick={() => handleUpdateDish(true)}>
-            + Thêm món ăn
+            + Thêm nguyên liệu
           </Button>
         </div>
 
-        {/* {isFetching ? (
+        {isFetching ? (
           <div className="flex justify-center items-center py-8">
             <Spin size="large" />
           </div>
-        ) : listItemInMenu && listItemInMenu.length > 0 ? (
+        ) : listIngredientInDish && listIngredientInDish.length > 0 ? (
           <div>
             <Table
               dataSource={paginatedData}
@@ -231,7 +438,7 @@ export default function DishDetail() {
             <div style={{ marginTop: 16, textAlign: "center", display: "flex", justifyContent: "flex-end" }}>
               <Pagination
                 current={currentPage}
-                total={listItemInMenu.length}
+                total={listIngredientInDish.length}
                 pageSize={pageSize}
                 onChange={handlePaginationChange}
                 showSizeChanger
@@ -241,9 +448,17 @@ export default function DishDetail() {
           </div>
         ) : (
           <Empty description="Không có món ăn nào trong menu" />
-        )} */}
+        )}
 
-        {/* <Modal title="Thêm món ăn vào menu" open={isModalOpen} onCancel={() => setIsModalOpen(false)} footer={false}>
+        <Modal
+          title="Thêm nguyên liệu vào món ăn"
+          open={isModalOpen}
+          onCancel={() => setIsModalOpen(false)}
+          footer={false}
+          style={{
+            top: 80
+          }}
+        >
           {isLoadingDishes ? (
             <div className="flex justify-center items-center py-8">
               <Spin />
@@ -251,60 +466,70 @@ export default function DishDetail() {
           ) : (
             <Form form={formAddMenuItem} layout="vertical" onFinish={handleUpdateForm}>
               <Form.Item
-                name="dish_id"
-                label="Chọn món ăn"
-                rules={[{ required: true, message: "Vui lòng chọn món ăn!" }]}
+                name="ingredient_id"
+                label="Chọn nguyên liệu"
+                rules={[{ required: true, message: "Vui lòng chọn nguyên liệu!" }]}
               >
                 <Select
+                  labelInValue
                   showSearch
-                  placeholder="Chọn món ăn chưa có trong menu"
-                  options={(availableDishes as AddDishToMenu[])?.map((dish) => ({
-                    value: dish.id,
-                    label: dish.name
+                  placeholder="Chọn nguyên liệu chưa có trong món ăn"
+                  options={(availableIngredients as any[])?.map((ing) => ({
+                    value: ing.id,
+                    label: ing.name
                   }))}
                   onChange={handleDishChange}
                 />
               </Form.Item>
 
-              <Form.Item name="price_base" label="Giá gốc món ăn">
+              <Form.Item name="unit" label="Đơn vị">
                 <InputNumber
                   disabled
                   min={0}
                   className="w-full"
                   formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
-                  placeholder="Nhập giá bán cho món ăn"
+                  placeholder="Đơn vị nguyên liệu"
+                />
+              </Form.Item>
+
+              <Form.Item name="current_stock" label="Số lượng tồn kho">
+                <InputNumber
+                  disabled
+                  min={0}
+                  className="w-full"
+                  formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
+                  placeholder="Số lượng tồn"
                 />
               </Form.Item>
 
               <Form.Item
-                name="price"
-                label="Giá bán trong menu"
+                name="quantity"
+                label="Số lượng dùng cho món ăn"
                 rules={[
-                  { required: true, message: "Vui lòng nhập giá bán!" },
+                  { required: true, message: "Vui lòng nhập số lượng món ăn cần chế biến!" },
                   ({ getFieldValue }) => ({
                     validator(_, value) {
-                      const base = getFieldValue("price_base")
-                      if (value === undefined || value === null) {
-                        return Promise.resolve()
+                      const currentStock = getFieldValue("current_stock")
+
+                      if (value == null) {
+                        return Promise.reject(new Error("Vui lòng nhập số lượng!"))
                       }
-                      if (base !== undefined && value < base) {
-                        return Promise.reject(new Error("Giá bán phải lớn hơn hoặc bằng giá gốc!"))
+                      if (value <= 0) {
+                        return Promise.reject(new Error("Số lượng phải lớn hơn 0!"))
+                      }
+                      if (value > currentStock) {
+                        return Promise.reject(new Error("Số lượng món ăn không được vượt quá tồn kho!"))
                       }
                       return Promise.resolve()
                     }
                   })
                 ]}
               >
-                <InputNumber
-                  min={0}
-                  className="w-full"
-                  formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
-                  placeholder="Nhập giá bán cho món ăn"
-                />
+                <InputNumber min={1} className="w-full" placeholder="Nhập số lượng dùng" />
               </Form.Item>
 
-              <Form.Item name="notes" label="Ghi chú món ăn">
-                <Input className="w-full" placeholder="Nhập ghi chú món ăn (nếu có)" />
+              <Form.Item name="notes" label="Ghi chú nguyên liệu">
+                <Input className="w-full" placeholder="Nhập ghi chú nguyên liệu (nếu có)" />
               </Form.Item>
 
               <div className="flex justify-end mt-4">
@@ -314,14 +539,14 @@ export default function DishDetail() {
                 <Button
                   type="primary"
                   htmlType="submit"
-                  loading={addDishToMenuMutation.isPending || updateDishToMenuMutation.isPending}
+                  loading={updateIngredientToDishMutation.isPending || addIngredientToDishMutation.isPending}
                 >
-                  {typeof editing === "string" ? "Cập nhật thực đơn" : "Thêm món ăn"}
+                  {typeof editing === "string" ? "Cập nhật nguyên liệu" : "Thêm nguyên liệu"}
                 </Button>
               </div>
             </Form>
           )}
-        </Modal> */}
+        </Modal>
       </div>
     </div>
   )
