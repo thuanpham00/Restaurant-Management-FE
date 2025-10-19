@@ -127,7 +127,7 @@ export default function ManageMenu() {
             state={{
               dataMenu: record
             }}
-            className="text-blue-500"
+            className="text-blue-500 text-center"
           >
             Xem chi tiết
           </Link>

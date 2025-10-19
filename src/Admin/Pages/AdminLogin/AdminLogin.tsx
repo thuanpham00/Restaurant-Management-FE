@@ -14,6 +14,7 @@ import { isError401, isError422 } from "src/Helpers/utils"
 import { ErrorResponse } from "src/Types/utils.type"
 import { useAppStore } from "src/StateGlobal/zustand"
 import { toast } from "react-toastify"
+import { EmployeeProfile } from "src/Types/user.type"
 
 type FormData = Pick<SchemaAuthType, "email" | "password"> // kiểu dữ liệu của form
 const formData = schemaAuth.pick(["email", "password"]) // validate ở client
@@ -37,14 +38,21 @@ export default function AdminLogin() {
   const handleSubmitForm = handleSubmit((data) => {
     loginMutation.mutate(data, {
       onSuccess: (response) => {
-        toast.success(response.data.message, {
-          autoClose: 1000
-        })
-        setIsAuthenticated(true)
-        setAvatar(response.data.data.user.avatar)
-        setNameUser(response.data.data.user.name)
-        setRole(response.data.data.user.role.name)
-        setEmployeeId(response.data.data.user.employee_profile.id)
+        const user = response.data.data.user
+        if (user.employee_profile) {
+          toast.success(response.data.message, {
+            autoClose: 1000
+          })
+          setIsAuthenticated(true)
+          setAvatar(response.data.data.user.avatar)
+          setNameUser(response.data.data.user.name)
+          setRole(response.data.data.user.role.name)
+          setEmployeeId((response.data.data.user.employee_profile as EmployeeProfile).id)
+        } else if (user.customer_profile) {
+          toast.error("Tài khoản bạn không đủ quyền truy cập!", {
+            autoClose: 1500
+          })
+        }
       },
       onError: (error) => {
         // lỗi từ server trả về

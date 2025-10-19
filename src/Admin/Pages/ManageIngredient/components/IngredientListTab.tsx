@@ -26,7 +26,12 @@ import { ingredientsAPI, ingredientCategoriesAPI } from "src/Apis/Admin"
 import { path } from "src/Constants/path"
 import { cleanObject } from "src/Helpers/common"
 import useQueryParams from "src/Hook/useQueryParams"
-import { Ingredient, IngredientCreateInput, IngredientFormInput, queryParamConfigIngredient } from "src/Types/ingredient.type"
+import {
+  Ingredient,
+  IngredientCreateInput,
+  IngredientFormInput,
+  queryParamConfigIngredient
+} from "src/Types/ingredient.type"
 import { PaginatedResponse } from "src/Types/utils.type"
 
 const { Option } = Select
@@ -311,7 +316,7 @@ export default function IngredientListTab() {
 
     // Handle category_ids array - convert to multiple query params
     const searchParams = new URLSearchParams()
-    
+
     Object.entries(params).forEach(([key, value]) => {
       searchParams.append(key, String(value))
     })
@@ -331,11 +336,11 @@ export default function IngredientListTab() {
 
   const resetFilter = () => {
     const filteredParams = new URLSearchParams()
-    
+
     // Only keep page and per_page
     if (queryConfig.page) filteredParams.set("page", queryConfig.page)
     if (queryConfig.per_page) filteredParams.set("per_page", queryConfig.per_page)
-    
+
     navigate({
       pathname: path.AdminIngredients,
       search: filteredParams.toString()
@@ -392,7 +397,11 @@ export default function IngredientListTab() {
       dataIndex: ["category", "name"],
       key: "category",
       width: 180,
-      render: (val) => <Tag color="blue" className="text-sm">{val || "N/A"}</Tag>
+      render: (val) => (
+        <Tag color="blue" className="text-sm">
+          {val || "N/A"}
+        </Tag>
+      )
     },
     {
       title: <div className="text-left">Đơn vị</div>,
@@ -439,9 +448,7 @@ export default function IngredientListTab() {
       width: 130,
       align: "center",
       render: (val, record) => (
-        <div className="text-sm">
-          {val ? `${parseFloat(val).toLocaleString()} ${record.unit}` : "-"}
-        </div>
+        <div className="text-sm">{val ? `${parseFloat(val).toLocaleString()} ${record.unit}` : "-"}</div>
       )
     },
     {
@@ -596,9 +603,9 @@ export default function IngredientListTab() {
             <Input placeholder="VD: Gạo tẻ" className="text-sm" />
           </Form.Item>
 
-          <Form.Item 
-            name="unit" 
-            label={<span className="text-sm">Đơn vị</span>} 
+          <Form.Item
+            name="unit"
+            label={<span className="text-sm">Đơn vị</span>}
             rules={[{ required: true, message: "Vui lòng nhập đơn vị" }]}
           >
             <Input placeholder="VD: kg, lít, gram" className="text-sm" />
@@ -634,10 +641,7 @@ export default function IngredientListTab() {
           </Form.Item>
 
           <div className="grid grid-cols-3 gap-4">
-            <Form.Item
-              name="current_stock"
-              label={<span className="text-sm">Tồn kho</span>}
-            >
+            <Form.Item name="current_stock" label={<span className="text-sm">Tồn kho</span>}>
               <InputNumber placeholder="0" min={0} className="w-full text-sm" />
             </Form.Item>
 
@@ -649,10 +653,7 @@ export default function IngredientListTab() {
               <InputNumber placeholder="0" min={0} className="w-full text-sm" />
             </Form.Item>
 
-            <Form.Item
-              name="max_stock"
-              label={<span className="text-sm">Tồn tối đa</span>}
-            >
+            <Form.Item name="max_stock" label={<span className="text-sm">Tồn tối đa</span>}>
               <InputNumber placeholder="0" min={0} className="w-full text-sm" />
             </Form.Item>
           </div>
@@ -728,7 +729,9 @@ export default function IngredientListTab() {
               </Descriptions.Item>
             )}
             <Descriptions.Item label={<span className="text-sm">Danh mục</span>} span={2}>
-              <Tag color="blue" className="text-sm">{selectedIngredient.category?.name}</Tag>
+              <Tag color="blue" className="text-sm">
+                {selectedIngredient.category?.name}
+              </Tag>
             </Descriptions.Item>
             <Descriptions.Item label={<span className="text-sm">Đơn vị</span>}>
               <span className="text-sm">{selectedIngredient.unit}</span>
@@ -739,16 +742,23 @@ export default function IngredientListTab() {
               </Tag>
             </Descriptions.Item>
             <Descriptions.Item label={<span className="text-sm">Tồn kho hiện tại</span>}>
-              <Tag color={isLowStock(selectedIngredient.current_stock, selectedIngredient.min_stock) ? "red" : "green"} className="text-sm">
+              <Tag
+                color={isLowStock(selectedIngredient.current_stock, selectedIngredient.min_stock) ? "red" : "green"}
+                className="text-sm"
+              >
                 {parseFloat(selectedIngredient.current_stock).toLocaleString()} {selectedIngredient.unit}
               </Tag>
             </Descriptions.Item>
             <Descriptions.Item label={<span className="text-sm">Tồn tối thiểu</span>}>
-              <span className="text-sm">{parseFloat(selectedIngredient.min_stock).toLocaleString()} {selectedIngredient.unit}</span>
+              <span className="text-sm">
+                {parseFloat(selectedIngredient.min_stock).toLocaleString()} {selectedIngredient.unit}
+              </span>
             </Descriptions.Item>
             <Descriptions.Item label={<span className="text-sm">Tồn tối đa</span>} span={2}>
               <span className="text-sm">
-                {selectedIngredient.max_stock ? `${parseFloat(selectedIngredient.max_stock).toLocaleString()} ${selectedIngredient.unit}` : "Không giới hạn"}
+                {selectedIngredient.max_stock
+                  ? `${parseFloat(selectedIngredient.max_stock).toLocaleString()} ${selectedIngredient.unit}`
+                  : "Không giới hạn"}
               </span>
             </Descriptions.Item>
             <Descriptions.Item label={<span className="text-sm">Ngày tạo</span>} span={2}>

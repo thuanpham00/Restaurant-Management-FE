@@ -3,7 +3,7 @@ import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tansta
 import { Button, Empty, Form, Input, Modal, Pagination, Spin, Table, Tag } from "antd"
 import { ColumnsType } from "antd/es/table"
 import { isUndefined, omit, omitBy } from "lodash"
-import { Beef, Filter, RotateCcw } from "lucide-react"
+import { Beef, Edit, Filter, RotateCcw, Trash2 } from "lucide-react"
 import { Fragment, useState } from "react"
 import { Helmet } from "react-helmet-async"
 import { createSearchParams, Link, useNavigate, useSearchParams } from "react-router-dom"
@@ -194,15 +194,15 @@ export default function ManageDishCategory() {
       render: (value) => <div className="text-left">{new Date(value).toLocaleString()}</div>
     },
     {
-      title: <div className="text-left">Hành động</div>,
+      title: <div className="text-center">Hành động</div>,
       key: "actions",
       render: (_, record) => (
-        <div className="text-left">
+        <div className="text-center">
           <Button type="link" onClick={() => handleEdit(record)}>
-            Sửa
+            <Edit size={16} />
           </Button>
           <Button danger type="link" onClick={() => handleDelete(record.id)}>
-            Xóa
+            <Trash2 size={16} />
           </Button>
         </div>
       )

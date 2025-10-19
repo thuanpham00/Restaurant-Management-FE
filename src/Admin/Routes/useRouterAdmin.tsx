@@ -8,6 +8,7 @@ import { useAppStore } from "src/StateGlobal/zustand"
 import ManagePromotion from "../Pages/ManageFinancial/Pages/ManagePromotion"
 import ManageInvoice from "../Pages/ManageFinancial/Pages/ManageInvoice"
 import InvoiceDetail from "../Pages/ManageFinancial/Pages/InvoiceDetail"
+import DishDetail from "../Pages/ManageDished/Pages/DishDetail"
 
 const AdminLogin = lazy(() => import("../Pages/AdminLogin"))
 const ManageDashboard = lazy(() => import("../Pages/ManageDashboard"))
@@ -124,6 +125,14 @@ export default function useRouterAdmin() {
                   element: (
                     <Suspense>
                       <ManageDish />
+                    </Suspense>
+                  )
+                },
+                {
+                  path: path.AdminDishDetail,
+                  element: (
+                    <Suspense>
+                      <DishDetail />
                     </Suspense>
                   )
                 },
