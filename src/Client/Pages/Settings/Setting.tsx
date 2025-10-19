@@ -20,6 +20,19 @@ export default function Setting() {
     setUser?: (u: UserType) => void
   }
 
+  const MEMBERSHIP_LABEL: Record<number, string> = {
+    0: "Bronze",
+    1: "Silver",
+    2: "Gold",
+    3: "Titanium"
+  }
+  const MEMBERSHIP_COLOR: Record<number, string> = {
+    0: "bg-gradient-to-r from-yellow-700 to-yellow-500 text-yellow-100",
+    1: "bg-gradient-to-r from-gray-400 to-gray-200 text-gray-900",
+    2: "bg-gradient-to-r from-yellow-400 to-yellow-200 text-yellow-900",
+    3: "bg-gradient-to-r from-blue-700 to-blue-400 text-white"
+  }
+
   const [user, setUserLocal] = useState<UserType | null>(storeUser || null)
   const [form, setForm] = useState({ email: "", phone: "", address: "", full_name: "" })
   const [saving, setSaving] = useState(false)
@@ -301,7 +314,19 @@ export default function Setting() {
               </div>
               <h2 className="text-lg font-bold text-white mb-2">{user?.name || "User"}</h2>
               <p className="text-gray-400 text-sm mb-6">{user?.email}</p>
-
+              <div className="w-full flex flex-col items-center mb-6">
+                <span className="text-gray-400 font-semibold text-sm mb-2 flex items-center gap-2">
+                  <svg width="18" height="18" fill="none" viewBox="0 0 24 24" className="inline-block text-orange-400">
+                    <path d="M12 2L15 8L22 9L17 14L18 21L12 18L6 21L7 14L2 9L9 8L12 2Z" fill="currentColor" />
+                  </svg>
+                  Cấp độ thành viên
+                </span>
+                <div
+                  className={`px-5 py-2 rounded-xl font-bold shadow-lg text-lg tracking-wide ${MEMBERSHIP_COLOR[user?.customer_profile?.membership_level ?? 0]}`}
+                >
+                  {MEMBERSHIP_LABEL[user?.customer_profile?.membership_level ?? 0]}
+                </div>
+              </div>
               <div className="mt-6 w-full space-y-3">
                 <button
                   type="button"
@@ -574,7 +599,13 @@ export default function Setting() {
                           >
                             <div className="flex justify-between items-start mb-4">
                               <div>
-                                <h3 className="text-white font-semibold text-lg">Hóa đơn #{invoice.invoice_id}</h3>
+                                <h3 className="text-white font-semibold text-lg">
+                                  <p>
+                                    {invoice.created_at
+                                      ? `Hóa đơn được lập ngày ${new Date(invoice.created_at).toLocaleDateString("vi-VN")}`
+                                      : "Hóa đơn chưa được lập"}
+                                  </p>
+                                </h3>
                                 <p className="text-gray-400 text-sm mt-1">Bàn: {invoice.table_id}</p>
                                 <p className="text-gray-500 text-xs mt-1">{invoice.created_at}</p>
                               </div>

@@ -150,13 +150,16 @@ const ForgotPassword = () => {
           email,
           password: (document.getElementById("password") as HTMLInputElement).value
         })
-
+        const user = loginResponse.data?.data?.user
         setIsAuthenticated(true)
         setAvatar(loginResponse.data.data.user.avatar)
         setNameUser(loginResponse.data.data.user.name)
         setRole(loginResponse.data.data.user.role.name)
         setUserId(loginResponse.data.data.user.id)
-
+        if (user?.id) {
+          localStorage.setItem("userId", user.id)
+          localStorage.setItem("user", JSON.stringify(user))
+        }
         setTimeout(() => {
           navigate("/")
         }, 1000)

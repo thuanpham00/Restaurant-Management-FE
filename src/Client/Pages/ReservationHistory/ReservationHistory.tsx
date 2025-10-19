@@ -54,6 +54,8 @@ const STATUS_ICON: Record<number, React.ElementType> = {
   3: CheckCircle
 }
 
+const isAuthenticated = Boolean(localStorage.getItem("access_token"))
+
 function normalizeStatus(s: unknown): number {
   const n = Number(s)
   return [0, 1, 2, 3].includes(n) ? n : 0
@@ -100,7 +102,6 @@ const ReservationHistory: React.FC = () => {
       if (isAxiosError(err)) {
         if (err.response?.status === 401) {
           setError("Vui lòng đăng nhập để xem lịch sử đặt bàn.")
-          navigate("/login")
         } else {
           setError(err.response?.data?.message || "Không thể tải lịch sử đặt bàn.")
         }
@@ -113,8 +114,10 @@ const ReservationHistory: React.FC = () => {
   }
 
   useEffect(() => {
-    load(1)
-  }, [])
+    if (isAuthenticated) {
+      load(1)
+    }
+  }, [isAuthenticated])
 
   return (
     <div className="bg-gray-900 text-white min-h-screen">
@@ -137,8 +140,33 @@ const ReservationHistory: React.FC = () => {
           </div>
         )}
 
+        {/* Login Alert */}
+        {!isAuthenticated && (
+          <div className="mb-8 group">
+            <div className="bg-gradient-to-br from-orange-500/20 to-orange-600/10 border-2 border-orange-500/50 rounded-2xl p-6 backdrop-blur-sm transition-all duration-300 hover:shadow-2xl hover:shadow-orange-500/20">
+              <div className="flex items-start gap-4">
+                <AlertCircle className="w-6 h-6 text-orange-400 flex-shrink-0 mt-0.5" />
+                <div className="flex-1">
+                  <p className="text-orange-400 font-semibold text-lg mb-2">Yêu cầu đăng nhập</p>
+                  <p className="text-orange-300/90 mb-3">Bạn cần đăng nhập để xem lịch sử đặt bàn</p>
+                  <button
+                    onClick={() => {
+                      sessionStorage.setItem("redirectAfterLogin", window.location.pathname)
+                      navigate("/login")
+                    }}
+                    className="inline-flex items-center gap-2 px-5 py-2.5 bg-orange-500 hover:bg-orange-600 text-white font-semibold rounded-lg transition-all duration-300 hover:shadow-lg hover:shadow-orange-500/50"
+                  >
+                    <CheckCircle className="w-4 h-4" />
+                    Đăng nhập ngay
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Error State */}
-        {error && (
+        {error && isAuthenticated && (
           <div className="bg-gradient-to-br from-red-500/10 to-red-600/5 border-2 border-red-500/30 rounded-2xl p-6 mb-6 max-w-2xl backdrop-blur-sm">
             <div className="flex items-start gap-4">
               <XCircle className="w-6 h-6 text-red-400 flex-shrink-0 mt-0.5" />

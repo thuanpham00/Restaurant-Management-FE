@@ -13,14 +13,14 @@ export type MenuFilterParams = {
 
 export const clientAPI = {
   searchFilter: (params: MenuFilterParams) => {
-    return Http.get<SuccessResponse<Dish[]>>("/api/auth/menus/filter-dishes", { params })
+    return Http.get<SuccessResponse<Dish[]>>("/api/menus/filter-dishes", { params })
   },
   getPopularDishes: () => {
-    return Http.get<SuccessResponse<Dish[]>>("/api/auth/dishes/popular")
+    return Http.get<SuccessResponse<Dish[]>>("/api/dishes/popular")
   },
   getMenuCategories: () => {
-    return Http.get<SuccessResponse<CategoryDishByMenu[]>>("/api/auth/menus/active/categories")
+    return Http.get<SuccessResponse<CategoryDishByMenu[]>>("/api/menus/active/categories")
   },
   getMenusWithItems: (params?: MenusWithItemsParams) =>
-    Http.get<SuccessResponse<MenuWithItems[]>>("/api/auth/menus/with-items", { params })
+    Http.get<SuccessResponse<MenuWithItems[]>>("/api/menus/with-items", { params })
 }

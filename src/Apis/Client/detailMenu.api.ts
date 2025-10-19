@@ -4,6 +4,6 @@ import { SuccessResponse } from "src/Types/utils.type"
 
 export const detailMenuAPI = {
   getDishById: (id: string) => {
-    return Http.get<SuccessResponse<Dish>>(`/api/auth/dishes/${id}`)
+    return Http.get<SuccessResponse<Dish>>(`/api/dishes/${id}`)
   }
 }
