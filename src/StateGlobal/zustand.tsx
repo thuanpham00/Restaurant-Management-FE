@@ -16,6 +16,7 @@ type State = {
   userId: string | null
   employeeId: string | null
   isShowCategory: boolean
+  permissions: string[]
 }
 
 type Actions = {
@@ -26,6 +27,7 @@ type Actions = {
   setUserId: (value: string | null) => void
   setEmployeeId: (value: string | null) => void
   setIsShowCategory: (value: boolean) => void
+  setPermissions: (value: string[]) => void
   reset: () => void
 }
 
@@ -37,6 +39,7 @@ export const useAppStore = create<State & Actions>((set) => ({
   userId: getUserIdFromLS(),
   employeeId: getEmployeeIdFromLS(),
   isShowCategory: false,
+  permissions: [],
 
   setIsAuthenticated: (value) => set({ isAuthenticated: value }),
   setNameUser: (value) => set({ nameUser: value }),
@@ -45,6 +48,7 @@ export const useAppStore = create<State & Actions>((set) => ({
   setUserId: (value) => set({ userId: value }),
   setEmployeeId: (value) => set({ employeeId: value }),
   setIsShowCategory: (value) => set({ isShowCategory: value }),
+  setPermissions: (value) => set({ permissions: value }),
 
   reset: () =>
     set({
@@ -54,6 +58,7 @@ export const useAppStore = create<State & Actions>((set) => ({
       avatar: null,
       userId: null,
       employeeId: null,
-      isShowCategory: false
+      isShowCategory: false,
+      permissions: []
     })
 }))

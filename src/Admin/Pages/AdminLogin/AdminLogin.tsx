@@ -13,13 +13,14 @@ import { authAPI } from "src/Apis/Admin"
 import { isError401, isError422 } from "src/Helpers/utils"
 import { ErrorResponse } from "src/Types/utils.type"
 import { useAppStore } from "src/StateGlobal/zustand"
+import { getDefaultPermissionsForRole, resolveRole } from "src/Authorization"
 import { toast } from "react-toastify"
 
 type FormData = Pick<SchemaAuthType, "email" | "password"> // kiểu dữ liệu của form
 const formData = schemaAuth.pick(["email", "password"]) // validate ở client
 
 export default function AdminLogin() {
-  const { setIsAuthenticated, setAvatar, setNameUser, setRole, setEmployeeId } = useAppStore()
+  const { setIsAuthenticated, setAvatar, setNameUser, setRole, setEmployeeId, setPermissions } = useAppStore()
   const {
     formState: { errors },
     setError,
@@ -40,11 +41,19 @@ export default function AdminLogin() {
         toast.success(response.data.message, {
           autoClose: 1000
         })
+        const user = response.data.data.user
+        const roleName = user.role?.name ?? null
+
         setIsAuthenticated(true)
-        setAvatar(response.data.data.user.avatar)
-        setNameUser(response.data.data.user.name)
-        setRole(response.data.data.user.role.name)
-        setEmployeeId(response.data.data.user.employee_profile.id)
+        setAvatar(user.avatar)
+        setNameUser(user.name)
+        setRole(roleName)
+        setEmployeeId(user.employee_profile?.id ?? null)
+
+        const resolvedRole = resolveRole(roleName)
+        const backendPermissions = user.role?.permissions?.map((permission: { code: string }) => permission.code) ?? []
+        const fallbackPermissions = resolvedRole ? getDefaultPermissionsForRole(resolvedRole) : []
+        setPermissions(backendPermissions.length > 0 ? backendPermissions : fallbackPermissions)
       },
       onError: (error) => {
         // lỗi từ server trả về

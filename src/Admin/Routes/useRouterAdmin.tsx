@@ -3,11 +3,11 @@ import { lazy, Suspense } from "react"
 import MainLayoutAdmin from "../Layouts/MainLayoutAdmin"
 import { path } from "src/Constants/path"
 import LayoutAuthAdmin from "../Layouts/LayoutAuthAdmin"
-import { rolesForApi } from "src/Helpers/role_permission"
 import { useAppStore } from "src/StateGlobal/zustand"
 import ManagePromotion from "../Pages/ManageFinancial/Pages/ManagePromotion"
 import ManageInvoice from "../Pages/ManageFinancial/Pages/ManageInvoice"
 import InvoiceDetail from "../Pages/ManageFinancial/Pages/InvoiceDetail"
+import { FEATURE_VIEW_ABILITY, PermissionBoundary, resolveRole } from "src/Authorization"
 
 const AdminLogin = lazy(() => import("../Pages/AdminLogin"))
 const ManageDashboard = lazy(() => import("../Pages/ManageDashboard"))
@@ -50,7 +50,9 @@ const RejectRouter = () => {
 
 const BlockClientForAdmin = () => {
   const { role } = useAppStore()
-  if (role === rolesForApi.CUSTOMER) {
+  if (!role) return <Outlet />
+  const normalizedRole = resolveRole(role)
+  if (!normalizedRole) {
     return <Navigate to={path.NotFound} replace />
   }
   return <Outlet />
@@ -75,7 +77,9 @@ export default function useRouterAdmin() {
                   path: path.AdminDashboard,
                   element: (
                     <Suspense>
-                      <ManageDashboard />
+                      <PermissionBoundary ability={FEATURE_VIEW_ABILITY.dashboard}>
+                        <ManageDashboard />
+                      </PermissionBoundary>
                     </Suspense>
                   )
                 },
@@ -83,7 +87,9 @@ export default function useRouterAdmin() {
                   path: path.AdminTables,
                   element: (
                     <Suspense>
-                      <ManageTable />
+                      <PermissionBoundary ability={FEATURE_VIEW_ABILITY.tables}>
+                        <ManageTable />
+                      </PermissionBoundary>
                     </Suspense>
                   )
                 },
@@ -91,7 +97,9 @@ export default function useRouterAdmin() {
                   path: path.AdminTablesDetail,
                   element: (
                     <Suspense>
-                      <TableDetail />
+                      <PermissionBoundary ability={FEATURE_VIEW_ABILITY.tables}>
+                        <TableDetail />
+                      </PermissionBoundary>
                     </Suspense>
                   )
                 },
@@ -99,7 +107,9 @@ export default function useRouterAdmin() {
                   path: path.AdminTableSessionDetail,
                   element: (
                     <Suspense>
-                      <TableSessionHistoryDetail />
+                      <PermissionBoundary ability={FEATURE_VIEW_ABILITY.tables}>
+                        <TableSessionHistoryDetail />
+                      </PermissionBoundary>
                     </Suspense>
                   )
                 },
@@ -107,7 +117,9 @@ export default function useRouterAdmin() {
                   path: path.AdminReservations,
                   element: (
                     <Suspense>
-                      <ManageReservation />
+                      <PermissionBoundary ability={FEATURE_VIEW_ABILITY.reservations}>
+                        <ManageReservation />
+                      </PermissionBoundary>
                     </Suspense>
                   )
                 },
@@ -115,7 +127,9 @@ export default function useRouterAdmin() {
                   path: path.AdminCategoryDish,
                   element: (
                     <Suspense>
-                      <ManageDishCategory />
+                      <PermissionBoundary ability={FEATURE_VIEW_ABILITY.menuCategory}>
+                        <ManageDishCategory />
+                      </PermissionBoundary>
                     </Suspense>
                   )
                 },
@@ -123,7 +137,9 @@ export default function useRouterAdmin() {
                   path: path.AdminDish,
                   element: (
                     <Suspense>
-                      <ManageDish />
+                      <PermissionBoundary ability={FEATURE_VIEW_ABILITY.dishes}>
+                        <ManageDish />
+                      </PermissionBoundary>
                     </Suspense>
                   )
                 },
@@ -131,7 +147,9 @@ export default function useRouterAdmin() {
                   path: path.AdminMenu,
                   element: (
                     <Suspense>
-                      <ManageMenu />
+                      <PermissionBoundary ability={FEATURE_VIEW_ABILITY.menu}>
+                        <ManageMenu />
+                      </PermissionBoundary>
                     </Suspense>
                   )
                 },
@@ -139,7 +157,9 @@ export default function useRouterAdmin() {
                   path: path.AdminMenuDetail,
                   element: (
                     <Suspense>
-                      <MenuDetail />
+                      <PermissionBoundary ability={FEATURE_VIEW_ABILITY.menu}>
+                        <MenuDetail />
+                      </PermissionBoundary>
                     </Suspense>
                   )
                 },
@@ -147,7 +167,9 @@ export default function useRouterAdmin() {
                   path: path.AdminCustomers,
                   element: (
                     <Suspense>
-                      <ManageCustomer />
+                      <PermissionBoundary ability={FEATURE_VIEW_ABILITY.customers}>
+                        <ManageCustomer />
+                      </PermissionBoundary>
                     </Suspense>
                   )
                 },
@@ -155,7 +177,9 @@ export default function useRouterAdmin() {
                   path: path.AdminStaff,
                   element: (
                     <Suspense>
-                      <ManageEmployee />
+                      <PermissionBoundary ability={FEATURE_VIEW_ABILITY.staff}>
+                        <ManageEmployee />
+                      </PermissionBoundary>
                     </Suspense>
                   )
                 },
@@ -163,7 +187,9 @@ export default function useRouterAdmin() {
                   path: path.AdminStaffDetail,
                   element: (
                     <Suspense>
-                      <EmployeeDetail />
+                      <PermissionBoundary ability={FEATURE_VIEW_ABILITY.staff}>
+                        <EmployeeDetail />
+                      </PermissionBoundary>
                     </Suspense>
                   )
                 },
@@ -171,7 +197,9 @@ export default function useRouterAdmin() {
                   path: path.AdminShifts,
                   element: (
                     <Suspense>
-                      <ManageShift />
+                      <PermissionBoundary ability={FEATURE_VIEW_ABILITY.shifts}>
+                        <ManageShift />
+                      </PermissionBoundary>
                     </Suspense>
                   )
                 },
@@ -179,7 +207,9 @@ export default function useRouterAdmin() {
                   path: path.AdminShiftDetail,
                   element: (
                     <Suspense>
-                      <ShiftAssignmentDetail />
+                      <PermissionBoundary ability={FEATURE_VIEW_ABILITY.shifts}>
+                        <ShiftAssignmentDetail />
+                      </PermissionBoundary>
                     </Suspense>
                   )
                 },
@@ -187,7 +217,9 @@ export default function useRouterAdmin() {
                   path: path.AdminPayroll,
                   element: (
                     <Suspense>
-                      <ManagePayroll />
+                      <PermissionBoundary ability={FEATURE_VIEW_ABILITY.payroll}>
+                        <ManagePayroll />
+                      </PermissionBoundary>
                     </Suspense>
                   )
                 },
@@ -195,7 +227,9 @@ export default function useRouterAdmin() {
                   path: path.AdminPayrollDetail,
                   element: (
                     <Suspense>
-                      <PayrollDetail />
+                      <PermissionBoundary ability={FEATURE_VIEW_ABILITY.payroll}>
+                        <PayrollDetail />
+                      </PermissionBoundary>
                     </Suspense>
                   )
                 },
@@ -203,7 +237,9 @@ export default function useRouterAdmin() {
                   path: path.AdminPromotions,
                   element: (
                     <Suspense>
-                      <ManagePromotion />
+                      <PermissionBoundary ability={FEATURE_VIEW_ABILITY.promotions}>
+                        <ManagePromotion />
+                      </PermissionBoundary>
                     </Suspense>
                   )
                 },
@@ -211,7 +247,9 @@ export default function useRouterAdmin() {
                   path: path.AdminInvoices,
                   element: (
                     <Suspense>
-                      <ManageInvoice />
+                      <PermissionBoundary ability={FEATURE_VIEW_ABILITY.invoices}>
+                        <ManageInvoice />
+                      </PermissionBoundary>
                     </Suspense>
                   )
                 },
@@ -219,7 +257,9 @@ export default function useRouterAdmin() {
                   path: path.AdminInvoicesDetail,
                   element: (
                     <Suspense>
-                      <InvoiceDetail />
+                      <PermissionBoundary ability={FEATURE_VIEW_ABILITY.invoices}>
+                        <InvoiceDetail />
+                      </PermissionBoundary>
                     </Suspense>
                   )
                 },
@@ -227,7 +267,9 @@ export default function useRouterAdmin() {
                   path: path.AdminIngredients,
                   element: (
                     <Suspense>
-                      <ManageIngredient />
+                      <PermissionBoundary ability={FEATURE_VIEW_ABILITY.ingredients}>
+                        <ManageIngredient />
+                      </PermissionBoundary>
                     </Suspense>
                   )
                 },
@@ -235,7 +277,9 @@ export default function useRouterAdmin() {
                   path: path.AdminSuppliers,
                   element: (
                     <Suspense>
-                      <ManageSupplier />
+                      <PermissionBoundary ability={FEATURE_VIEW_ABILITY.suppliers}>
+                        <ManageSupplier />
+                      </PermissionBoundary>
                     </Suspense>
                   )
                 },
@@ -243,7 +287,9 @@ export default function useRouterAdmin() {
                   path: path.AdminWarehouseIn,
                   element: (
                     <Suspense>
-                      <ManageStockImport />
+                      <PermissionBoundary ability={FEATURE_VIEW_ABILITY.warehouseIn}>
+                        <ManageStockImport />
+                      </PermissionBoundary>
                     </Suspense>
                   )
                 },
@@ -251,7 +297,9 @@ export default function useRouterAdmin() {
                   path: path.AdminWarehouseOut,
                   element: (
                     <Suspense>
-                      <ManageStockExport />
+                      <PermissionBoundary ability={FEATURE_VIEW_ABILITY.warehouseOut}>
+                        <ManageStockExport />
+                      </PermissionBoundary>
                     </Suspense>
                   )
                 },
@@ -259,7 +307,9 @@ export default function useRouterAdmin() {
                   path: path.AdminInventoryLoss,
                   element: (
                     <Suspense>
-                      <ManageStockLoss />
+                      <PermissionBoundary ability={FEATURE_VIEW_ABILITY.inventoryLoss}>
+                        <ManageStockLoss />
+                      </PermissionBoundary>
                     </Suspense>
                   )
                 },
@@ -267,7 +317,9 @@ export default function useRouterAdmin() {
                   path: path.AdminRoles,
                   element: (
                     <Suspense>
-                      <ManageRoles />
+                      <PermissionBoundary ability={FEATURE_VIEW_ABILITY.roles}>
+                        <ManageRoles />
+                      </PermissionBoundary>
                     </Suspense>
                   )
                 },
@@ -275,7 +327,9 @@ export default function useRouterAdmin() {
                   path: path.AdminPermissionMatrix,
                   element: (
                     <Suspense>
-                      <ManagePermissionMatrix />
+                      <PermissionBoundary ability={FEATURE_VIEW_ABILITY.permissionMatrix}>
+                        <ManagePermissionMatrix />
+                      </PermissionBoundary>
                     </Suspense>
                   )
                 }
