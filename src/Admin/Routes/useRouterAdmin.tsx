@@ -21,6 +21,7 @@ const MenuDetail = lazy(() => import("../Pages/ManageDished/Pages/MenuDetail"))
 
 const ManageCustomer = lazy(() => import("../Pages/ManageCustomer"))
 const ManageEmployee = lazy(() => import("../Pages/ManageEmployee"))
+const EmployeeDetail = lazy(() => import("../Pages/ManageEmployee/Pages/EmployeeDetail"))
 const ManageShift = lazy(() => import("../Pages/ManageShift"))
 const ShiftAssignmentDetail = lazy(() => import("../Pages/ManageShift/components/ShiftAssignmentDetail"))
 const ManagePayroll = lazy(() => import("../Pages/ManagePayroll"))
@@ -155,6 +156,14 @@ export default function useRouterAdmin() {
                   element: (
                     <Suspense>
                       <ManageEmployee />
+                    </Suspense>
+                  )
+                },
+                {
+                  path: path.AdminStaffDetail,
+                  element: (
+                    <Suspense>
+                      <EmployeeDetail />
                     </Suspense>
                   )
                 },

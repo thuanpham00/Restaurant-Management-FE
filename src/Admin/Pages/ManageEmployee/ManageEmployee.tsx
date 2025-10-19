@@ -17,7 +17,7 @@ import {
   Switch
 } from "antd"
 import { isUndefined, omitBy } from "lodash"
-import { Users, Edit, Trash2, Plus, Filter, RotateCcw } from "lucide-react"
+import { Users, Edit, Trash2, Plus, Filter, RotateCcw, Eye } from "lucide-react"
 import { Fragment, useState, useEffect, useMemo } from "react"
 import { Helmet } from "react-helmet-async"
 import { createSearchParams, useNavigate, useSearchParams } from "react-router-dom"
@@ -429,6 +429,16 @@ export default function ManageEmployee() {
       key: "action",
       render: (_: any, record: Employee) => (
         <div className="flex gap-2">
+          <Button
+            size="small"
+            icon={<Eye size={16} />}
+            onClick={(e) => {
+              e.stopPropagation()
+              navigate(path.AdminStaffDetail.replace(":id", record.id))
+            }}
+          >
+            Chi tiết
+          </Button>
           <Button
             size="small"
             type="primary"

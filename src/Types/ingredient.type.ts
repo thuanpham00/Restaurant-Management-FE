@@ -12,6 +12,8 @@ export type Ingredient = {
   created_at: string
   updated_at: string
   category: IngredientCategory
+  image?: string | null
+  image_url?: string | null
 }
 
 export type IngredientFormInput = {
@@ -22,6 +24,7 @@ export type IngredientFormInput = {
   max_stock?: string | number
   is_active?: boolean
   ingredient_category_id?: string
+  image?: File | null
 }
 
 export type IngredientCreateInput = {
@@ -32,6 +35,7 @@ export type IngredientCreateInput = {
   max_stock?: string | number
   is_active?: boolean
   ingredient_category_id: string
+  image?: File | null
 }
 
 export type queryParamConfigIngredient = {

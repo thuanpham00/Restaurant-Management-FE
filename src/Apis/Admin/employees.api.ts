@@ -40,8 +40,8 @@ export const employeesAPI = {
     )
   },
 
-  getDetail: (id: string) => {
-    return Http.get<SuccessResponse<Employee>>(`/api/employees/${id}`)
+  getDetail: (id: string, signal?: AbortSignal) => {
+    return Http.get<SuccessResponse<Employee>>(`/api/employees/${id}` , { signal })
   },
 
   create: (data: EmployeeCreateInput) => {

@@ -12,8 +12,10 @@ import {
   Switch,
   Table,
   Tag,
-  Descriptions
+  Descriptions,
+  Upload
 } from "antd"
+import type { UploadFile } from "antd/es/upload/interface"
 import { ColumnsType } from "antd/es/table"
 import { isUndefined, omitBy } from "lodash"
 import { Plus, Filter, RotateCcw, Edit, Trash2, AlertTriangle } from "lucide-react"
@@ -28,6 +30,14 @@ import { Ingredient, IngredientCreateInput, IngredientFormInput, queryParamConfi
 import { PaginatedResponse } from "src/Types/utils.type"
 
 const { Option } = Select
+
+const getBase64 = (file: File) =>
+  new Promise<string>((resolve, reject) => {
+    const reader = new FileReader()
+    reader.readAsDataURL(file)
+    reader.onload = () => resolve(reader.result as string)
+    reader.onerror = (error) => reject(error)
+  })
 
 export default function IngredientListTab() {
   const navigate = useNavigate()
@@ -58,6 +68,55 @@ export default function IngredientListTab() {
   const [selectedIngredient, setSelectedIngredient] = useState<Ingredient | null>(null)
   const [form] = Form.useForm()
   const [filterForm] = Form.useForm()
+  const [fileList, setFileList] = useState<UploadFile[]>([])
+  const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null)
+  const [previewOpen, setPreviewOpen] = useState(false)
+  const [previewImage, setPreviewImage] = useState<string>("")
+  const [previewTitle, setPreviewTitle] = useState<string>("")
+
+  const handleUploadChange = ({ fileList: newFileList }: { fileList: UploadFile[] }) => {
+    const latestFileList = newFileList
+      .slice(-1)
+      .map((file) => {
+        if (file.originFileObj instanceof File) {
+          const previewUrl = URL.createObjectURL(file.originFileObj as File)
+          return {
+            ...file,
+            status: "done" as UploadFile["status"],
+            thumbUrl: previewUrl
+          }
+        }
+        return { ...file, status: "done" as UploadFile["status"] }
+      })
+    setFileList(latestFileList)
+    const latestFile = latestFileList[0]
+
+    if (latestFile && latestFile.originFileObj) {
+      setSelectedImageFile(latestFile.originFileObj as File)
+    }
+
+    if (!latestFile) {
+      setSelectedImageFile(null)
+    }
+  }
+
+  const handlePreview = async (file: UploadFile) => {
+    if (!file.url && !file.preview && file.originFileObj) {
+      file.preview = await getBase64(file.originFileObj as File)
+    }
+
+  const previewSrc = (file.url ?? file.thumbUrl ?? (file.preview as string) ?? "") as string
+    setPreviewImage(previewSrc)
+    setPreviewOpen(true)
+    setPreviewTitle(file.name || "Ảnh nguyên liệu")
+  }
+
+  const uploadButton = (
+    <div className="flex flex-col items-center justify-center text-gray-500">
+      <Plus size={20} />
+      <div className="mt-1 text-xs">Tải ảnh</div>
+    </div>
+  )
 
   // ========== QUERIES ==========
   const { data, isFetching } = useQuery({
@@ -101,6 +160,16 @@ export default function IngredientListTab() {
     })
   }, [filterForm, queryParams, categoryIdsFromUrl])
 
+  useEffect(() => {
+    return () => {
+      fileList.forEach((file) => {
+        if (file.thumbUrl && file.thumbUrl.startsWith("blob:")) {
+          URL.revokeObjectURL(file.thumbUrl)
+        }
+      })
+    }
+  }, [fileList])
+
   // ========== MUTATIONS ==========
   const createMutation = useMutation({
     mutationFn: (values: IngredientCreateInput) => {
@@ -111,6 +180,8 @@ export default function IngredientListTab() {
       queryClient.invalidateQueries({ queryKey: ["listIngredients"] })
       setIsModalOpen(false)
       form.resetFields()
+      setFileList([])
+      setSelectedImageFile(null)
     },
     onError: (error: any) => {
       toast.error(error?.response?.data?.message || "Thêm nguyên liệu thất bại", { autoClose: 1500 })
@@ -126,6 +197,8 @@ export default function IngredientListTab() {
       queryClient.invalidateQueries({ queryKey: ["listIngredients"] })
       setIsModalOpen(false)
       setEditingId(null)
+      setFileList([])
+      setSelectedImageFile(null)
     },
     onError: (error: any) => {
       toast.error(error?.response?.data?.message || "Cập nhật thất bại", { autoClose: 1500 })
@@ -145,6 +218,7 @@ export default function IngredientListTab() {
 
   // ========== HANDLERS ==========
   const handleOpenModal = (record?: Ingredient) => {
+    setSelectedImageFile(null)
     if (record) {
       setEditingId(record.id)
       form.setFieldsValue({
@@ -156,10 +230,25 @@ export default function IngredientListTab() {
         is_active: record.is_active,
         ingredient_category_id: record.ingredient_category_id
       })
+      const existingImage = record.image_url || record.image
+      setFileList(
+        existingImage
+          ? [
+              {
+                uid: record.id,
+                name: record.name,
+                status: "done",
+                url: existingImage,
+                thumbUrl: existingImage
+              } as UploadFile
+            ]
+          : []
+      )
     } else {
       setEditingId(null)
       form.resetFields()
       form.setFieldsValue({ is_active: true })
+      setFileList([])
     }
     setIsModalOpen(true)
   }
@@ -167,10 +256,21 @@ export default function IngredientListTab() {
   const handleSubmit = async () => {
     try {
       const values = await form.validateFields()
+      const payload = {
+        name: values.name,
+        unit: values.unit,
+        ingredient_category_id: values.ingredient_category_id,
+        current_stock: values.current_stock ?? undefined,
+        min_stock: values.min_stock,
+        max_stock: values.max_stock ?? undefined,
+        is_active: values.is_active ?? true,
+        image: selectedImageFile ?? null
+      }
+
       if (editingId) {
-        updateMutation.mutate(values)
+        updateMutation.mutate(payload)
       } else {
-        createMutation.mutate(values as IngredientCreateInput)
+        createMutation.mutate(payload as IngredientCreateInput)
       }
     } catch (error) {
       console.log("Validation Failed:", error)
@@ -266,6 +366,20 @@ export default function IngredientListTab() {
       key: "id",
       width: 120,
       render: (val) => <div className="text-left font-mono text-sm">{val}</div>
+    },
+    {
+      title: <div className="text-left">Hình ảnh</div>,
+      key: "image",
+      width: 120,
+      align: "center",
+      render: (_: any, record: Ingredient) => {
+        const imageSrc = record.image_url || record.image
+        return imageSrc ? (
+          <img src={imageSrc} alt={record.name} className="h-14 w-14 object-cover rounded-md border" />
+        ) : (
+          <span className="text-xs italic text-gray-400">Không có</span>
+        )
+      }
     },
     {
       title: <div className="text-left">Tên nguyên liệu</div>,
@@ -458,6 +572,8 @@ export default function IngredientListTab() {
           setIsModalOpen(false)
           setEditingId(null)
           form.resetFields()
+          setFileList([])
+          setSelectedImageFile(null)
         }}
         okText={editingId ? "Cập nhật" : "Thêm"}
         cancelText="Hủy"
@@ -502,6 +618,21 @@ export default function IngredientListTab() {
             </Select>
           </Form.Item>
 
+          <Form.Item label={<span className="text-sm">Hình ảnh</span>}>
+            <Upload
+              listType="picture-card"
+              fileList={fileList}
+              onChange={handleUploadChange}
+              onPreview={handlePreview}
+              beforeUpload={() => false}
+              accept="image/jpeg,image/png"
+              maxCount={1}
+            >
+              {fileList.length >= 1 ? null : uploadButton}
+            </Upload>
+            <div className="text-xs text-gray-500">Hỗ trợ định dạng JPG, PNG và kích thước tối đa 1MB.</div>
+          </Form.Item>
+
           <div className="grid grid-cols-3 gap-4">
             <Form.Item
               name="current_stock"
@@ -530,6 +661,19 @@ export default function IngredientListTab() {
             <Switch checkedChildren="Hoạt động" unCheckedChildren="Ngừng" />
           </Form.Item>
         </Form>
+      </Modal>
+
+      <Modal
+        open={previewOpen}
+        title={previewTitle}
+        footer={null}
+        onCancel={() => {
+          setPreviewOpen(false)
+          setPreviewImage("")
+          setPreviewTitle("")
+        }}
+      >
+        <img alt={previewTitle} style={{ width: "100%" }} src={previewImage} />
       </Modal>
 
       {/* Detail Modal */}
@@ -572,6 +716,17 @@ export default function IngredientListTab() {
             <Descriptions.Item label={<span className="text-sm">Tên nguyên liệu</span>} span={2}>
               <span className="font-semibold text-sm">{selectedIngredient.name}</span>
             </Descriptions.Item>
+            {(selectedIngredient.image_url || selectedIngredient.image) && (
+              <Descriptions.Item label={<span className="text-sm">Hình ảnh</span>} span={2}>
+                <div className="flex items-center justify-center">
+                  <img
+                    src={selectedIngredient.image_url || selectedIngredient.image || ""}
+                    alt={selectedIngredient.name}
+                    className="max-h-48 rounded-md border object-cover"
+                  />
+                </div>
+              </Descriptions.Item>
+            )}
             <Descriptions.Item label={<span className="text-sm">Danh mục</span>} span={2}>
               <Tag color="blue" className="text-sm">{selectedIngredient.category?.name}</Tag>
             </Descriptions.Item>

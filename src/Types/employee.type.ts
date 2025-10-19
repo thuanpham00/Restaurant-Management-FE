@@ -33,7 +33,7 @@ export type Employee = {
 }
 
 export type EmployeeFormInput = {
-  full_name: string
+  full_name?: string
   phone?: string
   gender?: "male" | "female" | "other"
   address?: string

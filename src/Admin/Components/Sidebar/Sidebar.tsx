@@ -14,10 +14,7 @@ import {
   FileOutput,
   Scale,
   Receipt,
-  DollarSign,
   Tag,
-  BarChart3,
-  UserCog,
   Shield,
   Info,
   LogOut,
@@ -28,7 +25,7 @@ import {
 } from "lucide-react"
 import { path } from "src/Constants/path"
 import SidebarItem from "../SidebarItem"
-import React from "react"
+import React, { useMemo } from "react"
 import { Menu, MenuProps } from "antd"
 import "./Sidebar.css"
 import { assets } from "src/Assets/assets"
@@ -50,7 +47,7 @@ interface MenuConfig {
 export default function Sidebar() {
   const location = useLocation()
   const navigate = useNavigate()
-  const { setIsAuthenticated, setAvatar, setNameUser, setRole, setEmployeeId } = useAppStore()
+  const { setIsAuthenticated, setAvatar, setNameUser, setRole, setEmployeeId, employeeId } = useAppStore()
 
   // Centralized menu configuration with meaningful keys
   const menuConfig: MenuConfig = {
@@ -244,6 +241,13 @@ export default function Sidebar() {
     }
   ]
 
+  const accountPath = useMemo(() => {
+    if (employeeId) {
+      return path.AdminStaffDetail.replace(":id", employeeId)
+    }
+    return path.AdminProfile
+  }, [employeeId])
+
   const logoutMutation = useMutation({
     mutationFn: () => {
       return authAPI.logout()
@@ -291,8 +295,8 @@ export default function Sidebar() {
         <div className="absolute bottom-0 left-0 w-full">
           <div className="m-4">
             <Link
-              to={path.AdminProfile}
-              className={`text-[14px] flex items-center gap-1 px-3 py-2 w-full hover:text-primaryBlue hover:underline duration-100 ${checkActive(path.AdminProfile) ? "text-primaryBlue font-semibold" : "text-white"}`}
+              to={accountPath}
+              className={`text-[14px] flex items-center gap-1 px-3 py-2 w-full hover:text-primaryBlue hover:underline duration-100 ${checkActive(accountPath) ? "text-primaryBlue font-semibold" : "text-white"}`}
             >
               Thông tin tài khoản
               <Info size={16} />
