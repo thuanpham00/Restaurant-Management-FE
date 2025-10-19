@@ -24,6 +24,17 @@ export default function TableSessionItem({
   mainTableId?: string | number | null
   subTables?: any[]
 }) {
+  const handleToggleSelect = () => {
+    if (!table.session_id || !setMergeTableSessionSelected) return
+    setMergeTableSessionSelected((prev) => {
+      const exists = (prev as any[]).some((item) => item === table.session_id)
+      if (exists) {
+        return (prev as any[]).filter((item) => item !== table.session_id)
+      }
+      return [...(prev as any[]), table.session_id]
+    })
+  }
+
   const getStatusTag = (table: TableSession) => {
     if (!table.session_id)
       return (
@@ -119,10 +130,9 @@ export default function TableSessionItem({
           <Checkbox
             className="absolute top-2 right-2"
             checked={(mergeTableSessionSelected as any[]).some((item) => item === table.session_id)}
-            onChange={() => {
-              if (setMergeTableSessionSelected) {
-                setMergeTableSessionSelected((prev) => [...prev, table.session_id])
-              }
+            onChange={(event) => {
+              event.stopPropagation()
+              handleToggleSelect()
             }}
           />
         )}
@@ -140,19 +150,6 @@ export default function TableSessionItem({
 
         <div className="flex items-center gap-2 mb-4">
           <h2 className="text-xl text-left font-semibold text-shadow mb-0">Bàn {table.table_number}</h2>
-          {mainTableId && subTables && (
-            <>
-              {table.dining_table_id === mainTableId ? (
-                <Tag color="blue" className="text-[15px] py-1">
-                  Bàn chính
-                </Tag>
-              ) : subTables.includes(table.dining_table_id) ? (
-                <Tag color="gold" className="text-[15px] py-1">
-                  Bàn phụ
-                </Tag>
-              ) : null}
-            </>
-          )}
         </div>
 
         <div className="flex flex-col justify-start items-start gap-1">
@@ -192,14 +189,7 @@ export default function TableSessionItem({
       {type_show === "merge_table" ? (
         <button
           className={`block relative w-full rounded-xl overflow-hidden cursor-pointer transition duration-300 hover:shadow-lg ${mergeTableSessionSelected?.some((item) => item === table.session_id) ? " border-green-500 shadow-[0_0_14px_#22c55e]" : "border-transparent"}`}
-          onClick={() => {
-            const findTableSession = (mergeTableSessionSelected as any[]).find((item) => item === table.session_id)
-            if (findTableSession) {
-              setMergeTableSessionSelected?.((prev) => prev.filter((item) => item !== table.session_id))
-            } else {
-              setMergeTableSessionSelected?.((prev) => [...prev, table.session_id])
-            }
-          }}
+          onClick={handleToggleSelect}
         >
           <CardContent />
 

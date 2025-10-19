@@ -1,12 +1,30 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Modal, Form, Select, Input, Table, InputNumber, Button, Alert, Space, Typography, Divider, Card, Row, Col } from "antd"
+import {
+  Modal,
+  Form,
+  Select,
+  Input,
+  Table,
+  InputNumber,
+  Button,
+  Alert,
+  Space,
+  Typography,
+  Divider,
+  Card,
+  Row,
+  Col,
+  Tag
+} from "antd"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { useState, useMemo } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { toast } from "react-toastify"
 import { tableSessionAPI } from "src/Apis/Admin"
 import { TableSessionOrder } from "src/Types/tableSession.type"
 import { ColumnsType } from "antd/es/table"
 import { ArrowRight, Info } from "lucide-react"
+import type { TableSession } from "src/Types/tableSession.type"
+import { TableSessionStatus, TableSessionType } from "src/Types/product.type"
 
 const { Text } = Typography
 const { TextArea } = Input
@@ -67,12 +85,14 @@ export default function SplitTableModal({
   })
 
   const listEmptyTables = useMemo(() => {
-    const data = dataEmptyTables?.data?.data?.data || []
-    return data.filter((item: any) => item.dining_table_id !== sourceDiningTableId)
+    const tables = ((dataEmptyTables?.data.data) ?? []) as TableSession[]
+    return tables
+      .filter((table) => table.dining_table_id !== sourceDiningTableId && !table.session_id)
+      .sort((a, b) => Number(a.table_number) - Number(b.table_number))
   }, [dataEmptyTables, sourceDiningTableId])
 
   // Lấy danh sách bàn đang active (để chọn bàn đích)
-  const { data: dataTableSessionActive } = useQuery({
+  const { data: dataTableSessionActive, isFetching: isFetchingActiveTables } = useQuery({
     queryKey: ["listTableSessionActiveForSplit"],
     queryFn: () => {
       const controller = new AbortController()
@@ -89,16 +109,116 @@ export default function SplitTableModal({
     retry: 0
   })
 
-  const listTableSessionActive = useMemo(() => {
-    const data = dataTableSessionActive?.data?.data?.data || []
-    // Lọc bỏ bàn nguồn và chỉ lấy bàn đang active
-    return data.filter(
-      (item: any) =>
-        item.session_id !== sourceSessionId &&
-        item.session_status === 1 &&
-        item.dining_table_id !== sourceDiningTableId
-    )
-  }, [dataTableSessionActive, sourceSessionId, sourceDiningTableId])
+  const activeTables = useMemo(() => {
+    return ((dataTableSessionActive?.data.data) ?? []) as TableSession[]
+  }, [dataTableSessionActive])
+
+  type ActiveSessionGroup = {
+    sessionId: string
+    label: string
+    main: TableSession
+    subs: TableSession[]
+    totalCapacity: number
+    totalTables: number
+  }
+
+  const groupedActiveSessions = useMemo<ActiveSessionGroup[]>(() => {
+    if (!activeTables.length) {
+      return []
+    }
+
+    const mainSessionMap = new Map<string, { main: TableSession; subs: TableSession[] }>()
+
+    activeTables.forEach((table) => {
+      const sessionId = table.session_id
+      if (!sessionId) return
+      if (table.merged_into_session_id) return
+      if (table.session_status !== TableSessionStatus.Active) return
+      if (sessionId === sourceSessionId) return
+      if (table.dining_table_id === sourceDiningTableId) return
+
+      mainSessionMap.set(sessionId, {
+        main: table,
+        subs: []
+      })
+    })
+
+    if (mainSessionMap.size === 0) {
+      return []
+    }
+
+    activeTables.forEach((table) => {
+      const parentId = table.merged_into_session_id
+      if (!parentId) return
+      const group = mainSessionMap.get(parentId)
+      if (!group) return
+      if (table.session_id === sourceSessionId || table.dining_table_id === sourceDiningTableId) return
+      group.subs.push(table)
+    })
+
+    const groups: ActiveSessionGroup[] = []
+
+    mainSessionMap.forEach(({ main, subs }) => {
+      const orderedSubs = [...subs].sort((a, b) => Number(a.table_number) - Number(b.table_number))
+      const totalCapacity = orderedSubs.reduce(
+        (sum, item) => sum + (Number(item.capacity) || 0),
+        Number(main.capacity) || 0
+      )
+
+      groups.push({
+        sessionId: main.session_id as string,
+        label: `Bàn ${main.table_number}${orderedSubs.length ? ` (Gộp ${orderedSubs.length + 1} bàn)` : ""}`,
+        main,
+        subs: orderedSubs,
+        totalCapacity,
+        totalTables: orderedSubs.length + 1
+      })
+    })
+
+    groups.sort((a, b) => Number(a.main.table_number) - Number(b.main.table_number))
+
+    return groups
+  }, [activeTables, sourceDiningTableId, sourceSessionId])
+
+  const getSessionStatusMeta = (status: number | null | undefined) => {
+    switch (status) {
+      case TableSessionStatus.Pending:
+        return { color: "orange", label: "Đang chờ" }
+      case TableSessionStatus.Active:
+        return { color: "blue", label: "Đang phục vụ" }
+      case TableSessionStatus.Completed:
+        return { color: "gray", label: "Hoàn tất" }
+      case TableSessionStatus.Cancelled:
+        return { color: "red", label: "Đã hủy" }
+      case TableSessionStatus.Merged:
+        return { color: "magenta", label: "Đã gộp" }
+      default:
+        return null
+    }
+  }
+
+  const getSessionTypeMeta = (type: number | null | undefined) => {
+    switch (type) {
+      case TableSessionType.Offline:
+        return { color: "default", label: "Offline" }
+      case TableSessionType.Merge:
+        return { color: "gold", label: "Gộp bàn" }
+      case TableSessionType.Reservation:
+        return { color: "cyan", label: "Đặt trước" }
+      case TableSessionType.Split:
+        return { color: "purple", label: "Tách bàn" }
+      default:
+        return null
+    }
+  }
+
+  useEffect(() => {
+    if (targetType === "existing") {
+      form.setFieldsValue({ target_dining_table_id: undefined })
+    } else {
+      form.setFieldsValue({ target_session_id: undefined })
+    }
+  }, [targetType, form])
 
   // Tính toán remaining amount
   const remainingAmount = useMemo(() => {
@@ -441,10 +561,24 @@ export default function SplitTableModal({
               name="target_dining_table_id"
               rules={[{ required: true, message: "Vui lòng chọn bàn đích" }]}
             >
-              <Select placeholder="Chọn bàn trống" loading={!dataEmptyTables}>
-                {listEmptyTables.map((table: any) => (
-                  <Select.Option key={table.dining_table_id} value={table.dining_table_id}>
-                    Bàn {table.table_number} - {table.capacity} chỗ (Trống)
+              <Select
+                placeholder="Chọn bàn trống"
+                loading={visible && targetType === "new" && !dataEmptyTables}
+                optionLabelProp="label"
+                notFoundContent="Không có bàn trống phù hợp"
+              >
+                {listEmptyTables.map((table) => (
+                  <Select.Option
+                    key={table.dining_table_id}
+                    value={table.dining_table_id}
+                    label={`Bàn ${table.table_number}`}
+                  >
+                    <div className="flex flex-col">
+                      <span>
+                        Bàn {table.table_number} · {table.capacity} chỗ
+                      </span>
+                      <span className="text-xs text-gray-500">Trạng thái: Trống</span>
+                    </div>
                   </Select.Option>
                 ))}
               </Select>
@@ -455,10 +589,47 @@ export default function SplitTableModal({
               name="target_session_id"
               rules={[{ required: true, message: "Vui lòng chọn bàn đích" }]}
             >
-              <Select placeholder="Chọn bàn đang phục vụ" loading={!dataTableSessionActive}>
-                {listTableSessionActive.map((table: any) => (
-                  <Select.Option key={table.session_id} value={table.session_id}>
-                    Bàn {table.table_number} - {table.capacity} chỗ
+              <Select
+                placeholder="Chọn bàn đang phục vụ"
+                optionLabelProp="label"
+                loading={isFetchingActiveTables}
+                showSearch
+                filterOption={(input, option) =>
+                  (option?.label as string)?.toLowerCase().includes(input.toLowerCase()) ?? false
+                }
+                notFoundContent="Không tìm thấy bàn đang phục vụ phù hợp"
+              >
+                {groupedActiveSessions.map((session) => (
+                  <Select.Option key={session.sessionId} value={session.sessionId} label={session.label}>
+                    <div className="flex flex-col gap-1">
+                      <div className="flex flex-wrap items-center gap-2 text-sm">
+                        <span className="font-semibold text-gray-900">Bàn {session.main.table_number}</span>
+                        {(() => {
+                          const statusMeta = getSessionStatusMeta(session.main.session_status)
+                          return statusMeta ? <Tag color={statusMeta.color}>{statusMeta.label}</Tag> : null
+                        })()}
+                        {(() => {
+                          const typeMeta = getSessionTypeMeta(session.main.session_type)
+                          return typeMeta ? <Tag color={typeMeta.color}>{typeMeta.label}</Tag> : null
+                        })()}
+                      </div>
+                      <span className="text-xs text-gray-500">
+                        Tổng {session.totalTables} bàn · Sức chứa {session.totalCapacity} người
+                      </span>
+                      {session.subs.length > 0 && (
+                        <div className="mt-1 flex flex-wrap gap-1 text-xs">
+                          {session.subs.map((sub) => {
+                            const subStatusMeta = getSessionStatusMeta(sub.session_status)
+                            return (
+                              <Tag key={sub.dining_table_id} color={subStatusMeta?.color || "default"}>
+                                Bàn {sub.table_number}
+                                {subStatusMeta ? ` · ${subStatusMeta.label}` : ""}
+                              </Tag>
+                            )
+                          })}
+                        </div>
+                      )}
+                    </div>
                   </Select.Option>
                 ))}
               </Select>

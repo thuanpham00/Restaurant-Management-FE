@@ -187,7 +187,13 @@ export default function TableDetail() {
   const idDiningTable = dataTable.dining_table_id
 
   // ✅ Query 1: Detail Table Session - Always fresh, no cache
-  const { data, isFetching, isError, error } = useRealtimeQuery(
+  const {
+    data,
+    isFetching: isFetchingTableDetail,
+    isError,
+    error,
+    isLoading: isLoadingTableDetail
+  } = useRealtimeQuery(
     ["detailTableSession", idDiningTable],
     () => {
       const controller = new AbortController()
@@ -201,8 +207,14 @@ export default function TableDetail() {
 
   const dataTableSessionDetail = data?.data?.data as TableSessionDetail
 
+  const isInitialTableDetailLoading = isLoadingTableDetail && !dataTableSessionDetail && !isError
+
   // ✅ Query 2: Table Session Order - Auto refetch every 15 seconds
-  const { data: dataTableSessionOrderRes, isFetching: isFetchingDataTableSessionOrder } = useRealtimeQuery(
+  const {
+    data: dataTableSessionOrderRes,
+    isFetching: isFetchingDataTableSessionOrder,
+    isLoading: isLoadingDataTableSessionOrder
+  } = useRealtimeQuery(
     ["detailTableSessionOrder", dataTableSessionDetail?.session_id],
     () => {
       const controller = new AbortController()
@@ -239,6 +251,7 @@ export default function TableDetail() {
   })()
 
   const dataTableSessionOrder = dataTableSessionOrderMerged
+  const isInitialOrderLoading = isLoadingDataTableSessionOrder && !dataTableSessionOrder
 
   const [hasCurrentSession, setHasCurrentSession] = useState<boolean | null>(null)
   const [listTablePending, setListTablePending] = useState<HistoryTableSessionType[]>([])
@@ -260,7 +273,11 @@ export default function TableDetail() {
   )
 
   // ✅ Query 4: List Invoices for Table Session - Auto refetch every 20 seconds
-  const { data: dataListInvoices } = useRealtimeQuery(
+  const {
+    data: dataListInvoices,
+    isFetching: isFetchingInvoices,
+    isLoading: isLoadingInvoices
+  } = useRealtimeQuery(
     ["listInvoicesForTableSession", dataTableSessionDetail?.session_id],
     () => {
       const controller = new AbortController()
@@ -281,6 +298,7 @@ export default function TableDetail() {
 
   const invoiceList = dataListInvoices?.data?.data?.data || []
   const detailInvoice = invoiceList[0] || null // For backward compatibility
+  const isInitialInvoiceLoading = isLoadingInvoices && invoiceList.length === 0
 
   // ✅ Calculate overall payment status across all invoices
   const paymentStatus = useMemo(() => {
@@ -447,7 +465,11 @@ export default function TableDetail() {
   const [showInvoiceDetailModal, setShowInvoiceDetailModal] = useState(false)
   const [showCreateInvoiceModal, setShowCreateInvoiceModal] = useState(false)
 
-  const { data: listDishMenuInActiveData, isLoading: isLoadingDishes } = useQuery({
+  const {
+    data: listDishMenuInActiveData,
+    isLoading: isLoadingDishes,
+    isFetching: isFetchingDishes
+  } = useQuery({
     queryKey: ["ListDishInMenuActive", dataTableSessionDetail?.session_id],
     queryFn: () => menusAPI.getMenuItemFromMenuActive(),
     enabled: isModalOpen
@@ -884,15 +906,19 @@ export default function TableDetail() {
           }}
         >
           {hasCurrentSession === true ? (
-            isFetching ? (
+            isInitialTableDetailLoading ? (
               <div className="flex justify-center items-center flex-col h-[200px]">
-                <Spin tip="Đang tải dữ liệu..." size="large" spinning={isFetching}>
+                <Spin tip="Đang tải dữ liệu..." size="large" spinning>
                   <div style={{ minHeight: 100, width: 300, marginTop: 10 }} />
                 </Spin>
               </div>
             ) : (
-              <div>
-                <Collapse defaultActiveKey={["sessionInfo", "orderInfo"]} bordered={false} className="mb-4">
+              <Spin
+                spinning={isFetchingTableDetail && !isInitialTableDetailLoading}
+                tip="Đang đồng bộ dữ liệu..."
+              >
+                <div>
+                  <Collapse defaultActiveKey={["sessionInfo", "orderInfo"]} bordered={false} className="mb-4">
                   <Panel
                     key="sessionInfo"
                     header={<h2 className="text-lg font-semibold text-gray-700">Thông tin phiên bàn hiện tại</h2>}
@@ -1003,15 +1029,19 @@ export default function TableDetail() {
                       </h2>
                     }
                   >
-                    {isFetchingDataTableSessionOrder ? (
+                    {isInitialOrderLoading ? (
                       <div className="flex justify-center items-center flex-col h-[200px]">
-                        <Spin tip="Đang tải dữ liệu..." size="large" spinning={isFetching}>
+                        <Spin tip="Đang tải dữ liệu món..." size="large" spinning>
                           <div style={{ minHeight: 100, width: 300, marginTop: 10 }} />
                         </Spin>
                       </div>
                     ) : (
-                      <>
-                        <Descriptions
+                      <Spin
+                        spinning={isFetchingDataTableSessionOrder && !isInitialOrderLoading}
+                        tip="Đang đồng bộ món ăn..."
+                      >
+                        <div>
+                          <Descriptions
                           bordered
                           column={2}
                           size="middle"
@@ -1175,7 +1205,8 @@ export default function TableDetail() {
                             Cập nhật order
                           </Button>
                         </div>
-                      </>
+                        </div>
+                      </Spin>
                     )}
                   </Panel>
 
@@ -1184,20 +1215,31 @@ export default function TableDetail() {
                     header={<h2 className="text-lg font-semibold text-gray-700">Hóa đơn ({invoiceList.length})</h2>}
                   >
                     <div style={{ padding: 16 }}>
-                      <InvoiceListSummary
-                        invoices={invoiceList}
-                        tableSessionId={dataTableSessionDetail?.session_id}
-                        onViewDetail={(invoice) => {
-                          setSelectedInvoiceForDetail(invoice)
-                          setShowInvoiceDetailModal(true)
-                        }}
-                      />
+                      {isInitialInvoiceLoading ? (
+                        <div className="flex justify-center items-center py-6">
+                          <Spin tip="Đang tải hóa đơn..." />
+                        </div>
+                      ) : (
+                        <Spin
+                          spinning={isFetchingInvoices && !isInitialInvoiceLoading}
+                          tip="Đang đồng bộ hóa đơn..."
+                        >
+                          <InvoiceListSummary
+                            invoices={invoiceList}
+                            tableSessionId={dataTableSessionDetail?.session_id}
+                            onViewDetail={(invoice) => {
+                              setSelectedInvoiceForDetail(invoice)
+                              setShowInvoiceDetailModal(true)
+                            }}
+                          />
+                        </Spin>
+                      )}
                     </div>
                   </Panel>
-                </Collapse>
+                  </Collapse>
 
-                {/* Invoice Detail Modal */}
-                <InvoiceDetailModal
+                  {/* Invoice Detail Modal */}
+                  <InvoiceDetailModal
                   open={showInvoiceDetailModal}
                   onClose={() => {
                     setShowInvoiceDetailModal(false)
@@ -1216,8 +1258,9 @@ export default function TableDetail() {
                       queryKey: ["listInvoicesForTableSession", dataTableSessionDetail?.session_id]
                     })
                   }}
-                />
-              </div>
+                  />
+                </div>
+              </Spin>
             )
           ) : hasCurrentSession === false ? (
             <div>
@@ -1276,7 +1319,7 @@ export default function TableDetail() {
                     rowKey="id"
                     pagination={false}
                     bordered
-                    loading={isFetching}
+                    loading={isLoadingDishes || isFetchingDishes}
                     scroll={{
                       y: 400
                     }}

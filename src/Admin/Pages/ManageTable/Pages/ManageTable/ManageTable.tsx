@@ -12,8 +12,11 @@ import {
   Input,
   Select,
   Col,
-  Typography
+  Typography,
+  Tag,
+  Collapse
 } from "antd"
+import type { CollapseProps } from "antd"
 import omitBy from "lodash/omitBy"
 import isUndefined from "lodash/isUndefined"
 import useQueryParams from "src/Hook/useQueryParams"
@@ -25,7 +28,7 @@ import "antd/dist/reset.css"
 import { useRealtimeQuery } from "src/Hook/useRealtimeQuery"
 import { createSearchParams, Link, useNavigate } from "react-router-dom"
 import { Filter, RotateCcw, Table2, TabletSmartphone } from "lucide-react"
-import { useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { toast } from "react-toastify"
 import { isError422 } from "src/Helpers/utils"
 import { queryParamConfigTableSessions } from "src/Types/queryParams.type"
@@ -35,6 +38,7 @@ import { omit } from "lodash"
 import NavigateBack from "src/Admin/Components/NavigateBack"
 import TableSessionItem from "../../Components/TableSessionItem"
 import { TableSession } from "src/Types/tableSession.type"
+import { TableSessionStatus, TableSessionType } from "src/Types/product.type"
 import MergeIntoTable from "../../Components/MergeIntoTable"
 
 const { Title } = Typography
@@ -152,36 +156,181 @@ export default function ManageTable() {
   }
 
   const [mergedTable, setMergedTable] = useState(false)
+  const [expandedGroupKeys, setExpandedGroupKeys] = useState<string[]>([])
 
-  const groupedTablesMap = new Map<string, TableSession[]>()
+  const getStatusMeta = (table: TableSession) => {
+    if (!table.session_id) {
+      return { color: "green", label: "Trống" }
+    }
+    switch (table.session_status) {
+      case TableSessionStatus.Pending:
+        return { color: "orange", label: "Đang chờ" }
+      case TableSessionStatus.Active:
+        return { color: "blue", label: "Đang phục vụ" }
+      case TableSessionStatus.Completed:
+        return { color: "gray", label: "Hoàn tất" }
+      case TableSessionStatus.Cancelled:
+        return { color: "red", label: "Hủy" }
+      case TableSessionStatus.Merged:
+        return { color: "red", label: "Gộp bàn" }
+      default:
+        return { color: "default", label: "Không xác định" }
+    }
+  }
 
-  // Bước 1: Gom tất cả bàn có groupKey (merged_into hoặc session)
-  const tempGroups = new Map<string, TableSession[]>()
+  const getTypeMeta = (table: TableSession) => {
+    if (table.session_type === null || table.session_type === undefined) return null
+    switch (table.session_type) {
+      case TableSessionType.Offline:
+        return { color: "default", label: "Offline" }
+      case TableSessionType.Merge:
+        return { color: "gold", label: "Ghép bàn" }
+      case TableSessionType.Reservation:
+        return { color: "cyan", label: "Đặt trước" }
+      case TableSessionType.Split:
+        return { color: "magenta", label: "Tách bàn" }
+      default:
+        return null
+    }
+  }
 
-  listTableSession.forEach((table) => {
-    const groupKey = table.merged_into_session_id || table.session_id
-    if (groupKey) {
-      if (!tempGroups.has(groupKey)) tempGroups.set(groupKey, [])
-      tempGroups.get(groupKey)!.push(table)
+  const { groupedSessions, singleTables } = useMemo(() => {
+    type TableGroup = {
+      groupId: string
+      mainTable: TableSession
+      tables: TableSession[]
+      subTableIds: string[]
+      totalCapacity: number
+    }
+
+    const groupsByKey = new Map<string, TableSession[]>()
+    listTableSession.forEach((table) => {
+      const groupKey = table.merged_into_session_id ?? table.session_id
+      if (!groupKey) return
+      const current = groupsByKey.get(groupKey) ?? []
+      current.push(table)
+      groupsByKey.set(groupKey, current)
+    })
+
+    const groupedIds = new Set<string>()
+    const groups: TableGroup[] = []
+
+    groupsByKey.forEach((tables, groupId) => {
+      const uniqueTablesMap = new Map<string, TableSession>()
+      tables.forEach((table) => {
+        uniqueTablesMap.set(table.dining_table_id, table)
+      })
+
+      const uniqueTables = Array.from(uniqueTablesMap.values())
+
+      const mainTable =
+        uniqueTables.find((table) => table.session_id === groupId && !table.merged_into_session_id) ??
+        uniqueTables.find((table) => table.session_id === groupId) ??
+        null
+
+      if (!mainTable) return
+
+      const subTables = uniqueTables
+        .filter((table) => table.dining_table_id !== mainTable.dining_table_id)
+        .sort((a, b) => a.table_number - b.table_number)
+
+      if (subTables.length === 0) return
+
+      const orderedTables = [mainTable, ...subTables]
+      orderedTables.forEach((table) => groupedIds.add(table.dining_table_id))
+
+      groups.push({
+        groupId,
+        mainTable,
+        tables: orderedTables,
+        subTableIds: subTables.map((table) => table.dining_table_id),
+        totalCapacity: orderedTables.reduce((total, table) => total + (table.capacity || 0), 0)
+      })
+    })
+
+    groups.sort((a, b) => a.mainTable.table_number - b.mainTable.table_number)
+
+    const singles = listTableSession
+      .filter((table) => !groupedIds.has(table.dining_table_id))
+      .sort((a, b) => a.table_number - b.table_number)
+
+    return { groupedSessions: groups, singleTables: singles }
+  }, [listTableSession])
+
+  useEffect(() => {
+    if (groupedSessions.length === 0) {
+      setExpandedGroupKeys((prev) => (prev.length === 0 ? prev : []))
+      return
+    }
+
+    setExpandedGroupKeys((prev) => {
+      if (prev.length === 0) {
+        return [groupedSessions[0].groupId]
+      }
+
+      const validKeys = prev.filter((key) => groupedSessions.some((group) => group.groupId === key))
+
+      if (validKeys.length === prev.length) {
+        return prev
+      }
+
+      if (validKeys.length > 0) {
+        return validKeys
+      }
+
+      return [groupedSessions[0].groupId]
+    })
+  }, [groupedSessions])
+
+  const groupedCollapseItems: CollapseProps["items"] = groupedSessions.map((group) => {
+    const statusMeta = getStatusMeta(group.mainTable)
+    const typeMeta = getTypeMeta(group.mainTable)
+    const activeServingCount = group.tables.filter((table) => table.session_status === TableSessionStatus.Active).length
+
+    return {
+      key: group.groupId,
+      label: (
+        <div className="flex flex-wrap items-center justify-between gap-3 pr-6">
+          <div className="flex flex-col">
+            <span className="text-base font-semibold text-gray-900">Bàn {group.mainTable.table_number}</span>
+            <span className="text-xs text-gray-500">
+              {group.tables.length} bàn · Sức chứa {group.totalCapacity} người
+            </span>
+          </div>
+          <div className="flex flex-wrap items-center gap-2 text-xs">
+            <Tag color={statusMeta.color}>{statusMeta.label}</Tag>
+            {typeMeta && <Tag color={typeMeta.color}>{typeMeta.label}</Tag>}
+            {activeServingCount > 0 && <Tag color="green">Đang phục vụ: {activeServingCount}</Tag>}
+          </div>
+        </div>
+      ),
+      children: (
+        <div className="rounded-xl border border-emerald-200 bg-white p-4">
+          <Row gutter={[16, 16]}>
+            {group.tables.map((table, index) => (
+              <Col key={table.dining_table_id} xs={24} sm={12} md={8} lg={6} xl={6}>
+                <TableSessionItem
+                  table={table}
+                  index={index}
+                  mainTableId={group.mainTable.dining_table_id}
+                  subTables={group.subTableIds}
+                />
+              </Col>
+            ))}
+          </Row>
+          <div className="mt-4 flex justify-end">
+            <Link
+              to={`${path.AdminTables}/${group.mainTable.dining_table_id}`}
+              state={{ tableName: group.mainTable.table_number, dataTable: group.mainTable }}
+              className="inline-flex items-center rounded-lg bg-red-500 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-red-600 hover:text-white"
+            >
+              Xem chi tiết nhóm bàn
+            </Link>
+          </div>
+        </div>
+      )
     }
   })
-
-  // Bước 2: Chỉ giữ lại group có từ 2 bàn trở lên (tức là thật sự có gộp)
-  tempGroups.forEach((tables, key) => {
-    if (tables.length > 1) {
-      groupedTablesMap.set(key, tables)
-    }
-  })
-
-  // Bước 3: Đánh dấu những bàn đã nằm trong group
-  const groupedTableIds = new Set(
-    Array.from(groupedTablesMap.values())
-      .flat()
-      .map((t) => t.dining_table_id)
-  )
-
-  // Bàn độc lập (chưa gộp)
-  const singleTables = listTableSession.filter((t) => !groupedTableIds.has(t.dining_table_id))
 
   return (
     <div>
@@ -287,58 +436,29 @@ export default function ManageTable() {
         <>
           <>
             {/* --- Bàn gộp --- */}
-            {groupedTablesMap.size > 0 && (
+            {groupedSessions.length > 0 && (
               <>
                 <Title level={4} className="text-yellow-600 mb-3">
                   Bàn gộp
                 </Title>
 
-                <div className="flex items-center flex-wrap justify-between">
-                  {Array.from(groupedTablesMap.entries()).map(([groupKey, tables]) => {
-                    const widthValue = tables.length === 2 ? 49 : 99
-                    const mainTable = tables.find((t) => t.session_id === groupKey) || tables[0]
-                    const mainTableId = mainTable.dining_table_id
-                    const subTables = tables
-                      .filter((t) => t.dining_table_id !== mainTableId)
-                      .map((t) => t.dining_table_id)
-                    return (
-                      <div
-                        key={groupKey}
-                        className="rounded-2xl p-3 mb-6 border-4 border-[#a3d9a5] shadow-[0_0_14px_#a3d9a5] transition-all duration-300"
-                        style={{ width: `${widthValue}%` }}
-                      >
-                        <Row gutter={[16, 16]}>
-                          {tables.map((table, index) => (
-                            <Col key={table.dining_table_id} flex="1 0 45%">
-                              <TableSessionItem
-                                table={table}
-                                index={index}
-                                mainTableId={mainTableId}
-                                subTables={subTables}
-                              />
-                            </Col>
-                          ))}
-                        </Row>
-                        <div style={{ width: `${widthValue * 2}%` }} className="flex justify-center">
-                          <Link
-                            to={`${path.AdminTables}/${mainTableId}`}
-                            state={{ tableName: mainTable.table_number, dataTable: mainTable }}
-                            className="p-2 bg-red-500 rounded-sm text-white mt-2"
-                          >
-                            Chi tiết
-                          </Link>
-                        </div>
-                      </div>
-                    )
-                  })}
-                </div>
+                <Collapse
+                  bordered={false}
+                  className="rounded-2xl border border-emerald-200 bg-white shadow-sm"
+                  expandIconPosition="end"
+                  activeKey={expandedGroupKeys}
+                  onChange={(keys) => {
+                    setExpandedGroupKeys(Array.isArray(keys) ? keys : [keys])
+                  }}
+                  items={groupedCollapseItems}
+                />
               </>
             )}
 
             {/* --- Bàn đơn --- */}
             {singleTables.length > 0 && (
               <>
-                <Title level={4} className="text-blue-600 mb-3">
+                <Title level={4} className="text-blue-600 mt-5 mb-3">
                   Bàn đơn
                 </Title>
 

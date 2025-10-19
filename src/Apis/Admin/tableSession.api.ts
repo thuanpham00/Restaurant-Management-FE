@@ -15,7 +15,7 @@ import { SuccessResponse } from "src/Types/utils.type"
 
 export const tableSessionAPI = {
   getListTableSession: (params: queryParamConfigTableSessions, signal: AbortSignal) => {
-    return Http.get<SuccessResponse<TableSession>>("/api/table-sessions", {
+    return Http.get<SuccessResponse<TableSession[]>>("/api/table-sessions", {
       params,
       signal
     })
