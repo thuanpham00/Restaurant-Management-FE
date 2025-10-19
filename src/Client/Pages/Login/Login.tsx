@@ -75,8 +75,12 @@ const Login = () => {
   const loginMutation = useMutation({
     mutationFn: (body: FormData) => clientAPI.loginClient(body),
     onSuccess: (response) => {
-      toast.success(response.data.message, { autoClose: 1000 })
       const user = response.data?.data?.user
+      if (user?.role?.name !== "Customer") {
+        toast.error("Chỉ tài khoản khách hàng mới được phép đăng nhập!", { autoClose: 2500 })
+        return
+      }
+      toast.success(response.data.message, { autoClose: 1000 })
       setIsAuthenticated(true)
       setAvatar(user?.avatar ?? "")
       setNameUser(user?.name ?? "")
