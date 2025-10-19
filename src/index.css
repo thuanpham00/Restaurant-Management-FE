@@ -155,3 +155,22 @@ html {
 .ant-table-wrapper .ant-table-container::after {
   display: none !important;
 }
+
+.hide-picker::-webkit-calendar-picker-indicator {
+  opacity: 0; 
+  display: block;
+}
+
+.hide-picker::-webkit-clear-button,
+.hide-picker::-webkit-inner-spin-button {
+  display: none;
+}
+
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type=number] {
+  -moz-appearance: textfield; 
+}

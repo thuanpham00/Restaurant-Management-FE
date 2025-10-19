@@ -1,24 +1,25 @@
-import { useEffect } from "react"
-import { NavLink, useNavigate, useLocation } from "react-router-dom"
-import { LucideUtensils } from "lucide-react"
-import { Helmet } from "react-helmet-async"
+import { NavLink, useNavigate, useSearchParams } from "react-router-dom"
+import { LucideUtensils, Eye, EyeOff } from "lucide-react"
 import { useForm } from "react-hook-form"
 import { yupResolver } from "@hookform/resolvers/yup"
 import { useMutation } from "@tanstack/react-query"
 import { toast } from "react-toastify"
 import { clientAPI } from "src/Apis/Client/auth.api"
 import { schemaAuth, SchemaAuthType } from "src/Helpers/rule"
-import { isError422 } from "src/Helpers/utils"
-import { ErrorResponse } from "src/Types/utils.type"
+import type { ErrorResponse } from "src/Types/utils.type"
+import { isAxiosError } from "axios"
 import { useAppStore } from "src/StateGlobal/zustand"
+import { useState, useEffect } from "react"
+import { assets } from "src/Assets/assets"
 
 type FormData = Pick<SchemaAuthType, "email" | "password">
 const formSchema = schemaAuth.pick(["email", "password"])
 
 const Login = () => {
   const { setIsAuthenticated, setAvatar, setNameUser, setRole, setUserId } = useAppStore()
-  const location = useLocation()
   const navigate = useNavigate()
+  const [searchParams, setSearchParams] = useSearchParams()
+  const [showPassword, setShowPassword] = useState(false)
 
   const {
     formState: { errors },
@@ -27,55 +28,50 @@ const Login = () => {
     handleSubmit
   } = useForm<FormData>({ resolver: yupResolver(formSchema) })
 
-  // Mutation để lấy URL Google OAuth
+  // Kiểm tra URL params khi component mount
+  useEffect(() => {
+    const error = searchParams.get("error")
+    const message = searchParams.get("message")
+    const errorCode = searchParams.get("error_code")
+
+    if (error === "true" && message) {
+      // Hiển thị thông báo lỗi
+      if (errorCode === "EMAIL_ACCOUNT_EXISTS") {
+        toast.error(decodeURIComponent(message), {
+          autoClose: 5000,
+          position: "top-center"
+        })
+      } else {
+        toast.error(decodeURIComponent(message), { autoClose: 3000 })
+      }
+
+      // Xóa params khỏi URL sau khi hiển thị
+      searchParams.delete("error")
+      searchParams.delete("message")
+      searchParams.delete("error_code")
+      setSearchParams(searchParams, { replace: true })
+    }
+
+    // Kiểm tra thành công
+    const success = searchParams.get("success")
+    if (success === "true") {
+      searchParams.delete("success")
+      setSearchParams(searchParams, { replace: true })
+    }
+  }, [searchParams, setSearchParams])
+
+  // Lấy URL Google OAuth và redirect
   const googleLoginMutation = useMutation({
     mutationFn: () => clientAPI.getGoogleAuthUrl(),
     onSuccess: (response) => {
       window.location.href = response.data.data.url
     },
     onError: (error) => {
-      toast.error(error.message || "Không thể kết nối với Google", { autoClose: 2000 })
+      toast.error((error as Error).message || "Không thể kết nối với Google", { autoClose: 2000 })
     }
   })
 
-  // Mutation để xử lý callback Google
-  const googleCallbackMutation = useMutation({
-    mutationFn: () => clientAPI.googleCallback(location.search),
-    onSuccess: (response) => {
-      const { data, message } = response.data
-      // Lưu token và thông tin người dùng
-      localStorage.setItem("access_token", data.access_token)
-      localStorage.setItem("refresh_token", data.refresh_token)
-      setIsAuthenticated(true)
-      setAvatar(data.user?.avatar || "")
-      setNameUser(data.user?.name || "")
-      setRole(data.user?.role?.name || "")
-      setUserId(data.user?.id || "")
-      toast.success(message || "Đăng nhập bằng Google thành công", { autoClose: 3000 })
-      navigate("/")
-    },
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    onError: (error: any) => {
-      if (error.response?.status === 401) {
-        toast.error("Tài khoản chưa được kích hoạt", { autoClose: 3000 })
-      } else {
-        toast.error(error.response?.data?.message || "Đăng nhập bằng Google thất bại", {
-          autoClose: 3000
-        })
-      }
-    }
-  })
-
-  // Xử lý callback từ Google
-  useEffect(() => {
-    const queryParams = new URLSearchParams(location.search)
-    const code = queryParams.get("code")
-    if (code) {
-      // Gọi API google/callback khi nhận được code từ Google
-      googleCallbackMutation.mutate()
-    }
-  }, [location.search])
-
+  // Đăng nhập tài khoản thường
   const loginMutation = useMutation({
     mutationFn: (body: FormData) => clientAPI.loginClient(body),
     onSuccess: (response) => {
@@ -87,19 +83,34 @@ const Login = () => {
       setUserId(response.data.data.user.id)
       navigate("/")
     },
-    onError: (error) => {
-      if (isError422<ErrorResponse<FormData>>(error)) {
-        const formError = error.response?.data.errors
-        if (formError && !Array.isArray(formError)) {
-          if (formError.email && formError.email.length > 0) {
-            setError("email", { message: formError.email[0] })
+    onError: (error: unknown) => {
+      if (isAxiosError<ErrorResponse<FormData>>(error)) {
+        const status = error.response?.status
+        const responseData = error.response?.data
+
+        // Lỗi 422 (validate form)
+        if (status === 422 && responseData?.errors) {
+          const formError = responseData.errors
+          if (!Array.isArray(formError)) {
+            if (formError.email?.length) setError("email", { message: formError.email[0] })
+            if (formError.password?.length) setError("password", { message: formError.password[0] })
+          } else {
+            toast.error(formError[0] || "Đăng nhập thất bại", { autoClose: 2000 })
           }
-          if (formError.password && formError.password.length > 0) {
-            setError("password", { message: formError.password[0] })
-          }
-        } else if (Array.isArray(formError)) {
-          toast.error(formError[0] || "Đăng nhập thất bại", { autoClose: 2000 })
+          return
         }
+
+        // Lỗi 401 (Unauthorized)
+        if (status === 401) {
+          toast.error(responseData?.message || "Email hoặc mật khẩu không hợp lệ", { autoClose: 2000 })
+          return
+        }
+
+        // Các lỗi khác
+        toast.error("Có lỗi xảy ra khi đăng nhập. Vui lòng thử lại sau.", { autoClose: 2000 })
+      } else {
+        // Lỗi không thuộc Axios (ví dụ network hoặc runtime)
+        toast.error("Lỗi không xác định. Vui lòng thử lại.", { autoClose: 2000 })
       }
     }
   })
@@ -113,73 +124,81 @@ const Login = () => {
   }
 
   return (
-    <div className="min-h-screen w-full flex items-center justify-center bg-black relative">
-      <Helmet>
-        <title>Đăng nhập tài khoản - FoodZone</title>
-        <meta
-          name="description"
-          content="Đăng nhập tài khoản FoodZone để đặt món ăn nhanh chóng và tận hưởng trải nghiệm ẩm thực tuyệt vời."
-        />
-      </Helmet>
-
-      <div className="absolute inset-0 bg-opacity-70 z-0">
+    <div className="min-h-screen w-full flex items-center justify-center bg-gradient-to-br from-orange-500/20 via-gray-900/90 to-gray-900 relative">
+      {/* Overlay background */}
+      <div className="absolute inset-0 z-0">
         <div
           className="absolute inset-0 opacity-40 bg-cover bg-center"
           style={{
-            backgroundImage:
-              "url('https://images.unsplash.com/photo-1504674900247-0877df9cc836?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80')",
-            backgroundBlendMode: "overlay"
+            backgroundImage: `url(${assets.images.background})`,
+            backgroundBlendMode: "overlay",
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+            backgroundRepeat: "no-repeat"
           }}
         />
+        <div className="absolute inset-0 bg-gradient-to-br from-orange-500/10 via-gray-900/80 to-gray-900/90" />
       </div>
 
-      <div className="absolute top-6 left-6 z-10 flex items-center">
-        <div className="bg-orange-500 rounded-full p-2 mr-2">
-          <LucideUtensils size={20} className="text-white" />
+      {/* Logo */}
+      <div className="absolute top-8 left-8 z-10 flex items-center">
+        <div className="bg-gradient-to-br from-orange-500 to-orange-400 rounded-full p-3 shadow-lg">
+          <LucideUtensils size={28} className="text-white" />
         </div>
-        <span className="text-white font-bold text-xl">
-          food<span className="text-orange-500">.</span>
+        <span className="text-white font-extrabold text-2xl ml-3 tracking-tight drop-shadow-lg">
+          WowWraps<span className="text-orange-400">.</span>
         </span>
       </div>
 
+      {/* Login Card */}
       <div className="z-10 w-full max-w-md px-4">
-        <div className="bg-[#1a1a1a] rounded-xl p-8 shadow-2xl w-full">
-          <h1 className="text-2xl font-bold text-white text-center mb-8">Đăng nhập</h1>
+        <div className="bg-gradient-to-br from-gray-900/90 via-gray-800/95 to-gray-900/90 border-2 border-orange-400/30 rounded-2xl p-10 shadow-2xl w-full backdrop-blur-lg">
+          <h1 className="text-3xl font-extrabold text-white text-center mb-8 drop-shadow-lg">Đăng nhập</h1>
           <form onSubmit={handleSubmitForm}>
             <div className="mb-6">
-              <label htmlFor="email" className="block text-gray-300 text-sm font-medium mb-2">
+              <label htmlFor="email" className="block text-gray-300 text-sm font-semibold mb-2">
                 Email
               </label>
               <input
                 type="email"
                 id="email"
                 {...register("email")}
-                className="w-full px-4 py-3 bg-[#2d2d2d] border border-gray-600 rounded-lg text-white focus:outline-none focus:border-orange-500"
+                className="w-full px-4 py-3 bg-gray-800 border-2 border-gray-700 rounded-xl text-white focus:outline-none focus:border-orange-500 font-medium"
                 placeholder="your@email.com"
               />
               {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email.message}</p>}
             </div>
             <div className="mb-2">
-              <label htmlFor="password" className="block text-gray-300 text-sm font-medium mb-2">
+              <label htmlFor="password" className="block text-gray-300 text-sm font-semibold mb-2">
                 Mật khẩu
               </label>
-              <input
-                type="password"
-                id="password"
-                {...register("password")}
-                className="w-full px-4 py-3 bg-[#2d2d2d] border border-gray-600 rounded-lg text-white focus:outline-none focus:border-orange-500"
-                placeholder="••••••••"
-              />
+              <div className="relative">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  id="password"
+                  {...register("password")}
+                  className="w-full px-4 py-3 bg-gray-800 border-2 border-gray-700 rounded-xl text-white focus:outline-none focus:border-orange-500 pr-12 font-medium"
+                  placeholder="••••••••"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-orange-400"
+                  aria-label="Ẩn/hiện mật khẩu"
+                >
+                  {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                </button>
+              </div>
               {errors.password && <p className="text-red-500 text-sm mt-1">{errors.password.message}</p>}
             </div>
             <div className="mb-6 text-right">
-              <NavLink to="/forgot-password" className="text-orange-500 hover:text-orange-400 text-sm">
+              <NavLink to="/forgot-password" className="text-orange-400 hover:text-orange-500 text-sm font-semibold">
                 Quên mật khẩu?
               </NavLink>
             </div>
             <button
               type="submit"
-              className="w-full bg-orange-500 hover:bg-orange-600 text-white font-medium py-3 px-4 rounded-lg transition duration-300"
+              className="w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-bold py-3 px-4 rounded-xl shadow-lg transition duration-300 text-lg"
             >
               Đăng nhập
             </button>
@@ -187,24 +206,24 @@ const Login = () => {
 
           <div className="mt-8">
             <div className="flex items-center mb-6">
-              <div className="flex-grow h-px bg-gray-600"></div>
-              <span className="px-4 text-sm text-gray-400">hoặc tiếp tục với</span>
-              <div className="flex-grow h-px bg-gray-600"></div>
+              <div className="flex-grow h-px bg-gray-700"></div>
+              <span className="px-4 text-sm text-gray-400 font-medium">hoặc tiếp tục với</span>
+              <div className="flex-grow h-px bg-gray-700"></div>
             </div>
             <div className="flex justify-center space-x-4">
               <button
                 onClick={handleGoogleLogin}
-                className="bg-white hover:bg-gray-100 text-black w-12 h-12 rounded-full flex items-center justify-center transition duration-300"
+                className="bg-white hover:bg-orange-100 w-12 h-12 rounded-full flex items-center justify-center shadow-lg transition duration-300"
               >
-                <span className="font-bold">Google</span>
+                <img src={assets.images.google_logo} alt="Google Login" className="w-6 h-6 object-contain" />
               </button>
             </div>
           </div>
 
           <div className="mt-6 text-center">
-            <p className="text-white text-sm">
+            <p className="text-white text-base font-medium">
               Chưa có tài khoản?{" "}
-              <NavLink to="/register" className="text-orange-500 hover:text-orange-400">
+              <NavLink to="/register" className="text-orange-400 hover:text-orange-500 font-bold">
                 Đăng ký miễn phí
               </NavLink>
             </p>

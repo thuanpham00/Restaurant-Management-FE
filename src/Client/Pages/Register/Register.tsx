@@ -1,8 +1,6 @@
-// src/Components/Register.tsx
 import { useState } from "react"
 import { NavLink, useNavigate } from "react-router-dom"
 import { LucideUtensils, Eye, EyeOff } from "lucide-react"
-import { Helmet } from "react-helmet-async"
 import { useForm } from "react-hook-form"
 import { yupResolver } from "@hookform/resolvers/yup"
 import { useMutation } from "@tanstack/react-query"
@@ -12,13 +10,16 @@ import { isError422 } from "src/Helpers/utils"
 import { ErrorResponse } from "src/Types/utils.type"
 import { path } from "src/Constants/path"
 import { clientAPI } from "src/Apis/Client/auth.api"
+import { assets } from "src/Assets/assets"
 
 type FormData = SchemaRegisterType
 
 const Register = () => {
   const navigate = useNavigate()
-  const [showPassword, setShowPassword] = useState(false)
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+  const [showPassword, setShowPassword] = useState({
+    password: false,
+    confirm: false
+  }) // State để quản lý ẩn/hiện mật khẩu
 
   const {
     formState: { errors },
@@ -65,119 +66,123 @@ const Register = () => {
   })
 
   return (
-    <div className="min-h-screen w-full flex items-center justify-center bg-black relative">
-      <Helmet>
-        <title>Đăng ký tài khoản - FoodZone</title>
-        <meta
-          name="description"
-          content="Đăng ký tài khoản FoodZone để bắt đầu đặt món ăn và tận hưởng trải nghiệm ẩm thực tuyệt vời."
-        />
-      </Helmet>
-
-      <div className="absolute inset-0 bg-black bg-opacity-70 z-0">
+    <div className="min-h-screen w-full flex items-center justify-center bg-gradient-to-br from-orange-500/20 via-gray-900/90 to-gray-900 relative">
+      {/* Overlay background */}
+      <div className="absolute inset-0 z-0">
         <div
           className="absolute inset-0 opacity-40 bg-cover bg-center"
           style={{
-            backgroundImage:
-              'url("https://images.unsplash.com/photo-1504674900247-0877df9cc836?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80")',
-            backgroundBlendMode: "overlay"
+            backgroundImage: `url(${assets.images.background})`,
+            backgroundBlendMode: "overlay",
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+            backgroundRepeat: "no-repeat"
           }}
         />
+        <div className="absolute inset-0 bg-gradient-to-br from-orange-500/10 via-gray-900/80 to-gray-900/90" />
       </div>
 
-      <div className="absolute top-6 left-6 z-10 flex items-center">
-        <div className="bg-orange-500 rounded-full p-2 mr-2">
-          <LucideUtensils size={20} className="text-white" />
+      {/* Logo */}
+      <div className="absolute top-8 left-8 z-10 flex items-center">
+        <div className="bg-gradient-to-br from-orange-500 to-orange-400 rounded-full p-3 shadow-lg">
+          <LucideUtensils size={28} className="text-white" />
         </div>
-        <span className="text-white font-bold text-xl">
-          food<span className="text-orange-500">.</span>
+        <span className="text-white font-extrabold text-2xl ml-3 tracking-tight drop-shadow-lg">
+          WowWraps<span className="text-orange-400">.</span>
         </span>
       </div>
 
+      {/* Register Card */}
       <div className="z-10 w-full max-w-md px-4">
-        <div className="bg-[#1a1a1a] rounded-xl p-8 shadow-2xl w-full">
-          <h1 className="text-2xl font-bold text-white text-center mb-8">Đăng ký</h1>
+        <div className="bg-gradient-to-br from-gray-900/90 via-gray-800/95 to-gray-900/90 border-2 border-orange-400/30 rounded-2xl p-10 shadow-2xl w-full backdrop-blur-lg">
+          <h1 className="text-3xl font-extrabold text-white text-center mb-8 drop-shadow-lg">Đăng ký</h1>
           <form onSubmit={handleSubmitForm}>
             <div className="mb-6">
-              <label htmlFor="fullName" className="block text-gray-300 text-sm font-medium mb-2">
+              <label htmlFor="fullName" className="block text-gray-300 text-sm font-semibold mb-2">
                 Họ và tên
               </label>
               <input
                 type="text"
                 id="fullName"
                 {...register("name")}
-                className="w-full px-4 py-3 bg-[#2d2d2d] border border-gray-600 rounded-lg text-white focus:outline-none focus:border-orange-500"
+                className="w-full px-4 py-3 bg-gray-800 border-2 border-gray-700 rounded-xl text-white focus:outline-none focus:border-orange-500 font-medium"
                 placeholder="Họ và tên của bạn"
               />
               {errors.name && <p className="text-red-500 text-sm mt-1">{errors.name.message}</p>}
             </div>
             <div className="mb-6">
-              <label htmlFor="email" className="block text-gray-300 text-sm font-medium mb-2">
+              <label htmlFor="email" className="block text-gray-300 text-sm font-semibold mb-2">
                 Email
               </label>
               <input
                 type="email"
                 id="email"
                 {...register("email")}
-                className="w-full px-4 py-3 bg-[#2d2d2d] border border-gray-600 rounded-lg text-white focus:outline-none focus:border-orange-500"
+                className="w-full px-4 py-3 bg-gray-800 border-2 border-gray-700 rounded-xl text-white focus:outline-none focus:border-orange-500 font-medium"
                 placeholder="your@email.com"
               />
               {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email.message}</p>}
             </div>
             <div className="mb-6 relative">
-              <label htmlFor="password" className="block text-gray-300 text-sm font-medium mb-2">
+              <label htmlFor="password" className="block text-gray-300 text-sm font-semibold mb-2">
                 Mật khẩu
               </label>
-              <input
-                type={showPassword ? "text" : "password"}
-                id="password"
-                {...register("password")}
-                className="w-full px-4 py-3 bg-[#2d2d2d] border border-gray-600 rounded-lg text-white focus:outline-none focus:border-orange-500"
-                placeholder="••••••••"
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-2 top-[70%] -translate-y-1/2 text-gray-400 hover:text-white"
-              >
-                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-              </button>
+              <div className="relative">
+                <input
+                  type={showPassword.password ? "text" : "password"}
+                  id="password"
+                  {...register("password")}
+                  className="w-full px-4 py-3 bg-gray-800 border-2 border-gray-700 rounded-xl text-white focus:outline-none focus:border-orange-500 pr-12 font-medium"
+                  placeholder="••••••••"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((s) => ({ ...s, password: !s.password }))}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-orange-400"
+                  aria-label="Ẩn/hiện mật khẩu"
+                >
+                  {showPassword.password ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                </button>
+              </div>
               {errors.password && <p className="text-red-500 text-sm mt-1">{errors.password.message}</p>}
             </div>
             <div className="mb-6 relative">
-              <label htmlFor="confirmPassword" className="block text-gray-300 text-sm font-medium mb-2">
+              <label htmlFor="confirmPassword" className="block text-gray-300 text-sm font-semibold mb-2">
                 Xác nhận mật khẩu
               </label>
-              <input
-                type={showConfirmPassword ? "text" : "password"}
-                id="confirmPassword"
-                {...register("password_confirmation")}
-                className="w-full px-4 py-3 bg-[#2d2d2d] border border-gray-600 rounded-lg text-white focus:outline-none focus:border-orange-500"
-                placeholder="••••••••"
-              />
-              <button
-                type="button"
-                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                className="absolute right-2 top-[44%] -translate-y-1/2 text-gray-400 hover:text-white"
-              >
-                {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-              </button>
+              <div className="relative">
+                <input
+                  type={showPassword.confirm ? "text" : "password"}
+                  id="confirmPassword"
+                  {...register("password_confirmation")}
+                  className="w-full px-4 py-3 bg-gray-800 border-2 border-gray-700 rounded-xl text-white focus:outline-none focus:border-orange-500 pr-12 font-medium"
+                  placeholder="••••••••"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((s) => ({ ...s, confirm: !s.confirm }))}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-orange-400"
+                  aria-label="Ẩn/hiện xác nhận mật khẩu"
+                >
+                  {showPassword.confirm ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                </button>
+              </div>
               {errors.password_confirmation && (
                 <p className="text-red-500 text-sm mt-1">{errors.password_confirmation.message}</p>
               )}
             </div>
             <button
               type="submit"
-              className="w-full bg-orange-500 hover:bg-orange-600 text-white font-medium py-3 px-4 rounded-lg transition"
+              className="w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-bold py-3 px-4 rounded-xl shadow-lg transition duration-300 text-lg"
             >
               Đăng ký
             </button>
           </form>
 
           <div className="mt-6 text-center">
-            <p className="text-white text-sm">
+            <p className="text-white text-base font-medium">
               Đã có tài khoản?{" "}
-              <NavLink to="/login" className="text-orange-500 hover:text-orange-400">
+              <NavLink to="/login" className="text-orange-400 hover:text-orange-500 font-bold">
                 Đăng nhập
               </NavLink>
             </p>

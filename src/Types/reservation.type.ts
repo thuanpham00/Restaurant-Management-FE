@@ -4,7 +4,7 @@ export type Reservation = {
   reserved_at: string
   number_of_people: number
   status: number
-  notes: string
+  notes?: string | null
   created_at: string
   updated_at: string
   customer: {
@@ -32,4 +32,25 @@ export type ReservationCheckAssignTable = {
   dining_table_id: string
   dining_table_number: number
   assigned: boolean
+}
+
+export type ReservationCreate = {
+  number_of_people: number
+  reserved_at: string // "YYYY-MM-DD HH:mm:ss"
+  notes?: string | null
+}
+
+export interface Paginated<T> {
+  data: T[]
+  current_page: number
+  last_page: number
+  per_page: number
+  total: number
+}
+
+export interface ReservationFilters {
+  status?: string | null
+  date_from?: string | null
+  date_to?: string | null
+  q?: string | null
 }

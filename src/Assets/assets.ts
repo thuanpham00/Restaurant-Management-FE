@@ -40,6 +40,9 @@ import image28 from "./figma/images/image28.png"
 import image29 from "./figma/images/image29.png"
 import image30 from "./figma/images/image30.png"
 import image31 from "./figma/images/image31.png"
+import google_logo from "./figma/images/google-logo.png"
+import default_avatar from "./figma/images/default_avatar.png"
+import background from "./figma/images/background.png"
 
 // Ellipses
 import ellipse30 from "./figma/ellipses/ellipse30.png"
@@ -119,12 +122,15 @@ export const assets = {
   images: {
     image89,
     image77,
+    google_logo,
     image90,
     image91,
     image28,
     image29,
     image30,
-    image31
+    image31,
+    default_avatar,
+    background
   },
   ellipses: {
     ellipse30,

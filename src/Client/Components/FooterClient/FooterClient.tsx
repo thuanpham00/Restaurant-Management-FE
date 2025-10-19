@@ -1,92 +1,84 @@
-import { Link } from "react-router-dom";
-import { assets } from "src/Assets/assets";
+import { Link } from "react-router-dom"
+import { assets } from "src/Assets/assets"
+import { Facebook, Instagram, Mail, Phone } from "lucide-react"
 
 const Footer = () => (
-    <footer className="bg-gray-900 py-16 px-6 sm:px-8 lg:px-[135px]">
-      <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-        {/* Logo & App Download */}
-        <div>
-          <img src={assets.icons.group55} alt="Logo" className="w-48 h-12 mb-8" />
-          <p className="text-white/80 mb-6">Download the WowWraps app today.</p>
-          <div className="flex space-y-4 flex-col">
-            <img src={assets.icons.frame} alt="App Store" className="h-[70px]" />
-            <img src={assets.icons.frame1} alt="Google Play" className="h-[70px]" />
-          </div>
-        </div>
-  
-        {/* Useful Links */}
-        <div>
-          <h3 className="text-white text-xl font-medium mb-6">Useful Link</h3>
-          <ul className="space-y-3 text-white/80">
-            <li>
-              <Link to="#" className="hover:text-white transition-colors">
-                Home
-              </Link>
-            </li>
-            <li>
-              <Link to="#" className="hover:text-white transition-colors">
-                About Us
-              </Link>
-            </li>
-            <li>
-              <Link to="#" className="hover:text-white transition-colors">
-                Services
-              </Link>
-            </li>
-            <li>
-              <Link to="#" className="hover:text-white transition-colors">
-                Booking
-              </Link>
-            </li>
-            <li>
-              <Link to={""} className="hover:text-white transition-colors">
-                Menu
-              </Link>
-            </li>
-          </ul>
-        </div>
-  
-        {/* Contact Info */}
-        <div>
-          <h3 className="text-white text-xl font-medium mb-6">Contact Info</h3>
-          <div className="space-y-3 text-white/80">
-            <p>Silk St, Barbican, London EC2Y 8DS, UK</p>
-            <p className="text-orange-400">info@example.com</p>
-            <p>800-123-45-678</p>
-          </div>
-        </div>
-  
-        {/* Follow Us & Legal */}
-        <div>
-          <div className="mb-8">
-            <h3 className="text-white text-xl font-medium mb-6">Follow us</h3>
-            <ul className="space-y-3">
-              {[
-                { name: "Facebook", width: "w-16" },
-                { name: "Instagram", width: "w-16" },
-                { name: "Linkedin", width: "w-14" },
-                { name: "Twitter", width: "w-12" }
-              ].map((social, index) => (
-                <li key={index}>
-                  <Link to="#" className="text-white/80 hover:text-white transition-colors">
-                    {social.name}
-                  </Link>
-                  <div className={`h-px bg-white/40 ${social.width} mt-1`}></div>
-                </li>
-              ))}
-            </ul>
-          </div>
-  
-          <div>
-            <h3 className="text-white text-xl font-medium mb-6">Legal</h3>
-            <div className="space-y-3 text-white/80">
-              <p>Website by huit.com</p>
-              <p>©2022. All Rights Reserved</p>
-            </div>
-          </div>
+  <footer className="bg-gradient-to-br from-gray-900 via-[#18181b] to-gray-950 py-14 px-6 sm:px-8 lg:px-[135px] border-t border-orange-500/10 shadow-inner">
+    <div className="grid md:grid-cols-[1.2fr_1fr_1fr] gap-12 justify-items-center md:justify-items-start text-center md:text-left items-start">
+      {/* Cột 1 - Logo & giới thiệu */}
+      <div className="flex flex-col items-center md:items-start self-start">
+        <img src={assets.icons.group55} alt="Logo" className="w-44 h-12 mb-5 drop-shadow-lg" />
+        <p className="text-white/100 leading-relaxed max-w-[320px] mb-4">
+          Thưởng thức hương vị của Nhà hàng chúng tôi — khám phá thực đơn hấp dẫn và đặt món ăn yêu thích của bạn một
+          cách dễ dàng.
+        </p>
+        <div className="flex gap-4 mt-2">
+          <a
+            href="https://facebook.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="bg-orange-500/10 hover:bg-orange-500/30 text-orange-400 hover:text-white rounded-full p-2 transition-all"
+            aria-label="Facebook"
+          >
+            <Facebook className="w-5 h-5" />
+          </a>
+          <a
+            href="https://instagram.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="bg-orange-500/10 hover:bg-orange-500/30 text-orange-400 hover:text-white rounded-full p-2 transition-all"
+            aria-label="Instagram"
+          >
+            <Instagram className="w-5 h-5" />
+          </a>
         </div>
       </div>
-    </footer>
-  )
 
-  export default Footer
+      {/* Cột 2 - Khám phá nhanh */}
+      <div className="self-start">
+        <h3 className="text-white text-xl font-semibold mb-6 tracking-wide">Khám phá nhanh</h3>
+        <ul className="space-y-3 text-white/80 font-medium">
+          {[
+            { name: "Trang chủ", to: "/home" },
+            { name: "Thực đơn", to: "/menu" },
+            { name: "Đặt bàn", to: "/table" }
+          ].map((item, idx) => (
+            <li key={idx}>
+              <Link
+                to={item.to}
+                className="hover:text-orange-400 hover:underline underline-offset-4 transition-colors duration-200"
+              >
+                {item.name}
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      {/* Cột 3 - Liên hệ */}
+      <div className="self-start">
+        <h3 className="text-white text-xl font-semibold mb-6 tracking-wide">Liên hệ</h3>
+        <ul className="space-y-3 text-white/80 text-base">
+          <li className="flex items-center gap-2">
+            <Mail className="w-4 h-4 text-orange-400" />
+            <span className="text-orange-400">HUIT@gmail.com</span>
+          </li>
+          <li className="flex items-center gap-2">
+            <Phone className="w-4 h-4 text-orange-400" />
+            <span>800-123-45-678</span>
+          </li>
+          <li className="flex items-center gap-2">
+            <span className="inline-block w-4 h-4 rounded-full bg-orange-400/70 mr-1" />
+            <span>140 Lê Trọng Tấn</span>
+          </li>
+        </ul>
+        <div className="h-px bg-white/20 my-6"></div>
+        <p className="text-white/60 text-sm">
+          ©2025 <span className="font-semibold text-orange-400">WowWraps</span>. Bản quyền thuộc về chúng tôi.
+        </p>
+      </div>
+    </div>
+  </footer>
+)
+
+export default Footer

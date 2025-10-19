@@ -1,4 +1,4 @@
-import { DishClient } from "./dish.type"
+import { Dish } from "./dish.type"
 
 export type MenuDetailListItem = {
   menu: {
@@ -10,8 +10,8 @@ export type MenuDetailListItem = {
     menu_id: string
     dish_id: string
     dish_name: string
-    price_base: string
-    price: string
+    price_base: number
+    price: number
     notes: string
     dish_image: string
   }[]
@@ -20,7 +20,7 @@ export type MenuDetailListItem = {
 export type AddDishToMenu = {
   id: string
   name: string
-  price: string
+  price: number
   image: string
 }
 
@@ -40,5 +40,29 @@ export interface SpecialMenu {
   name: string
   description: string
   is_active: boolean
-  dishes: DishClient[]
+  dishes: Dish[]
+}
+
+export type MenuCore = Pick<Menus, "id" | "name" | "description" | "version" | "is_active">
+
+export interface MenuItemInMenu {
+  id: string
+  menu_id?: string
+  dish_id: string
+  dish_name: string | null
+  price_base: number
+  price: number
+  notes: string | null
+  dish_image: string | null
+  dish_active: boolean
+}
+
+export interface MenuWithItems extends MenuCore {
+  items: MenuItemInMenu[]
+}
+
+export type MenusWithItemsParams = {
+  is_active?: boolean
+  limit_items?: number
+  only_active_dishes?: boolean
 }

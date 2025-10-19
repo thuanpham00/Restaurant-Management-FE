@@ -1,7 +1,7 @@
 export type Dish = {
   id: string
   name: string
-  price: string
+  price: number
   desc: string
   category_id: string
   cooking_time: number
@@ -17,4 +17,3 @@ export type Dish = {
     updated_at: string
   }
 }
-
