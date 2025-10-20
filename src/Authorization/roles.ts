@@ -64,10 +64,13 @@ const LEGACY_ROLE_CODES: Array<[string, AppRole]> = [
   ["WAITER", AppRole.WAITER]
 ]
 
-const ROLE_ALIAS_LOOKUP = [...ROLE_ALIAS_ENTRIES, ...LEGACY_ROLE_CODES].reduce<Record<string, AppRole>>((acc, [alias, role]) => {
-  acc[alias.toLowerCase()] = role
-  return acc
-}, {})
+const ROLE_ALIAS_LOOKUP = [...ROLE_ALIAS_ENTRIES, ...LEGACY_ROLE_CODES].reduce<Record<string, AppRole>>(
+  (acc, [alias, role]) => {
+    acc[alias.toLowerCase()] = role
+    return acc
+  },
+  {}
+)
 
 export const resolveRole = (rawRole?: string | null): AppRole | null => {
   if (!rawRole) return null

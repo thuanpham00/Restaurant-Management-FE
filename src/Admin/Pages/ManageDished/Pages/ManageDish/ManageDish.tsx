@@ -154,7 +154,7 @@ export default function ManageDish() {
       form.setFieldsValue({
         name: "",
         desc: "",
-        price: "",
+        price: 0,
         cooking_time: 0,
         category_id: "",
         is_active: true

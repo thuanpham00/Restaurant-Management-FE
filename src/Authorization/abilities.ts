@@ -18,6 +18,11 @@ export enum AppAbility {
   DISH_MANAGE = "dishes:manage",
   MENU_VIEW = "menu:view",
   MENU_MANAGE = "menu:manage",
+  ORDER_VIEW = "orders:view",
+  ORDER_MANAGE = "orders:manage",
+  ORDER_ITEM_VIEW = "order-items:view",
+  ORDER_ITEM_MANAGE = "order-items:manage",
+
   INGREDIENTS_VIEW = "ingredients:view",
   INGREDIENTS_MANAGE = "ingredients:manage",
   SUPPLIERS_VIEW = "suppliers:view",

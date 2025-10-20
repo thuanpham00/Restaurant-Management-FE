@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Navigate, Outlet, useRoutes } from "react-router-dom"
 import { lazy, Suspense } from "react"
 import MainLayoutAdmin from "../Layouts/MainLayoutAdmin"

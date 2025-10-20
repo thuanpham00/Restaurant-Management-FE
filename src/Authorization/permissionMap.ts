@@ -5,9 +5,7 @@ const unique = (abilities: AppAbility[]): AppAbility[] => Array.from(new Set(abi
 
 export const ROLE_PERMISSIONS: Record<AppRole, AppAbility[]> = {
   [AppRole.SUPER_ADMIN]: ALL_ABILITIES,
-  [AppRole.ADMINISTRATOR]: unique(
-    ALL_ABILITIES.filter((ability) => ability !== AppAbility.PERMISSION_MATRIX_MANAGE)
-  ),
+  [AppRole.ADMINISTRATOR]: unique(ALL_ABILITIES.filter((ability) => ability !== AppAbility.PERMISSION_MATRIX_MANAGE)),
   [AppRole.MANAGER]: unique([
     AppAbility.DASHBOARD_VIEW,
     AppAbility.TABLES_VIEW,
@@ -28,6 +26,10 @@ export const ROLE_PERMISSIONS: Record<AppRole, AppAbility[]> = {
     AppAbility.DISH_MANAGE,
     AppAbility.MENU_VIEW,
     AppAbility.MENU_MANAGE,
+    AppAbility.ORDER_VIEW,
+    AppAbility.ORDER_MANAGE,
+    AppAbility.ORDER_ITEM_VIEW,
+    AppAbility.ORDER_ITEM_MANAGE,
     AppAbility.INGREDIENTS_VIEW,
     AppAbility.INGREDIENTS_MANAGE,
     AppAbility.SUPPLIERS_VIEW,
