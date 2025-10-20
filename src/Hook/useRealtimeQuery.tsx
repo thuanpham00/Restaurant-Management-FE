@@ -99,7 +99,7 @@ export function useRealtimeQuery<
 
     // Refetch configuration
     refetchOnMount: "always", // Always refetch when component mounts
-    refetchOnWindowFocus: true, // Refetch when user returns to the tab
+    // refetchOnWindowFocus: true, // Refetch when user returns to the tab
     refetchOnReconnect: true, // Refetch when network reconnects
 
     // Optional configurations from options

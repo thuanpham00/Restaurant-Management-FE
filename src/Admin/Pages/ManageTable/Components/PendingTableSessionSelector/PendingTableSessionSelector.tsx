@@ -128,7 +128,7 @@ function PendingTableSessionSelector({
                 }
 
                 return (
-                  <List.Item key={session.session_id}>
+                  <List.Item key={session.session_id} className="h-[260px]">
                     <Card
                       title={
                         <div className="flex items-center justify-between">
@@ -138,22 +138,28 @@ function PendingTableSessionSelector({
                         </div>
                       }
                       extra={<Clock size={16} className="text-gray-500" />}
-                      className="cursor-pointer"
+                      className="cursor-pointer h-full flex flex-col justify-between"
                     >
-                      <div className="flex items-center gap-4">
-                        <span>Loại phiên: </span>
-                        {sessionTypeTag}
+                      <div>
+                        <div className="flex items-center gap-4">
+                          <span>Loại phiên: </span>
+                          {sessionTypeTag}
+                        </div>
+                        <p className="mt-2">Khách: {session.reservation?.customer_name || "Khách vãng lai"}</p>
+                        {/* {session.session_type !== 0 && (
+                        )} */}
+                        <div>
+                          <p className="mt-2">Số người: {session.reservation?.number_of_people || "Không xác định"}</p>
+                          <p className="mt-2">
+                            Ngày đặt:{" "}
+                            {session.reservation?.reserved_at
+                              ? new Date(session.reservation.reserved_at).toLocaleString()
+                              : "Không xác định"}
+                          </p>
+                        </div>
                       </div>
-                      <p>Số người: {session.reservation?.number_of_people || "N/A"}</p>
-                      <p>Khách: {session.reservation?.customer_name || "Khách vãng lai"}</p>
-                      <p>
-                        Ngày đặt:{" "}
-                        {session.reservation?.reserved_at
-                          ? new Date(session.reservation.reserved_at).toLocaleString()
-                          : "N/A"}
-                      </p>
 
-                      <div className="flex items-center justify-between gap-2 mt-2">
+                      <div className="flex items-center justify-between gap-2 mt-4">
                         <div>
                           <Button type="primary">
                             <Link

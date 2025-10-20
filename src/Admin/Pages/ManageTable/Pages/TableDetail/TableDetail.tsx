@@ -1372,6 +1372,12 @@ export default function TableDetail() {
                         ? "bg-[#f2f2f2] hover:bg-blue-50 transition-colors"
                         : "bg-white hover:bg-blue-50 transition-colors"
                     }
+                    onRow={(record) => ({
+                      onClick: () => {
+                        const isChecked = listOrderAdd.some((item) => item.dish_id === record.dish_id)
+                        handleChangeCheckOrder(record, !isChecked)
+                      }
+                    })}
                   />
                 </Col>
                 <Col span={10}>
