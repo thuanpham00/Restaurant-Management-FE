@@ -429,7 +429,7 @@ export default function ManageDashboard() {
         </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-3 xl:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-4 xl:grid-cols-4">
         <Card>
           <Spin spinning={isRevenueFetching}>
             <div className="flex items-center gap-3">
@@ -479,19 +479,19 @@ export default function ManageDashboard() {
           </Spin>
         </Card>
 
-        {/* <Card>
+        <Card>
           <Spin spinning={isPromotionsFetching}>
             <div className="flex items-center gap-3">
               <div className="rounded-full bg-purple-500/10 p-3 text-purple-500">
                 <Gift size={22} />
               </div>
               <div>
-                <p className="text-sm text-gray-500">Giá trị khuyến mãi</p>
+                <p className="text-sm text-gray-500">Tổng khuyến mãi</p>
                 <p className="text-lg font-semibold">{formatCurrency(promotionsData?.total_discount)}</p>
               </div>
             </div>
           </Spin>
-        </Card> */}
+        </Card>
       </div>
 
       <div className="grid gap-4 xl:grid-cols-3">

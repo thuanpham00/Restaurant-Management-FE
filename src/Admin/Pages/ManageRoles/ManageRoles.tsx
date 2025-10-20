@@ -306,19 +306,16 @@ export default function ManageRoles() {
     {
       title: "Thao tác",
       key: "action",
-      width: 200,
+      width: 100,
       fixed: "right",
       align: "center",
       render: (_: any, record: Role) => (
         <Space size="small">
           <Button type="link" icon={<Eye size={16} />} onClick={() => handleView(record)}>
-            Xem
           </Button>
           <Button type="link" icon={<Edit size={16} />} onClick={() => handleEdit(record)}>
-            Sửa
           </Button>
           <Button type="link" danger icon={<Trash2 size={16} />} onClick={() => handleDelete(record)}>
-            Xóa
           </Button>
         </Space>
       )

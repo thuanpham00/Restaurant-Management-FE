@@ -500,10 +500,9 @@ export default function ShiftListTab() {
       align: "center" as const,
       render: (_: any, record: Shift) => (
         <div className="flex gap-2 justify-center">
-          <Button size="small" type="primary" icon={<Edit size={16} />} onClick={() => handleEdit(record)}>
-            Sửa
+          <Button  type="link" icon={<Edit size={16} />} onClick={() => handleEdit(record)}>
           </Button>
-          <Button size="small" danger icon={<Trash2 size={16} />} onClick={() => handleDelete(record)} />
+          <Button type="link" danger icon={<Trash2 size={16} />} onClick={() => handleDelete(record)} />
         </div>
       )
     }

@@ -1,11 +1,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useMutation, useQueryClient } from "@tanstack/react-query"
-import { Modal, Descriptions, Space, Button, InputNumber, Radio, Divider } from "antd"
-import { useState, useMemo } from "react"
+import { Modal, Descriptions, Space, Button, InputNumber, Radio, Divider, Checkbox } from "antd"
+import { useState, useMemo, useEffect } from "react"
 import { toast } from "react-toastify"
 import { invoicePaymentAPI } from "src/Apis/Admin/invoicePayment.api"
 import { useAppStore } from "src/StateGlobal/zustand"
-import { InvoicePaymentPayload } from "src/Types/invoicePayment.type"
+import { InvoicePaymentPayload, InvoiceDetail } from "src/Types/invoicePayment.type"
+import type { TableSessionDetail, TableSessionOrder } from "src/Types/tableSession.type"
+import { exportInvoicePdf } from "../../utils/invoicePdf"
 import PromotionForm from "../PromotionForm"
 
 interface CreateInvoiceModalProps {
@@ -14,9 +16,24 @@ interface CreateInvoiceModalProps {
   totalAmount: number // Tạm tính từ order
   tableSessionId: string
   idDiningTable: string
+  tableSessionDetail?: TableSessionDetail | null
+  orderItems?: TableSessionOrder["items"]
+  tableInfo?: {
+    tableName?: string | null
+    tableNumber?: number | null
+  }
 }
 
-const CreateInvoiceModal = ({ open, onClose, totalAmount, tableSessionId, idDiningTable }: CreateInvoiceModalProps) => {
+const CreateInvoiceModal = ({
+  open,
+  onClose,
+  totalAmount,
+  tableSessionId,
+  idDiningTable,
+  tableSessionDetail,
+  orderItems,
+  tableInfo
+}: CreateInvoiceModalProps) => {
   const queryClient = useQueryClient()
   const { employeeId } = useAppStore()
 
@@ -26,6 +43,14 @@ const CreateInvoiceModal = ({ open, onClose, totalAmount, tableSessionId, idDini
     { promotion_id: string; discount_value: number }[] | null
   >(null)
   const [paymentMethod, setPaymentMethod] = useState<number>(0) // 0 = Cash, 1 = Bank Transfer
+  const [shouldExportInvoice, setShouldExportInvoice] = useState(false)
+
+  useEffect(() => {
+    if (!open) {
+      setShouldExportInvoice(false)
+      setPaymentMethod(0)
+    }
+  }, [open])
 
   // Calculate final amount với discount + VAT
   const financialCalculation = useMemo(() => {
@@ -115,9 +140,44 @@ const CreateInvoiceModal = ({ open, onClose, totalAmount, tableSessionId, idDini
     }
 
     payNowMutation.mutate(payload, {
-      onSuccess: () => {
+      onSuccess: async (response) => {
         toast.success("Thanh toán thành công!", { autoClose: 1500 })
+        if (shouldExportInvoice) {
+          let invoiceDetail: InvoiceDetail | undefined
+
+          try {
+            const createdInvoiceId =
+              response?.data?.data?.id ?? response?.data?.id ?? (response?.data as { id?: string })?.id ?? null
+
+            if (createdInvoiceId) {
+              const detailRes = await invoicePaymentAPI.getDetailInvoice(createdInvoiceId)
+              invoiceDetail = detailRes?.data?.data as InvoiceDetail | undefined
+            } else {
+              const detailRes = await invoicePaymentAPI.getDetailInvoiceFromIdTableSession(tableSessionId)
+              invoiceDetail = detailRes?.data?.data as InvoiceDetail | undefined
+            }
+
+            if (invoiceDetail) {
+              await exportInvoicePdf({
+                invoiceDetail,
+                paidAmount: financialCalculation.finalAmount,
+                paymentMethod,
+                tableSessionDetail,
+                tableInfo,
+                orderItems,
+                orderSubtotal: totalAmount
+              })
+            } else {
+              toast.warn("Không tìm thấy dữ liệu hóa đơn để xuất PDF.", { autoClose: 2000 })
+            }
+          } catch (error) {
+            console.error("Failed to export invoice PDF", error)
+            toast.error("Không thể xuất hóa đơn PDF. Vui lòng thử lại.", { autoClose: 2000 })
+          }
+        }
+
         onClose()
+        setShouldExportInvoice(false)
         // Invalidate queries
         queryClient.invalidateQueries({ queryKey: ["detailTableSession", idDiningTable] })
         queryClient.invalidateQueries({ queryKey: ["detailTableSessionOrder", tableSessionId] })
@@ -206,6 +266,10 @@ const CreateInvoiceModal = ({ open, onClose, totalAmount, tableSessionId, idDini
             <Radio value={1}>Chuyển khoản ngân hàng</Radio>
           </Radio.Group>
         </div>
+
+        <Checkbox checked={shouldExportInvoice} onChange={(e) => setShouldExportInvoice(e.target.checked)}>
+          Xuất hóa đơn PDF sau khi thanh toán
+        </Checkbox>
 
         {/* Action Buttons */}
         <Space style={{ width: "100%", justifyContent: "flex-end" }}>

@@ -136,7 +136,7 @@ export default function InvoiceDetail() {
             {Number(detailInvoice.total_amount).toLocaleString()} ₫
           </Descriptions.Item>
           <Descriptions.Item label="Giảm giá">{Number(detailInvoice.discount).toLocaleString()} %</Descriptions.Item>
-          <Descriptions.Item label="Thuế">{Number(detailInvoice.tax).toLocaleString()} ₫</Descriptions.Item>
+          <Descriptions.Item label="Thuế">{Number(detailInvoice.tax).toLocaleString()} %</Descriptions.Item>
           <Descriptions.Item label="Thành tiền cuối cùng">
             <span className="font-semibold text-green-600 text-lg">
               {Number(detailInvoice.final_amount).toLocaleString()} ₫

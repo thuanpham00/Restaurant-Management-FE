@@ -285,18 +285,16 @@ export default function ManageCustomer() {
       render: (_: any, record: Customer) => (
         <div className="flex gap-2">
           <Button
-            size="small"
-            type="primary"
+            type="link"
             icon={<Edit size={16} />}
             onClick={(e) => {
               e.stopPropagation()
               handleEdit(record)
             }}
           >
-            Sửa
           </Button>
           <Button
-            size="small"
+            type="link"
             danger
             icon={<Trash2 size={16} />}
             onClick={(e) => {
@@ -304,7 +302,6 @@ export default function ManageCustomer() {
               handleDelete(record.id, record.full_name)
             }}
           >
-            Xóa
           </Button>
         </div>
       )
@@ -411,7 +408,6 @@ export default function ManageCustomer() {
               <>
                 <Button onClick={handleCloseModal}>Đóng</Button>
                 <Button type="primary" icon={<Edit size={16} />} onClick={() => handleEdit()}>
-                  Chỉnh sửa
                 </Button>
               </>
             ) : (

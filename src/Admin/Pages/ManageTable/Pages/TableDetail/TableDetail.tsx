@@ -953,33 +953,90 @@ export default function TableDetail() {
                 </Spin>
               </div>
             ) : (
-              <Spin
-                spinning={isFetchingTableDetail && !isInitialTableDetailLoading}
-                tip="Đang đồng bộ dữ liệu..."
-              >
+              <Spin spinning={isFetchingTableDetail && !isInitialTableDetailLoading} tip="Đang đồng bộ dữ liệu...">
                 <div>
                   <Collapse defaultActiveKey={["sessionInfo", "orderInfo"]} bordered={false} className="mb-4">
-                  <Panel
-                    key="sessionInfo"
-                    header={<h2 className="text-lg font-semibold text-gray-700">Thông tin phiên bàn hiện tại</h2>}
-                  >
-                    <Form
-                      layout="vertical"
-                      initialValues={{
-                        session_id: dataTableSessionDetail?.session_id,
-                        session_type: dataTableSessionDetail?.session_type,
-                        session_status: dataTableSessionDetail?.session_status,
-                        started_at: dataTableSessionDetail?.started_at
-                          ? dayjs(dataTableSessionDetail.started_at)
-                          : null,
-                        ended_at: dataTableSessionDetail?.ended_at ? dayjs(dataTableSessionDetail.ended_at) : null,
-                        reservation_number_of_people: dataTableSessionDetail?.reservation_number_of_people,
-                        reservation_notes: dataTableSessionDetail?.reservation_notes,
-                        reservation_reserved_at: dataTableSessionDetail?.reservation_reserved_at
-                          ? dayjs(dataTableSessionDetail.reservation_reserved_at)
-                          : null
-                      }}
+                    <Panel
+                      key="sessionInfo"
+                      header={<h2 className="text-lg font-semibold text-gray-700">Thông tin phiên bàn hiện tại</h2>}
                     >
+                      <Form
+                        layout="vertical"
+                        initialValues={{
+                          session_id: dataTableSessionDetail?.session_id,
+                          session_type: dataTableSessionDetail?.session_type,
+                          session_status: dataTableSessionDetail?.session_status,
+                          started_at: dataTableSessionDetail?.started_at
+                            ? dayjs(dataTableSessionDetail.started_at)
+                            : null,
+                          ended_at: dataTableSessionDetail?.ended_at ? dayjs(dataTableSessionDetail.ended_at) : null,
+                          reservation_number_of_people: dataTableSessionDetail?.reservation_number_of_people,
+                          reservation_notes: dataTableSessionDetail?.reservation_notes,
+                          reservation_reserved_at: dataTableSessionDetail?.reservation_reserved_at
+                            ? dayjs(dataTableSessionDetail.reservation_reserved_at)
+                            : null
+                        }}
+                      >
+                        <Descriptions
+                          bordered
+                          column={2}
+                          size="middle"
+                          styles={{
+                            label: { fontWeight: 500, background: "#fafafa" },
+                            content: { background: "#fff" }
+                          }}
+                        >
+                          <Descriptions.Item label="Mã phiên">
+                            <Form.Item name="session_id" noStyle>
+                              <Input disabled />
+                            </Form.Item>
+                          </Descriptions.Item>
+
+                          <Descriptions.Item label="Loại phiên">
+                            <Form.Item name="session_type" noStyle>
+                              <div>{renderSessionType(dataTableSessionDetail?.session_type)}</div>
+                            </Form.Item>
+                          </Descriptions.Item>
+
+                          <Descriptions.Item label="Trạng thái" span={2}>
+                            <Form.Item name="session_status" noStyle>
+                              <div>{renderSessionStatus(dataTableSessionDetail?.session_status)}</div>
+                            </Form.Item>
+                          </Descriptions.Item>
+
+                          <Descriptions.Item label="Bắt đầu">
+                            <Form.Item name="started_at" noStyle>
+                              <DatePicker showTime style={{ width: "100%" }} disabled />
+                            </Form.Item>
+                          </Descriptions.Item>
+
+                          <Descriptions.Item label="Kết thúc">
+                            <Form.Item name="ended_at" noStyle>
+                              <DatePicker showTime style={{ width: "100%" }} disabled />
+                            </Form.Item>
+                          </Descriptions.Item>
+
+                          <Descriptions.Item label="Thời gian đặt" span={1}>
+                            <Form.Item name="reservation_reserved_at" noStyle>
+                              <DatePicker showTime style={{ width: "100%" }} disabled />
+                            </Form.Item>
+                          </Descriptions.Item>
+
+                          <Descriptions.Item label="Số người đặt" span={1}>
+                            <Form.Item name="reservation_number_of_people" noStyle>
+                              <Input type="number" disabled />
+                            </Form.Item>
+                          </Descriptions.Item>
+
+                          <Descriptions.Item label="Ghi chú" span={2}>
+                            <Form.Item name="reservation_notes" noStyle>
+                              <Input.TextArea rows={2} disabled />
+                            </Form.Item>
+                          </Descriptions.Item>
+                        </Descriptions>
+                      </Form>
+
+                      <h3 className="text-md font-semibold my-4 text-gray-700">Thông tin khách hàng</h3>
                       <Descriptions
                         bordered
                         column={2}
@@ -989,316 +1046,262 @@ export default function TableDetail() {
                           content: { background: "#fff" }
                         }}
                       >
-                        <Descriptions.Item label="Mã phiên">
-                          <Form.Item name="session_id" noStyle>
-                            <Input disabled />
-                          </Form.Item>
+                        <Descriptions.Item label="Tên khách">{dataTableSessionDetail?.customer_name}</Descriptions.Item>
+                        <Descriptions.Item label="Giới tính">
+                          {dataTableSessionDetail?.customer_gender}
                         </Descriptions.Item>
-
-                        <Descriptions.Item label="Loại phiên">
-                          <Form.Item name="session_type" noStyle>
-                            <div>{renderSessionType(dataTableSessionDetail?.session_type)}</div>
-                          </Form.Item>
+                        <Descriptions.Item label="Số điện thoại" span={2}>
+                          {dataTableSessionDetail?.customer_phone}
                         </Descriptions.Item>
-
-                        <Descriptions.Item label="Trạng thái" span={2}>
-                          <Form.Item name="session_status" noStyle>
-                            <div>{renderSessionStatus(dataTableSessionDetail?.session_status)}</div>
-                          </Form.Item>
-                        </Descriptions.Item>
-
-                        <Descriptions.Item label="Bắt đầu">
-                          <Form.Item name="started_at" noStyle>
-                            <DatePicker showTime style={{ width: "100%" }} disabled />
-                          </Form.Item>
-                        </Descriptions.Item>
-
-                        <Descriptions.Item label="Kết thúc">
-                          <Form.Item name="ended_at" noStyle>
-                            <DatePicker showTime style={{ width: "100%" }} disabled />
-                          </Form.Item>
-                        </Descriptions.Item>
-
-                        <Descriptions.Item label="Thời gian đặt" span={1}>
-                          <Form.Item name="reservation_reserved_at" noStyle>
-                            <DatePicker showTime style={{ width: "100%" }} disabled />
-                          </Form.Item>
-                        </Descriptions.Item>
-
-                        <Descriptions.Item label="Số người đặt" span={1}>
-                          <Form.Item name="reservation_number_of_people" noStyle>
-                            <Input type="number" disabled />
-                          </Form.Item>
-                        </Descriptions.Item>
-
-                        <Descriptions.Item label="Ghi chú" span={2}>
-                          <Form.Item name="reservation_notes" noStyle>
-                            <Input.TextArea rows={2} disabled />
-                          </Form.Item>
+                        <Descriptions.Item label="Địa chỉ" span={2}>
+                          {dataTableSessionDetail?.customer_address}
                         </Descriptions.Item>
                       </Descriptions>
-                    </Form>
+                    </Panel>
 
-                    <h3 className="text-md font-semibold my-4 text-gray-700">Thông tin khách hàng</h3>
-                    <Descriptions
-                      bordered
-                      column={2}
-                      size="middle"
-                      styles={{
-                        label: { fontWeight: 500, background: "#fafafa" },
-                        content: { background: "#fff" }
-                      }}
+                    <Panel
+                      key="orderInfo"
+                      header={
+                        <h2 className="text-lg font-semibold text-gray-700">
+                          Thông tin món ăn hiện tại{" "}
+                          <span className="text-red-500">#{dataTableSessionOrder?.order_id}</span>
+                        </h2>
+                      }
                     >
-                      <Descriptions.Item label="Tên khách">{dataTableSessionDetail?.customer_name}</Descriptions.Item>
-                      <Descriptions.Item label="Giới tính">{dataTableSessionDetail?.customer_gender}</Descriptions.Item>
-                      <Descriptions.Item label="Số điện thoại" span={2}>
-                        {dataTableSessionDetail?.customer_phone}
-                      </Descriptions.Item>
-                      <Descriptions.Item label="Địa chỉ" span={2}>
-                        {dataTableSessionDetail?.customer_address}
-                      </Descriptions.Item>
-                    </Descriptions>
-                  </Panel>
-
-                  <Panel
-                    key="orderInfo"
-                    header={
-                      <h2 className="text-lg font-semibold text-gray-700">
-                        Thông tin món ăn hiện tại{" "}
-                        <span className="text-red-500">#{dataTableSessionOrder?.order_id}</span>
-                      </h2>
-                    }
-                  >
-                    {isInitialOrderLoading ? (
-                      <div className="flex justify-center items-center flex-col h-[200px]">
-                        <Spin tip="Đang tải dữ liệu món..." size="large" spinning>
-                          <div style={{ minHeight: 100, width: 300, marginTop: 10 }} />
-                        </Spin>
-                      </div>
-                    ) : (
-                      <Spin
-                        spinning={isFetchingDataTableSessionOrder && !isInitialOrderLoading}
-                        tip="Đang đồng bộ món ăn..."
-                      >
-                        <div>
-                          <Descriptions
-                          bordered
-                          column={2}
-                          size="middle"
-                          styles={{
-                            label: { fontWeight: 500, background: "#fafafa" },
-                            content: { background: "#fff" }
-                          }}
-                        >
-                          <Descriptions.Item label="Trạng thái đơn" span={2}>
-                            {/* {renderOrderStatus((dataTableSessionOrder as TableSessionOrderMerged)?.order_status)} */}
-                            {renderOrderStatus(mergedStatus)}
-                          </Descriptions.Item>
-                          <Descriptions.Item label="Tổng tiền" span={2}>
-                            <span className="text-red-500 font-semibold">
-                              {Number(dataTableSessionOrder?.total_amount || 0).toLocaleString("vi-VN")} đ
-                            </span>
-                          </Descriptions.Item>
-                        </Descriptions>
-
-                        <h3 className="text-md font-semibold my-4 text-gray-700">Danh sách món ăn</h3>
-                        <Table
-                          scroll={{ x: "max-content" }} // 👈 quan trọng
-                          bordered
-                          rowKey="order_item_id"
-                          pagination={false}
-                          rowHoverable={false} // ⬅️ Tắt hover mặc định
-                          dataSource={dataTableSessionOrder?.items.sort(
-                            (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
-                          )}
-                          columns={[
-                            {
-                              title: "Món ăn",
-                              dataIndex: ["dish", "dish_name"],
-                              key: "dish_name",
-                              fixed: "left",
-                              render: (_: any, record: any) => (
-                                <div className="flex items-center gap-2">
-                                  {record.dish.image ? (
-                                    <Image
-                                      src={record.dish.image}
-                                      alt={record.dish.dish_name}
-                                      className=" rounded-md object-cover"
-                                      width={64}
-                                      height={64}
-                                    />
-                                  ) : (
-                                    <Image
-                                      src={assets.rectangles.Burger}
-                                      alt={record.dish.dish_name}
-                                      className="w-12 h-12 rounded-md object-cover"
-                                      width={64}
-                                      height={64}
-                                    />
-                                  )}
-                                  <div>
-                                    <p className="font-medium">{record.dish.dish_name}</p>
-                                    <p className="text-xs text-gray-500">{record.dish.category_name}</p>
-                                  </div>
-                                </div>
-                              )
-                            },
-                            {
-                              title: "Số lượng",
-                              dataIndex: "quantity",
-                              key: "quantity",
-                              align: "center",
-                              render: (val: number, record: any) => {
-                                return (
-                                  <InputNumber
-                                    min={1}
-                                    className="text-right"
-                                    value={updateOrderItemList[record.order_item_id]?.quantity ?? val}
-                                    onChange={(newValueChange) =>
-                                      handleChangeItem(record.order_item_id, "quantity", newValueChange || 0)
-                                    }
-                                    disabled={record.item_status !== 0}
-                                  />
-                                )
-                              }
-                            },
-                            {
-                              title: "Đơn giá",
-                              dataIndex: "item_price",
-                              key: "item_price",
-                              render: (val: string) => `${Number(val).toLocaleString("vi-VN")} đ`,
-                              align: "right"
-                            },
-                            {
-                              title: "Thành tiền",
-                              dataIndex: "total_price",
-                              key: "total_price",
-                              render: (val: string) => `${Number(val).toLocaleString("vi-VN")} đ`,
-                              align: "right"
-                            },
-                            {
-                              title: "Trạng thái",
-                              dataIndex: "item_status",
-                              key: "item_status",
-                              render: (val: number, record: any) => (
-                                <Select
-                                  value={updateOrderItemList[record.order_item_id]?.status ?? val}
-                                  style={{ width: 140 }}
-                                  onChange={(newValueChange) =>
-                                    handleChangeItem(record.order_item_id, "status", newValueChange)
-                                  }
-                                  options={orderItemStatusOptions}
-                                />
-                              ),
-                              align: "center"
-                            },
-                            {
-                              title: "Ghi chú",
-                              dataIndex: "notes",
-                              key: "notes",
-                              align: "center",
-                              width: 150,
-                              render: (val: string, record: any) => (
-                                <Input
-                                  className="text-left"
-                                  value={updateOrderItemList[record.order_item_id]?.notes ?? val}
-                                  onChange={(e) => {
-                                    const newValueChange = e.target.value || ""
-                                    handleChangeItem(record.order_item_id, "notes", newValueChange)
-                                  }}
-                                />
-                              )
-                            },
-                            {
-                              title: "Thời gian tạo",
-                              dataIndex: "created_at",
-                              key: "created_at",
-                              align: "center",
-                              render: (val: string) => <div>{val}</div>
-                            }
-                          ]}
-                          rowClassName={(record, index) => {
-                            if (record.item_status === 4) {
-                              return "bg-red-200 text-red-700 font-medium"
-                            }
-                            if (record.item_status === 3) {
-                              return "bg-green-200 text-green-700 font-medium"
-                            }
-                            return index % 2 === 0 ? "bg-[#f2f2f2]" : "bg-white"
-                          }}
-                        />
-
-                        <div className="mt-2 flex justify-end gap-2">
-                          <Button
-                            className="mt-2 py-4 bg-lime-600 hover:!bg-lime-700"
-                            type="primary"
-                            icon={<ChefHat />}
-                            onClick={() => setIsModalOpen(true)}
-                          >
-                            Thêm Order
-                          </Button>
-                          <Button
-                            className="mt-2 py-4"
-                            type="primary"
-                            icon={<CookingPot />}
-                            onClick={handleUpdateOrderItemList}
-                          >
-                            Cập nhật order
-                          </Button>
-                        </div>
-                        </div>
-                      </Spin>
-                    )}
-                  </Panel>
-
-                  <Panel
-                    key="invoiceInfo"
-                    header={<h2 className="text-lg font-semibold text-gray-700">Hóa đơn ({invoiceList.length})</h2>}
-                  >
-                    <div style={{ padding: 16 }}>
-                      {isInitialInvoiceLoading ? (
-                        <div className="flex justify-center items-center py-6">
-                          <Spin tip="Đang tải hóa đơn..." />
+                      {isInitialOrderLoading ? (
+                        <div className="flex justify-center items-center flex-col h-[200px]">
+                          <Spin tip="Đang tải dữ liệu món..." size="large" spinning>
+                            <div style={{ minHeight: 100, width: 300, marginTop: 10 }} />
+                          </Spin>
                         </div>
                       ) : (
                         <Spin
-                          spinning={isFetchingInvoices && !isInitialInvoiceLoading}
-                          tip="Đang đồng bộ hóa đơn..."
+                          spinning={isFetchingDataTableSessionOrder && !isInitialOrderLoading}
+                          tip="Đang đồng bộ món ăn..."
                         >
-                          <InvoiceListSummary
-                            invoices={invoiceList}
-                            tableSessionId={dataTableSessionDetail?.session_id}
-                            onViewDetail={(invoice) => {
-                              setSelectedInvoiceForDetail(invoice)
-                              setShowInvoiceDetailModal(true)
-                            }}
-                          />
+                          <div>
+                            <Descriptions
+                              bordered
+                              column={2}
+                              size="middle"
+                              styles={{
+                                label: { fontWeight: 500, background: "#fafafa" },
+                                content: { background: "#fff" }
+                              }}
+                            >
+                              <Descriptions.Item label="Trạng thái đơn" span={2}>
+                                {/* {renderOrderStatus((dataTableSessionOrder as TableSessionOrderMerged)?.order_status)} */}
+                                {renderOrderStatus(mergedStatus)}
+                              </Descriptions.Item>
+                              <Descriptions.Item label="Tổng tiền" span={2}>
+                                <span className="text-red-500 font-semibold">
+                                  {Number(dataTableSessionOrder?.total_amount || 0).toLocaleString("vi-VN")} đ
+                                </span>
+                              </Descriptions.Item>
+                            </Descriptions>
+
+                            <h3 className="text-md font-semibold my-4 text-gray-700">Danh sách món ăn</h3>
+                            <Table
+                              scroll={{ x: "max-content" }} // 👈 quan trọng
+                              bordered
+                              rowKey="order_item_id"
+                              pagination={false}
+                              rowHoverable={false} // ⬅️ Tắt hover mặc định
+                              dataSource={dataTableSessionOrder?.items.sort(
+                                (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+                              )}
+                              columns={[
+                                {
+                                  title: "Món ăn",
+                                  dataIndex: ["dish", "dish_name"],
+                                  key: "dish_name",
+                                  fixed: "left",
+                                  render: (_: any, record: any) => (
+                                    <div className="flex items-center gap-2">
+                                      {record.dish.image ? (
+                                        <Image
+                                          src={record.dish.image}
+                                          alt={record.dish.dish_name}
+                                          className=" rounded-md object-cover"
+                                          width={64}
+                                          height={64}
+                                        />
+                                      ) : (
+                                        <Image
+                                          src={assets.rectangles.Burger}
+                                          alt={record.dish.dish_name}
+                                          className="w-12 h-12 rounded-md object-cover"
+                                          width={64}
+                                          height={64}
+                                        />
+                                      )}
+                                      <div>
+                                        <p className="font-medium">{record.dish.dish_name}</p>
+                                        <p className="text-xs text-gray-500">{record.dish.category_name}</p>
+                                      </div>
+                                    </div>
+                                  )
+                                },
+                                {
+                                  title: "Số lượng",
+                                  dataIndex: "quantity",
+                                  key: "quantity",
+                                  align: "center",
+                                  render: (val: number, record: any) => {
+                                    return (
+                                      <InputNumber
+                                        min={1}
+                                        className="text-right"
+                                        value={updateOrderItemList[record.order_item_id]?.quantity ?? val}
+                                        onChange={(newValueChange) =>
+                                          handleChangeItem(record.order_item_id, "quantity", newValueChange || 0)
+                                        }
+                                        disabled={record.item_status !== 0}
+                                      />
+                                    )
+                                  }
+                                },
+                                {
+                                  title: "Đơn giá",
+                                  dataIndex: "item_price",
+                                  key: "item_price",
+                                  render: (val: string) => `${Number(val).toLocaleString("vi-VN")} đ`,
+                                  align: "right"
+                                },
+                                {
+                                  title: "Thành tiền",
+                                  dataIndex: "total_price",
+                                  key: "total_price",
+                                  render: (val: string) => `${Number(val).toLocaleString("vi-VN")} đ`,
+                                  align: "right"
+                                },
+                                {
+                                  title: "Trạng thái",
+                                  dataIndex: "item_status",
+                                  key: "item_status",
+                                  render: (val: number, record: any) => (
+                                    <Select
+                                      value={updateOrderItemList[record.order_item_id]?.status ?? val}
+                                      style={{ width: 140 }}
+                                      onChange={(newValueChange) =>
+                                        handleChangeItem(record.order_item_id, "status", newValueChange)
+                                      }
+                                      options={orderItemStatusOptions}
+                                    />
+                                  ),
+                                  align: "center"
+                                },
+                                {
+                                  title: "Ghi chú",
+                                  dataIndex: "notes",
+                                  key: "notes",
+                                  align: "center",
+                                  width: 150,
+                                  render: (val: string, record: any) => (
+                                    <Input
+                                      className="text-left"
+                                      value={updateOrderItemList[record.order_item_id]?.notes ?? val}
+                                      onChange={(e) => {
+                                        const newValueChange = e.target.value || ""
+                                        handleChangeItem(record.order_item_id, "notes", newValueChange)
+                                      }}
+                                    />
+                                  )
+                                },
+                                {
+                                  title: "Thời gian tạo",
+                                  dataIndex: "created_at",
+                                  key: "created_at",
+                                  align: "center",
+                                  render: (val: string) => <div>{val}</div>
+                                }
+                              ]}
+                              rowClassName={(record, index) => {
+                                if (record.item_status === 4) {
+                                  return "bg-red-200 text-red-700 font-medium"
+                                }
+                                if (record.item_status === 3) {
+                                  return "bg-green-200 text-green-700 font-medium"
+                                }
+                                return index % 2 === 0 ? "bg-[#f2f2f2]" : "bg-white"
+                              }}
+                            />
+
+                            <div className="mt-2 flex justify-end gap-2">
+                              <Button
+                                className="mt-2 py-4 bg-lime-600 hover:!bg-lime-700"
+                                type="primary"
+                                icon={<ChefHat />}
+                                onClick={() => setIsModalOpen(true)}
+                              >
+                                Thêm Order
+                              </Button>
+                              <Button
+                                className="mt-2 py-4"
+                                type="primary"
+                                icon={<CookingPot />}
+                                onClick={handleUpdateOrderItemList}
+                              >
+                                Cập nhật order
+                              </Button>
+                            </div>
+                          </div>
                         </Spin>
                       )}
-                    </div>
-                  </Panel>
+                    </Panel>
+
+                    <Panel
+                      key="invoiceInfo"
+                      header={<h2 className="text-lg font-semibold text-gray-700">Hóa đơn ({invoiceList.length})</h2>}
+                    >
+                      <div style={{ padding: 16 }}>
+                        {isInitialInvoiceLoading ? (
+                          <div className="flex justify-center items-center py-6">
+                            <Spin tip="Đang tải hóa đơn..." />
+                          </div>
+                        ) : (
+                          <Spin spinning={isFetchingInvoices && !isInitialInvoiceLoading} tip="Đang đồng bộ hóa đơn...">
+                            <InvoiceListSummary
+                              invoices={invoiceList}
+                              tableSessionId={dataTableSessionDetail?.session_id}
+                              onViewDetail={(invoice) => {
+                                setSelectedInvoiceForDetail(invoice)
+                                setShowInvoiceDetailModal(true)
+                              }}
+                            />
+                          </Spin>
+                        )}
+                      </div>
+                    </Panel>
                   </Collapse>
 
                   {/* Invoice Detail Modal */}
                   <InvoiceDetailModal
-                  open={showInvoiceDetailModal}
-                  onClose={() => {
-                    setShowInvoiceDetailModal(false)
-                    setSelectedInvoiceForDetail(null)
-                  }}
-                  invoiceId={selectedInvoiceForDetail?.id || null}
-                  tableSessionId={dataTableSessionDetail?.session_id || ""}
-                  idDiningTable={idDiningTable}
-                  onSplitInvoice={(invoice) => {
-                    setSelectedInvoiceForDetail(invoice as any)
-                    setShowSplitInvoiceModal(true)
-                  }}
-                  onPaymentSuccess={() => {
-                    queryClient.invalidateQueries({ queryKey: ["detailTableSession", idDiningTable] })
-                    queryClient.invalidateQueries({
-                      queryKey: ["listInvoicesForTableSession", dataTableSessionDetail?.session_id]
-                    })
-                  }}
+                    open={showInvoiceDetailModal}
+                    onClose={() => {
+                      setShowInvoiceDetailModal(false)
+                      setSelectedInvoiceForDetail(null)
+                    }}
+                    invoiceId={selectedInvoiceForDetail?.id || null}
+                    tableSessionId={dataTableSessionDetail?.session_id || ""}
+                    idDiningTable={idDiningTable}
+                    onSplitInvoice={(invoice) => {
+                      setSelectedInvoiceForDetail(invoice as any)
+                      setShowSplitInvoiceModal(true)
+                    }}
+                    onPaymentSuccess={() => {
+                      queryClient.invalidateQueries({ queryKey: ["detailTableSession", idDiningTable] })
+                      queryClient.invalidateQueries({
+                        queryKey: ["listInvoicesForTableSession", dataTableSessionDetail?.session_id]
+                      })
+                    }}
+                    tableSessionDetail={dataTableSessionDetail}
+                    tableInfo={{
+                      tableName: nameTable,
+                      tableNumber: dataTable?.table_number ?? null
+                    }}
+                    orderItems={dataTableSessionOrder?.items}
+                    orderSubtotal={dataTableSessionOrder ? Number(dataTableSessionOrder.total_amount) : undefined}
                   />
                 </div>
               </Spin>
@@ -1438,6 +1441,9 @@ export default function TableDetail() {
           totalAmount={Number(dataTableSessionOrder?.total_amount || 0)}
           tableSessionId={dataTableSessionDetail?.session_id || ""}
           idDiningTable={idDiningTable}
+          tableSessionDetail={dataTableSessionDetail}
+          orderItems={dataTableSessionOrder?.items}
+          tableInfo={{ tableName: nameTable, tableNumber: dataTable?.table_number }}
         />
       </Row>
     </div>

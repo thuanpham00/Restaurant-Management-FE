@@ -430,28 +430,25 @@ export default function ManageEmployee() {
       render: (_: any, record: Employee) => (
         <div className="flex gap-2">
           <Button
-            size="small"
+            type="link"
             icon={<Eye size={16} />}
             onClick={(e) => {
               e.stopPropagation()
               navigate(path.AdminStaffDetail.replace(":id", record.id))
             }}
           >
-            Chi tiết
           </Button>
           <Button
-            size="small"
-            type="primary"
+            type="link"
             icon={<Edit size={16} />}
             onClick={(e) => {
               e.stopPropagation()
               handleEdit(record)
             }}
           >
-            Sửa
           </Button>
           <Button
-            size="small"
+            type="link"
             danger
             icon={<Trash2 size={16} />}
             onClick={(e) => {
@@ -765,7 +762,6 @@ export default function ManageEmployee() {
                 <>
                   <Button onClick={handleCloseModal}>Đóng</Button>
                   <Button type="primary" icon={<Edit size={16} />} onClick={() => handleEdit()}>
-                    Chỉnh sửa
                   </Button>
                 </>
               ) : (
