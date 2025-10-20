@@ -19,5 +19,5 @@ export const clientAPI = {
     return Http.get<SuccessResponse<Chef[]>>("/api/employees/find/chefs")
   },
   getPromotions: (params?: PromotionQuery) =>
-    Http.get<SuccessResponse<Paginated<Promotion>>>("/api/promotions", { params })
+    Http.get<SuccessResponse<Paginated<Promotion>>>("/api/promotions/Promotions/clients", { params })
 }
