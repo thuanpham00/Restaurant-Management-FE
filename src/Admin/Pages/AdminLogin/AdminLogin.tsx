@@ -13,14 +13,14 @@ import { authAPI } from "src/Apis/Admin"
 import { isError401, isError422 } from "src/Helpers/utils"
 import { ErrorResponse } from "src/Types/utils.type"
 import { useAppStore } from "src/StateGlobal/zustand"
-import { getDefaultPermissionsForRole, resolveRole } from "src/Authorization"
+import { resolveRole } from "src/Authorization"
 import { toast } from "react-toastify"
 
 type FormData = Pick<SchemaAuthType, "email" | "password"> // kiểu dữ liệu của form
 const formData = schemaAuth.pick(["email", "password"]) // validate ở client
 
 export default function AdminLogin() {
-  const { setIsAuthenticated, setAvatar, setNameUser, setRole, setEmployeeId, setPermissions } = useAppStore()
+  const { setIsAuthenticated, setAvatar, setNameUser, setRole, setEmployeeId } = useAppStore()
   const {
     formState: { errors },
     setError,
@@ -50,10 +50,9 @@ export default function AdminLogin() {
         setRole(roleName)
         setEmployeeId(user.employee_profile?.id ?? null)
 
-        const resolvedRole = resolveRole(roleName)
-        const backendPermissions = user.role?.permissions?.map((permission: { code: string }) => permission.code) ?? []
-        const fallbackPermissions = resolvedRole ? getDefaultPermissionsForRole(resolvedRole) : []
-        setPermissions(backendPermissions.length > 0 ? backendPermissions : fallbackPermissions)
+        if (!resolveRole(roleName)) {
+          toast.warn("Vai trò người dùng không hợp lệ, vui lòng liên hệ quản trị viên để được cấp lại quyền.")
+        }
       },
       onError: (error) => {
         // lỗi từ server trả về

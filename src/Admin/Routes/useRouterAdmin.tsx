@@ -1,5 +1,5 @@
 import { Navigate, Outlet, useRoutes } from "react-router-dom"
-import { lazy, Suspense } from "react"
+import { lazy, Suspense, ComponentType, LazyExoticComponent } from "react"
 import MainLayoutAdmin from "../Layouts/MainLayoutAdmin"
 import { path } from "src/Constants/path"
 import LayoutAuthAdmin from "../Layouts/LayoutAuthAdmin"
@@ -7,7 +7,7 @@ import { useAppStore } from "src/StateGlobal/zustand"
 import ManagePromotion from "../Pages/ManageFinancial/Pages/ManagePromotion"
 import ManageInvoice from "../Pages/ManageFinancial/Pages/ManageInvoice"
 import InvoiceDetail from "../Pages/ManageFinancial/Pages/InvoiceDetail"
-import { FEATURE_VIEW_ABILITY, PermissionBoundary, resolveRole } from "src/Authorization"
+import { FEATURE_VIEW_ABILITY, FeatureKey, PermissionBoundary, resolveRole } from "src/Authorization"
 
 const AdminLogin = lazy(() => import("../Pages/AdminLogin"))
 const ManageDashboard = lazy(() => import("../Pages/ManageDashboard"))
@@ -34,6 +34,45 @@ const ManageStockExport = lazy(() => import("../Pages/ManageStockExport"))
 const ManageStockLoss = lazy(() => import("../Pages/ManageStockLoss"))
 const ManageRoles = lazy(() => import("../Pages/ManageRoles"))
 const ManagePermissionMatrix = lazy(() => import("../Pages/ManagePermissionMatrix"))
+
+type GuardedComponent = LazyExoticComponent<ComponentType<any>> | ComponentType<any>
+
+const withPermission = (feature: FeatureKey, Component: GuardedComponent) => (
+  <Suspense>
+    <PermissionBoundary ability={FEATURE_VIEW_ABILITY[feature]}>
+      <Component />
+    </PermissionBoundary>
+  </Suspense>
+)
+
+const FEATURE_ROUTES: Array<{ path: string; feature: FeatureKey; Component: GuardedComponent }> = [
+  { path: path.AdminDashboard, feature: "dashboard", Component: ManageDashboard },
+  { path: path.AdminTables, feature: "tables", Component: ManageTable },
+  { path: path.AdminTablesDetail, feature: "tables", Component: TableDetail },
+  { path: path.AdminTableSessionDetail, feature: "tables", Component: TableSessionHistoryDetail },
+  { path: path.AdminReservations, feature: "reservations", Component: ManageReservation },
+  { path: path.AdminCategoryDish, feature: "menuCategory", Component: ManageDishCategory },
+  { path: path.AdminDish, feature: "dishes", Component: ManageDish },
+  { path: path.AdminMenu, feature: "menu", Component: ManageMenu },
+  { path: path.AdminMenuDetail, feature: "menu", Component: MenuDetail },
+  { path: path.AdminCustomers, feature: "customers", Component: ManageCustomer },
+  { path: path.AdminStaff, feature: "staff", Component: ManageEmployee },
+  { path: path.AdminStaffDetail, feature: "staff", Component: EmployeeDetail },
+  { path: path.AdminShifts, feature: "shifts", Component: ManageShift },
+  { path: path.AdminShiftDetail, feature: "shifts", Component: ShiftAssignmentDetail },
+  { path: path.AdminPayroll, feature: "payroll", Component: ManagePayroll },
+  { path: path.AdminPayrollDetail, feature: "payroll", Component: PayrollDetail },
+  { path: path.AdminPromotions, feature: "promotions", Component: ManagePromotion },
+  { path: path.AdminInvoices, feature: "invoices", Component: ManageInvoice },
+  { path: path.AdminInvoicesDetail, feature: "invoices", Component: InvoiceDetail },
+  { path: path.AdminIngredients, feature: "ingredients", Component: ManageIngredient },
+  { path: path.AdminSuppliers, feature: "suppliers", Component: ManageSupplier },
+  { path: path.AdminWarehouseIn, feature: "warehouseIn", Component: ManageStockImport },
+  { path: path.AdminWarehouseOut, feature: "warehouseOut", Component: ManageStockExport },
+  { path: path.AdminInventoryLoss, feature: "inventoryLoss", Component: ManageStockLoss },
+  { path: path.AdminRoles, feature: "roles", Component: ManageRoles },
+  { path: path.AdminPermissionMatrix, feature: "permissionMatrix", Component: ManagePermissionMatrix }
+]
 
 const ProtectedRoute = () => {
   const { isAuthenticated } = useAppStore()
@@ -73,266 +112,10 @@ export default function useRouterAdmin() {
               path: "",
               element: <MainLayoutAdmin />,
               children: [
-                {
-                  path: path.AdminDashboard,
-                  element: (
-                    <Suspense>
-                      <PermissionBoundary ability={FEATURE_VIEW_ABILITY.dashboard}>
-                        <ManageDashboard />
-                      </PermissionBoundary>
-                    </Suspense>
-                  )
-                },
-                {
-                  path: path.AdminTables,
-                  element: (
-                    <Suspense>
-                      <PermissionBoundary ability={FEATURE_VIEW_ABILITY.tables}>
-                        <ManageTable />
-                      </PermissionBoundary>
-                    </Suspense>
-                  )
-                },
-                {
-                  path: path.AdminTablesDetail,
-                  element: (
-                    <Suspense>
-                      <PermissionBoundary ability={FEATURE_VIEW_ABILITY.tables}>
-                        <TableDetail />
-                      </PermissionBoundary>
-                    </Suspense>
-                  )
-                },
-                {
-                  path: path.AdminTableSessionDetail,
-                  element: (
-                    <Suspense>
-                      <PermissionBoundary ability={FEATURE_VIEW_ABILITY.tables}>
-                        <TableSessionHistoryDetail />
-                      </PermissionBoundary>
-                    </Suspense>
-                  )
-                },
-                {
-                  path: path.AdminReservations,
-                  element: (
-                    <Suspense>
-                      <PermissionBoundary ability={FEATURE_VIEW_ABILITY.reservations}>
-                        <ManageReservation />
-                      </PermissionBoundary>
-                    </Suspense>
-                  )
-                },
-                {
-                  path: path.AdminCategoryDish,
-                  element: (
-                    <Suspense>
-                      <PermissionBoundary ability={FEATURE_VIEW_ABILITY.menuCategory}>
-                        <ManageDishCategory />
-                      </PermissionBoundary>
-                    </Suspense>
-                  )
-                },
-                {
-                  path: path.AdminDish,
-                  element: (
-                    <Suspense>
-                      <PermissionBoundary ability={FEATURE_VIEW_ABILITY.dishes}>
-                        <ManageDish />
-                      </PermissionBoundary>
-                    </Suspense>
-                  )
-                },
-                {
-                  path: path.AdminMenu,
-                  element: (
-                    <Suspense>
-                      <PermissionBoundary ability={FEATURE_VIEW_ABILITY.menu}>
-                        <ManageMenu />
-                      </PermissionBoundary>
-                    </Suspense>
-                  )
-                },
-                {
-                  path: path.AdminMenuDetail,
-                  element: (
-                    <Suspense>
-                      <PermissionBoundary ability={FEATURE_VIEW_ABILITY.menu}>
-                        <MenuDetail />
-                      </PermissionBoundary>
-                    </Suspense>
-                  )
-                },
-                {
-                  path: path.AdminCustomers,
-                  element: (
-                    <Suspense>
-                      <PermissionBoundary ability={FEATURE_VIEW_ABILITY.customers}>
-                        <ManageCustomer />
-                      </PermissionBoundary>
-                    </Suspense>
-                  )
-                },
-                {
-                  path: path.AdminStaff,
-                  element: (
-                    <Suspense>
-                      <PermissionBoundary ability={FEATURE_VIEW_ABILITY.staff}>
-                        <ManageEmployee />
-                      </PermissionBoundary>
-                    </Suspense>
-                  )
-                },
-                {
-                  path: path.AdminStaffDetail,
-                  element: (
-                    <Suspense>
-                      <PermissionBoundary ability={FEATURE_VIEW_ABILITY.staff}>
-                        <EmployeeDetail />
-                      </PermissionBoundary>
-                    </Suspense>
-                  )
-                },
-                {
-                  path: path.AdminShifts,
-                  element: (
-                    <Suspense>
-                      <PermissionBoundary ability={FEATURE_VIEW_ABILITY.shifts}>
-                        <ManageShift />
-                      </PermissionBoundary>
-                    </Suspense>
-                  )
-                },
-                {
-                  path: path.AdminShiftDetail,
-                  element: (
-                    <Suspense>
-                      <PermissionBoundary ability={FEATURE_VIEW_ABILITY.shifts}>
-                        <ShiftAssignmentDetail />
-                      </PermissionBoundary>
-                    </Suspense>
-                  )
-                },
-                {
-                  path: path.AdminPayroll,
-                  element: (
-                    <Suspense>
-                      <PermissionBoundary ability={FEATURE_VIEW_ABILITY.payroll}>
-                        <ManagePayroll />
-                      </PermissionBoundary>
-                    </Suspense>
-                  )
-                },
-                {
-                  path: path.AdminPayrollDetail,
-                  element: (
-                    <Suspense>
-                      <PermissionBoundary ability={FEATURE_VIEW_ABILITY.payroll}>
-                        <PayrollDetail />
-                      </PermissionBoundary>
-                    </Suspense>
-                  )
-                },
-                {
-                  path: path.AdminPromotions,
-                  element: (
-                    <Suspense>
-                      <PermissionBoundary ability={FEATURE_VIEW_ABILITY.promotions}>
-                        <ManagePromotion />
-                      </PermissionBoundary>
-                    </Suspense>
-                  )
-                },
-                {
-                  path: path.AdminInvoices,
-                  element: (
-                    <Suspense>
-                      <PermissionBoundary ability={FEATURE_VIEW_ABILITY.invoices}>
-                        <ManageInvoice />
-                      </PermissionBoundary>
-                    </Suspense>
-                  )
-                },
-                {
-                  path: path.AdminInvoicesDetail,
-                  element: (
-                    <Suspense>
-                      <PermissionBoundary ability={FEATURE_VIEW_ABILITY.invoices}>
-                        <InvoiceDetail />
-                      </PermissionBoundary>
-                    </Suspense>
-                  )
-                },
-                {
-                  path: path.AdminIngredients,
-                  element: (
-                    <Suspense>
-                      <PermissionBoundary ability={FEATURE_VIEW_ABILITY.ingredients}>
-                        <ManageIngredient />
-                      </PermissionBoundary>
-                    </Suspense>
-                  )
-                },
-                {
-                  path: path.AdminSuppliers,
-                  element: (
-                    <Suspense>
-                      <PermissionBoundary ability={FEATURE_VIEW_ABILITY.suppliers}>
-                        <ManageSupplier />
-                      </PermissionBoundary>
-                    </Suspense>
-                  )
-                },
-                {
-                  path: path.AdminWarehouseIn,
-                  element: (
-                    <Suspense>
-                      <PermissionBoundary ability={FEATURE_VIEW_ABILITY.warehouseIn}>
-                        <ManageStockImport />
-                      </PermissionBoundary>
-                    </Suspense>
-                  )
-                },
-                {
-                  path: path.AdminWarehouseOut,
-                  element: (
-                    <Suspense>
-                      <PermissionBoundary ability={FEATURE_VIEW_ABILITY.warehouseOut}>
-                        <ManageStockExport />
-                      </PermissionBoundary>
-                    </Suspense>
-                  )
-                },
-                {
-                  path: path.AdminInventoryLoss,
-                  element: (
-                    <Suspense>
-                      <PermissionBoundary ability={FEATURE_VIEW_ABILITY.inventoryLoss}>
-                        <ManageStockLoss />
-                      </PermissionBoundary>
-                    </Suspense>
-                  )
-                },
-                {
-                  path: path.AdminRoles,
-                  element: (
-                    <Suspense>
-                      <PermissionBoundary ability={FEATURE_VIEW_ABILITY.roles}>
-                        <ManageRoles />
-                      </PermissionBoundary>
-                    </Suspense>
-                  )
-                },
-                {
-                  path: path.AdminPermissionMatrix,
-                  element: (
-                    <Suspense>
-                      <PermissionBoundary ability={FEATURE_VIEW_ABILITY.permissionMatrix}>
-                        <ManagePermissionMatrix />
-                      </PermissionBoundary>
-                    </Suspense>
-                  )
-                }
+                ...FEATURE_ROUTES.map(({ path: routePath, feature, Component }) => ({
+                  path: routePath,
+                  element: withPermission(feature, Component)
+                }))
               ]
             }
           ]

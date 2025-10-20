@@ -19,8 +19,8 @@ import {
   Tooltip
 } from "antd"
 import { isUndefined, omitBy } from "lodash"
-import { Shield, Edit, Trash2, Plus, Filter, RotateCcw, Eye, Grid } from "lucide-react"
-import { Fragment, useState } from "react"
+import { Edit, Trash2, Plus, Filter, RotateCcw, Eye, Grid } from "lucide-react"
+import { Fragment, useEffect, useState } from "react"
 import { Helmet } from "react-helmet-async"
 import { toast } from "react-toastify"
 import { createSearchParams, useNavigate } from "react-router-dom"
@@ -34,6 +34,7 @@ import useQueryParams from "src/Hook/useQueryParams"
 import { PaginatedResponse } from "src/Types/utils.type"
 import { Role, queryParamConfigRole } from "src/Types/user.type"
 import { Permission } from "src/Types/permissions.type"
+import { AppAbility, PermissionGate, useAuthorization } from "src/Authorization"
 
 const { Option } = Select
 const { TextArea } = Input
@@ -42,16 +43,25 @@ export default function ManageRoles() {
   const queryConfig: queryParamConfigRole = useQueryParams()
   const queryClient = useQueryClient()
   const navigate = useNavigate()
+  const { can } = useAuthorization()
+  const canViewRoles = can(AppAbility.ROLES_VIEW)
+  const canManageRoles = can(AppAbility.ROLES_MANAGE)
 
   // ========== STATE ==========
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false)
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [selectedRole, setSelectedRole] = useState<Role | null>(null)
-
   const [createForm] = Form.useForm()
   const [editForm] = Form.useForm()
   const [filterForm] = Form.useForm()
+  useEffect(() => {
+    if (!canManageRoles) {
+      setIsCreateModalOpen(false)
+      setIsEditModalOpen(false)
+      setSelectedRole((prev) => (isDetailModalOpen ? prev : null))
+    }
+  }, [canManageRoles, isDetailModalOpen])
 
   // ========== QUERY ==========
   const { data, isFetching } = useQuery({
@@ -73,7 +83,8 @@ export default function ManageRoles() {
       return rolesAPI.getList(params, controller.signal)
     },
     staleTime: 3 * 60 * 1000,
-    placeholderData: keepPreviousData
+    placeholderData: keepPreviousData,
+    enabled: canViewRoles
   })
 
   const paginated = data?.data?.data as PaginatedResponse<Role>
@@ -83,7 +94,8 @@ export default function ManageRoles() {
   const { data: permissionsData } = useQuery({
     queryKey: ["permissions-all"],
     queryFn: () => permissionsAPI.getList({ per_page: "99" }),
-    staleTime: 5 * 60 * 1000
+    staleTime: 5 * 60 * 1000,
+    enabled: canManageRoles
   })
 
   const allPermissions = permissionsData?.data?.data?.data || []
@@ -95,7 +107,7 @@ export default function ManageRoles() {
       if (!selectedRole?.id) return Promise.reject("No role selected")
       return rolesAPI.getDetail(selectedRole.id)
     },
-    enabled: !!selectedRole?.id && (isDetailModalOpen || isEditModalOpen),
+    enabled: !!selectedRole?.id && canViewRoles && (isDetailModalOpen || isEditModalOpen),
     staleTime: 3 * 60 * 1000
   })
 
@@ -165,6 +177,10 @@ export default function ManageRoles() {
     }
   })
 
+  if (!canViewRoles) {
+    return null
+  }
+
   // ========== HANDLERS ==========
   const handleView = (role: Role) => {
     setSelectedRole(role)
@@ -172,11 +188,19 @@ export default function ManageRoles() {
   }
 
   const handleEdit = (role: Role) => {
+    if (!canManageRoles) {
+      toast.warn("Bạn không có quyền quản lý vai trò.")
+      return
+    }
     setSelectedRole(role)
     setIsEditModalOpen(true)
   }
 
   const handleDelete = (role: Role) => {
+    if (!canManageRoles) {
+      toast.warn("Bạn không có quyền quản lý vai trò.")
+      return
+    }
     Modal.confirm({
       title: "Xác nhận xóa vai trò",
       content: `Bạn có chắc chắn muốn xóa vai trò "${role.name}"?`,
@@ -190,6 +214,10 @@ export default function ManageRoles() {
   }
 
   const handleCreate = (values: any) => {
+    if (!canManageRoles) {
+      toast.warn("Bạn không có quyền quản lý vai trò.")
+      return
+    }
     const body = {
       name: values.name,
       description: values.description,
@@ -201,6 +229,10 @@ export default function ManageRoles() {
 
   const handleUpdate = (values: any) => {
     if (!selectedRole) return
+    if (!canManageRoles) {
+      toast.warn("Bạn không có quyền quản lý vai trò.")
+      return
+    }
 
     const body = cleanObject({
       name: values.name,
@@ -314,12 +346,16 @@ export default function ManageRoles() {
           <Button type="link" icon={<Eye size={16} />} onClick={() => handleView(record)}>
             Xem
           </Button>
-          <Button type="link" icon={<Edit size={16} />} onClick={() => handleEdit(record)}>
-            Sửa
-          </Button>
-          <Button type="link" danger icon={<Trash2 size={16} />} onClick={() => handleDelete(record)}>
-            Xóa
-          </Button>
+          {canManageRoles && (
+            <>
+              <Button type="link" icon={<Edit size={16} />} onClick={() => handleEdit(record)}>
+                Sửa
+              </Button>
+              <Button type="link" danger icon={<Trash2 size={16} />} onClick={() => handleDelete(record)}>
+                Xóa
+              </Button>
+            </>
+          )}
         </Space>
       )
     }
@@ -344,9 +380,11 @@ export default function ManageRoles() {
             <Button type="default" icon={<Grid size={16} />} onClick={() => navigate("/admin/permission-matrix")}>
               Ma trận Phân quyền
             </Button>
-            <Button type="primary" icon={<Plus size={16} />} onClick={() => setIsCreateModalOpen(true)}>
-              Thêm vai trò
-            </Button>
+            <PermissionGate ability={AppAbility.ROLES_MANAGE}>
+              <Button type="primary" icon={<Plus size={16} />} onClick={() => setIsCreateModalOpen(true)}>
+                Thêm vai trò
+              </Button>
+            </PermissionGate>
           </Space>
         </div>
 
@@ -418,7 +456,7 @@ export default function ManageRoles() {
         {/* Create Modal */}
         <Modal
           title="Thêm vai trò mới"
-          open={isCreateModalOpen}
+          open={canManageRoles && isCreateModalOpen}
           onCancel={() => {
             setIsCreateModalOpen(false)
             createForm.resetFields()
@@ -466,7 +504,12 @@ export default function ManageRoles() {
                 >
                   Hủy
                 </Button>
-                <Button type="primary" htmlType="submit" loading={createMutation.isPending}>
+                <Button
+                  type="primary"
+                  htmlType="submit"
+                  loading={createMutation.isPending}
+                  disabled={!canManageRoles}
+                >
                   Tạo vai trò
                 </Button>
               </Space>
@@ -477,7 +520,7 @@ export default function ManageRoles() {
         {/* Edit Modal */}
         <Modal
           title="Chỉnh sửa vai trò"
-          open={isEditModalOpen}
+          open={canManageRoles && isEditModalOpen}
           onCancel={() => {
             setIsEditModalOpen(false)
             editForm.resetFields()
@@ -546,6 +589,7 @@ export default function ManageRoles() {
                     type="primary"
                     htmlType="submit"
                     loading={updateMutation.isPending || syncPermissionsMutation.isPending}
+                    disabled={!canManageRoles}
                   >
                     Cập nhật
                   </Button>

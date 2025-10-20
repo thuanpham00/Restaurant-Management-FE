@@ -8,6 +8,7 @@ import { Save, RotateCcw, List } from "lucide-react"
 import { Helmet } from "react-helmet-async"
 import { useNavigate } from "react-router-dom"
 import NavigateBack from "src/Admin/Components/NavigateBack"
+import { AppAbility, useAuthorization } from "src/Authorization"
 import "./ManagePermissionMatrix.css"
 
 const { Title } = Typography
@@ -16,6 +17,9 @@ const { Panel } = Collapse
 export default function ManagePermissionMatrix() {
   const queryClient = useQueryClient()
   const navigate = useNavigate()
+  const { can } = useAuthorization()
+  const canViewPermissionMatrix = can(AppAbility.PERMISSION_MATRIX_VIEW)
+  const canManagePermissionMatrix = can(AppAbility.PERMISSION_MATRIX_MANAGE)
   
   const [pendingChanges, setPendingChanges] = useState<Record<string, string[]>>({})
   const [hasChanges, setHasChanges] = useState(false)
@@ -24,20 +28,25 @@ export default function ManagePermissionMatrix() {
   const { data: rolesData, isLoading: rolesLoading } = useQuery({
     queryKey: ["roles-matrix"],
     queryFn: () => rolesAPI.getList({ per_page: "99" }),
-    staleTime: 5 * 60 * 1000
+    staleTime: 5 * 60 * 1000,
+    enabled: canViewPermissionMatrix
   })
 
   // Fetch all permissions
   const { data: permissionsData, isLoading: permissionsLoading } = useQuery({
     queryKey: ["permissions-matrix"],
     queryFn: () => permissionsAPI.getList({ per_page: "99" }),
-    staleTime: 5 * 60 * 1000
+    staleTime: 5 * 60 * 1000,
+    enabled: canViewPermissionMatrix
   })
 
   const roles = rolesData?.data?.data?.data || []
   const permissions = permissionsData?.data?.data?.data || []
 
   useMemo(() => {
+    if (!canViewPermissionMatrix) {
+      return
+    }
     if (roles.length > 0 && Object.keys(pendingChanges).length === 0) {
       const initialChanges: Record<string, string[]> = {}
       roles.forEach((role) => {
@@ -45,7 +54,7 @@ export default function ManagePermissionMatrix() {
       })
       setPendingChanges(initialChanges)
     }
-  }, [roles])
+  }, [roles, canViewPermissionMatrix])
 
   const batchSyncMutation = useMutation({
     mutationFn: async (changes: Record<string, string[]>) => {
@@ -67,6 +76,10 @@ export default function ManagePermissionMatrix() {
 
   // Handle checkbox change (store in pending changes)
   const handlePermissionToggle = (roleId: string, permissionId: string, checked: boolean) => {
+    if (!canManagePermissionMatrix) {
+      toast.warn("Bạn không có quyền quản lý ma trận phân quyền.")
+      return
+    }
     setPendingChanges((prev) => {
       const currentPermissions = prev[roleId] || []
       const newPermissions = checked
@@ -83,11 +96,19 @@ export default function ManagePermissionMatrix() {
 
   // Save all changes
   const handleSaveChanges = () => {
+    if (!canManagePermissionMatrix) {
+      toast.warn("Bạn không có quyền quản lý ma trận phân quyền.")
+      return
+    }
     batchSyncMutation.mutate(pendingChanges)
   }
 
   // Reset to original state
   const handleReset = () => {
+    if (!canManagePermissionMatrix) {
+      toast.warn("Bạn không có quyền quản lý ma trận phân quyền.")
+      return
+    }
     const initialChanges: Record<string, string[]> = {}
     roles.forEach((role) => {
       initialChanges[role.id] = role.permissions?.map((p) => p.id) || []
@@ -171,7 +192,7 @@ export default function ManagePermissionMatrix() {
                   <Button
                     icon={<RotateCcw size={16} />}
                     onClick={handleReset}
-                    disabled={batchSyncMutation.isPending}
+                    disabled={batchSyncMutation.isPending || !canManagePermissionMatrix}
                   >
                     Đặt lại
                   </Button>
@@ -182,7 +203,7 @@ export default function ManagePermissionMatrix() {
                 icon={<Save size={16} />}
                 onClick={handleSaveChanges}
                 loading={batchSyncMutation.isPending}
-                disabled={!hasChanges}
+                disabled={!hasChanges || !canManagePermissionMatrix}
               >
                 Lưu thay đổi {hasChanges && `(${changedCount})`}
               </Button>
@@ -258,7 +279,7 @@ export default function ManagePermissionMatrix() {
                                     <Checkbox
                                       checked={checked}
                                       onChange={(e) => handlePermissionToggle(role.id, permission.id, e.target.checked)}
-                                      disabled={!role.is_active || !permission.is_active}
+                                      disabled={!role.is_active || !permission.is_active || !canManagePermissionMatrix}
                                     />
                                   </td>
                                 )

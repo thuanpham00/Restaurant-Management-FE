@@ -44,7 +44,6 @@ export const ROLE_PERMISSIONS: Record<AppRole, AppAbility[]> = {
     AppAbility.PROMOTIONS_MANAGE
   ]),
   [AppRole.STAFF]: unique([
-    AppAbility.DASHBOARD_VIEW,
     AppAbility.TABLES_VIEW,
     AppAbility.RESERVATIONS_VIEW,
     AppAbility.CUSTOMERS_VIEW,
@@ -72,7 +71,6 @@ export const ROLE_PERMISSIONS: Record<AppRole, AppAbility[]> = {
     AppAbility.PROMOTIONS_MANAGE
   ]),
   [AppRole.KITCHEN_STAFF]: unique([
-    AppAbility.DASHBOARD_VIEW,
     AppAbility.MENU_CATEGORY_VIEW,
     AppAbility.MENU_CATEGORY_MANAGE,
     AppAbility.DISH_VIEW,
@@ -90,7 +88,6 @@ export const ROLE_PERMISSIONS: Record<AppRole, AppAbility[]> = {
     AppAbility.WAREHOUSE_LOSS_MANAGE
   ]),
   [AppRole.WAITER]: unique([
-    AppAbility.DASHBOARD_VIEW,
     AppAbility.TABLES_VIEW,
     AppAbility.TABLES_MANAGE,
     AppAbility.RESERVATIONS_VIEW,

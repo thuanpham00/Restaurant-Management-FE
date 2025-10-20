@@ -4,9 +4,16 @@ import { Tabs } from "antd"
 import { Calculator } from "lucide-react"
 import NavigateBack from "src/Admin/Components/NavigateBack"
 import PayrollListTab from "./components/PayrollListTab"
+import { AppAbility, useAuthorization } from "src/Authorization"
 
 export default function ManagePayroll() {
+  const { can } = useAuthorization()
+  const canViewPayroll = can(AppAbility.PAYROLL_VIEW)
   const [activeTab, setActiveTab] = useState("list")
+
+  if (!canViewPayroll) {
+    return null
+  }
 
   const items = [
     {

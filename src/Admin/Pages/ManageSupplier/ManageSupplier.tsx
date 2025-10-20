@@ -28,6 +28,7 @@ import { cleanObject } from "src/Helpers/common"
 import useQueryParams from "src/Hook/useQueryParams"
 import { Supplier, SupplierCreateInput, SupplierFormInput, queryParamConfigSupplier } from "src/Types/supplier.type"
 import { PaginatedResponse } from "src/Types/utils.type"
+import { AppAbility, useAuthorization } from "src/Authorization"
 
 const { Option } = Select
 
@@ -50,6 +51,10 @@ export default function ManageSupplier() {
     isUndefined
   )
 
+  const { can } = useAuthorization()
+  const canViewSuppliers = can(AppAbility.SUPPLIERS_VIEW)
+  const canManageSuppliers = can(AppAbility.SUPPLIERS_MANAGE)
+
   // ========== STATE ==========
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false)
@@ -67,7 +72,8 @@ export default function ManageSupplier() {
       return suppliersAPI.getList(queryConfig, controller.signal)
     },
     staleTime: 3 * 60 * 1000,
-    placeholderData: keepPreviousData
+    placeholderData: keepPreviousData,
+    enabled: canViewSuppliers
   })
 
   const paginated = data?.data?.data as PaginatedResponse<Supplier>
@@ -80,7 +86,8 @@ export default function ManageSupplier() {
       setTimeout(() => controller.abort(), 10000)
       return ingredientsAPI.getList({ per_page: "1000" }, controller.signal)
     },
-    staleTime: 5 * 60 * 1000
+    staleTime: 5 * 60 * 1000,
+    enabled: canViewSuppliers
   })
 
   const ingredientsList = (ingredientsData?.data?.data as any)?.data || []
@@ -141,8 +148,24 @@ export default function ManageSupplier() {
     })
   }, [queryParams, filterForm])
 
+  useEffect(() => {
+    if (!canManageSuppliers) {
+      setIsModalOpen(false)
+      setEditingId(null)
+      form.resetFields()
+    }
+  }, [canManageSuppliers, form])
+
+  if (!canViewSuppliers) {
+    return null
+  }
+
   // ========== HANDLERS ==========
   const handleOpenModal = (record?: Supplier) => {
+    if (!canManageSuppliers) {
+      toast.warn("Bạn không có quyền quản lý nhà cung cấp.")
+      return
+    }
     if (record) {
       setEditingId(record.id)
       form.setFieldsValue({
@@ -163,6 +186,10 @@ export default function ManageSupplier() {
   }
 
   const handleSubmit = async () => {
+    if (!canManageSuppliers) {
+      toast.warn("Bạn không có quyền quản lý nhà cung cấp.")
+      return
+    }
     try {
       const values = await form.validateFields()
       if (editingId) {
@@ -176,6 +203,10 @@ export default function ManageSupplier() {
   }
 
   const handleDelete = (id: string) => {
+    if (!canManageSuppliers) {
+      toast.warn("Bạn không có quyền quản lý nhà cung cấp.")
+      return
+    }
     Modal.confirm({
       title: "Xác nhận xóa",
       content: "Bạn có chắc chắn muốn xóa nhà cung cấp này? Chỉ có thể xóa nhà cung cấp không có phiếu nhập kho.",
@@ -319,25 +350,29 @@ export default function ManageSupplier() {
             }}
             title="Xem chi tiết"
           />
-          <Button
-            type="link"
-            icon={<Edit size={16} />}
-            onClick={(e) => {
-              e.stopPropagation()
-              handleOpenModal(record)
-            }}
-            title="Chỉnh sửa"
-          />
-          <Button
-            danger
-            type="link"
-            icon={<Trash2 size={16} />}
-            onClick={(e) => {
-              e.stopPropagation()
-              handleDelete(record.id)
-            }}
-            title="Xóa"
-          />
+          {canManageSuppliers && (
+            <>
+              <Button
+                type="link"
+                icon={<Edit size={16} />}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  handleOpenModal(record)
+                }}
+                title="Chỉnh sửa"
+              />
+              <Button
+                danger
+                type="link"
+                icon={<Trash2 size={16} />}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  handleDelete(record.id)
+                }}
+                title="Xóa"
+              />
+            </>
+          )}
         </Space>
       )
     }
@@ -470,9 +505,11 @@ export default function ManageSupplier() {
           <div className="text-sm text-gray-600">
             Tổng số: <span className="font-semibold">{paginated?.total || 0}</span> nhà cung cấp
           </div>
-          <Button type="primary" icon={<Plus size={16} />} onClick={() => handleOpenModal()}>
-            Thêm nhà cung cấp
-          </Button>
+          {canManageSuppliers && (
+            <Button type="primary" icon={<Plus size={16} />} onClick={() => handleOpenModal()}>
+              Thêm nhà cung cấp
+            </Button>
+          )}
         </div>
 
         {/* Table */}
@@ -499,7 +536,7 @@ export default function ManageSupplier() {
       {/* Create/Edit Modal */}
       <Modal
         title={<span className="text-base">{editingId ? "Cập nhật nhà cung cấp" : "Thêm nhà cung cấp mới"}</span>}
-        open={isModalOpen}
+        open={isModalOpen && canManageSuppliers}
         onOk={handleSubmit}
         onCancel={() => {
           setIsModalOpen(false)
@@ -510,6 +547,7 @@ export default function ManageSupplier() {
         cancelText="Hủy"
         width={700}
         confirmLoading={createMutation.isPending || updateMutation.isPending}
+        okButtonProps={{ disabled: !canManageSuppliers }}
         styles={{
           body: {
             maxHeight: "calc(100vh - 200px)",
@@ -565,29 +603,43 @@ export default function ManageSupplier() {
           setIsDetailModalOpen(false)
           setSelectedSupplier(null)
         }}
-        footer={[
-          <Button
-            key="close"
-            onClick={() => {
-              setIsDetailModalOpen(false)
-              setSelectedSupplier(null)
-            }}
-          >
-            Đóng
-          </Button>,
-          <Button
-            key="edit"
-            type="primary"
-            onClick={() => {
-              setIsDetailModalOpen(false)
-              if (selectedSupplier) {
-                handleOpenModal(selectedSupplier)
-              }
-            }}
-          >
-            Chỉnh sửa
-          </Button>
-        ]}
+        footer={
+          canManageSuppliers
+            ? [
+                <Button
+                  key="close"
+                  onClick={() => {
+                    setIsDetailModalOpen(false)
+                    setSelectedSupplier(null)
+                  }}
+                >
+                  Đóng
+                </Button>,
+                <Button
+                  key="edit"
+                  type="primary"
+                  onClick={() => {
+                    setIsDetailModalOpen(false)
+                    if (selectedSupplier) {
+                      handleOpenModal(selectedSupplier)
+                    }
+                  }}
+                >
+                  Chỉnh sửa
+                </Button>
+              ]
+            : [
+                <Button
+                  key="close"
+                  onClick={() => {
+                    setIsDetailModalOpen(false)
+                    setSelectedSupplier(null)
+                  }}
+                >
+                  Đóng
+                </Button>
+              ]
+        }
         width={1100}
         styles={{
           body: {

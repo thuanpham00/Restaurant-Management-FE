@@ -47,7 +47,7 @@ type MenuItems = NonNullable<MenuProps["items"]>
 export default function Sidebar() {
   const location = useLocation()
   const navigate = useNavigate()
-  const { setIsAuthenticated, setAvatar, setNameUser, setRole, setEmployeeId, setPermissions, employeeId } = useAppStore()
+  const { setIsAuthenticated, setAvatar, setNameUser, setRole, setEmployeeId, employeeId } = useAppStore()
   const { can } = useAuthorization()
 
   // Centralized menu configuration with meaningful keys
@@ -240,8 +240,7 @@ export default function Sidebar() {
         setNameUser(null)
         setRole(null)
         setAvatar(null)
-        setEmployeeId(null)
-        setPermissions([])
+  setEmployeeId(null)
 
         navigate(path.AdminLogin)
       }
