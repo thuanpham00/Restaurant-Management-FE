@@ -18,7 +18,7 @@ import {
 } from "antd"
 import { isUndefined, omit, omitBy } from "lodash"
 import { Beef, Filter, RotateCcw } from "lucide-react"
-import { Fragment, useMemo, useState } from "react"
+import { Fragment, useEffect, useMemo, useState } from "react"
 import { Helmet } from "react-helmet-async"
 import { createSearchParams, useNavigate, useSearchParams } from "react-router-dom"
 import { toast } from "react-toastify"
@@ -32,10 +32,13 @@ import { isError400 } from "src/Helpers/utils"
 import useQueryParams from "src/Hook/useQueryParams"
 import { Dish } from "src/Types/dish.type"
 import { queryParamConfigCategoryDish, queryParamConfigDish } from "src/Types/queryParams.type"
+import { AppAbility, PermissionGate, useAuthorization } from "src/Authorization"
 
 export default function ManageDish() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
+  const { can } = useAuthorization()
+  const canManageDish = can(AppAbility.DISH_MANAGE)
   const queryParams: queryParamConfigDish = useQueryParams()
   const queryConfig: queryParamConfigDish = omitBy(
     {
@@ -82,7 +85,7 @@ export default function ManageDish() {
 
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingId, setEditingId] = useState<string | null | boolean>(null)
-  const [form] = Form.useForm<Dish>()
+  const [form] = Form.useForm<Record<string, any>>()
 
   const [file, setFile] = useState<File | undefined>(undefined)
   const [previewOldImage, setPreviewOldImage] = useState<string>("")
@@ -94,6 +97,16 @@ export default function ManageDish() {
   const handleChangeImage = (file?: File) => {
     setFile(file as File)
   }
+
+  useEffect(() => {
+    if (!canManageDish) {
+      setIsModalOpen(false)
+      setEditingId(null)
+      setFile(undefined)
+      setPreviewOldImage("")
+      form.resetFields()
+    }
+  }, [canManageDish, form])
 
   // Update API
   const updateMutation = useMutation({
@@ -150,6 +163,10 @@ export default function ManageDish() {
   })
 
   const handleEdit = async (record: any | boolean) => {
+    if (!canManageDish) {
+      toast.warn("Bạn không có quyền quản lý món ăn.")
+      return
+    }
     if (record === true) {
       form.setFieldsValue({
         name: "",
@@ -181,6 +198,10 @@ export default function ManageDish() {
   console.log(file)
 
   const handleUpdate = () => {
+    if (!canManageDish) {
+      toast.warn("Bạn không có quyền quản lý món ăn.")
+      return
+    }
     form.validateFields().then(async (values) => {
       const payload: any = {
         ...values
@@ -217,6 +238,10 @@ export default function ManageDish() {
   })
 
   const handleDelete = (id: string) => {
+    if (!canManageDish) {
+      toast.warn("Bạn không có quyền quản lý món ăn.")
+      return
+    }
     Modal.confirm({
       title: "Bạn có chắc muốn xóa?",
       content: "Món ăn sẽ bị xóa vĩnh viễn.",
@@ -296,16 +321,21 @@ export default function ManageDish() {
     {
       title: <div className="text-center">Hành động</div>,
       key: "actions",
-      render: (_: any, record: any) => (
-        <div className="text-left">
-          <Button type="link" onClick={() => handleEdit(record)}>
-            Sửa
-          </Button>
-          <Button danger type="link" onClick={() => handleDelete(record.id)}>
-            Xóa
-          </Button>
-        </div>
-      )
+      render: (_: any, record: any) => {
+        if (!canManageDish) {
+          return <span className="text-gray-400 italic">Không có quyền</span>
+        }
+        return (
+          <div className="text-left">
+            <Button type="link" onClick={() => handleEdit(record)}>
+              Sửa
+            </Button>
+            <Button danger type="link" onClick={() => handleDelete(record.id)}>
+              Xóa
+            </Button>
+          </div>
+        )
+      }
     }
   ]
 
@@ -442,11 +472,13 @@ export default function ManageDish() {
           </div>
         </Form>
 
-        <div className="flex justify-end mt-4">
-          <Button type="primary" icon={<Beef />} onClick={() => handleEdit(true)} className="whitespace-nowrap">
-            Thêm món ăn
-          </Button>
-        </div>
+        <PermissionGate ability={AppAbility.DISH_MANAGE}>
+          <div className="flex justify-end mt-4">
+            <Button type="primary" icon={<Beef />} onClick={() => handleEdit(true)} className="whitespace-nowrap">
+              Thêm món ăn
+            </Button>
+          </div>
+        </PermissionGate>
       </div>
 
       {isFetching ? (
@@ -496,7 +528,7 @@ export default function ManageDish() {
 
       <Modal
         title="Thông tin món ăn"
-        open={isModalOpen}
+        open={canManageDish && isModalOpen}
         width={700}
         style={{ top: 40 }}
         onCancel={() => setIsModalOpen(false)}

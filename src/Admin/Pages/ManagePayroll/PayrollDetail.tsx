@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { Form, InputNumber, Input, Button, Divider, Tag, Table, Spin, Modal } from "antd"
 import { Plus, Edit, Trash2, DollarSign, Save } from "lucide-react"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { useParams } from "react-router-dom"
 import { toast } from "react-toastify"
 import { Helmet } from "react-helmet-async"
@@ -17,6 +17,7 @@ import {
 } from "src/Types/payroll.type"
 import PayrollItemModal from "./components/PayrollItemModal"
 import PaymentModal from "./components/PaymentModal"
+import { AppAbility, useAuthorization } from "src/Authorization"
 
 export default function PayrollDetail() {
   const { id } = useParams<{ id: string }>()
@@ -25,12 +26,23 @@ export default function PayrollDetail() {
   const [isItemModalOpen, setIsItemModalOpen] = useState(false)
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false)
   const [selectedItem, setSelectedItem] = useState<PayrollItem | null>(null)
+  const { can } = useAuthorization()
+  const canViewPayroll = can(AppAbility.PAYROLL_VIEW)
+  const canManagePayroll = can(AppAbility.PAYROLL_MANAGE)
+
+  useEffect(() => {
+    if (!canManagePayroll) {
+      setIsItemModalOpen(false)
+      setIsPaymentModalOpen(false)
+      setSelectedItem(null)
+    }
+  }, [canManagePayroll])
 
   // ========== QUERIES ==========
   const { data: payrollDetailData, isFetching } = useQuery({
     queryKey: ["payroll", id],
     queryFn: () => payrollAPI.getDetail(id!),
-    enabled: !!id,
+    enabled: !!id && canViewPayroll,
     staleTime: 1 * 60 * 1000
   })
 
@@ -61,24 +73,44 @@ export default function PayrollDetail() {
     }
   })
 
+  if (!canViewPayroll) {
+    return null
+  }
+
   // ========== HANDLERS ==========
   const handleUpdate = () => {
+    if (!canManagePayroll) {
+      toast.warn("Bạn không có quyền quản lý bảng lương.")
+      return
+    }
     form.validateFields().then((values) => {
       updateMutation.mutate(values)
     })
   }
 
   const handleAddItem = () => {
+    if (!canManagePayroll) {
+      toast.warn("Bạn không có quyền quản lý bảng lương.")
+      return
+    }
     setSelectedItem(null)
     setIsItemModalOpen(true)
   }
 
   const handleEditItem = (item: PayrollItem) => {
+    if (!canManagePayroll) {
+      toast.warn("Bạn không có quyền quản lý bảng lương.")
+      return
+    }
     setSelectedItem(item)
     setIsItemModalOpen(true)
   }
 
   const handleDeleteItem = (item: PayrollItem) => {
+    if (!canManagePayroll) {
+      toast.warn("Bạn không có quyền quản lý bảng lương.")
+      return
+    }
     Modal.confirm({
       title: "Xác nhận xóa",
       content: `Bạn có chắc muốn xóa khoản mục "${item.description}"?`,
@@ -95,6 +127,10 @@ export default function PayrollDetail() {
   }
 
   const handleOpenPaymentModal = () => {
+    if (!canManagePayroll) {
+      toast.warn("Bạn không có quyền quản lý bảng lương.")
+      return
+    }
     setIsPaymentModalOpen(true)
   }
 
@@ -112,69 +148,6 @@ export default function PayrollDetail() {
   }
 
   // ========== ITEMS TABLE COLUMNS ==========
-  const itemColumns = [
-    {
-      title: "Loại",
-      dataIndex: "item_type",
-      key: "item_type",
-      width: 100,
-      render: (type: number) => (
-        <Tag color={ITEM_TYPE_COLORS[type]}>{ITEM_TYPE_LABELS[type]}</Tag>
-      )
-    },
-    {
-      title: "Mã",
-      dataIndex: "code",
-      key: "code",
-      width: 120
-    },
-    {
-      title: "Mô tả",
-      dataIndex: "description",
-      key: "description",
-      ellipsis: true
-    },
-    {
-      title: "Số tiền",
-      dataIndex: "amount",
-      key: "amount",
-      width: 140,
-      align: "right" as const,
-      render: (_: any, record: PayrollItem) => (
-        <span
-          className={`font-mono ${record.item_type === 0 ? "text-green-600" : "text-red-600"}`}
-        >
-          {parseFloat(record.signed_amount) > 0 ? "+" : ""}
-          {formatCurrency(record.amount)}
-        </span>
-      )
-    },
-    {
-      title: "Hành động",
-      key: "action",
-      width: 100,
-      render: (_: any, record: PayrollItem) => (
-        <div className="flex gap-2">
-          <Button
-            size="small"
-            type="text"
-            icon={<Edit size={14} />}
-            onClick={() => handleEditItem(record)}
-            disabled={isPaid}
-          />
-          <Button
-            size="small"
-            type="text"
-            danger
-            icon={<Trash2 size={14} />}
-            onClick={() => handleDeleteItem(record)}
-            disabled={isPaid}
-          />
-        </div>
-      )
-    }
-  ]
-
   // ========== RENDER ==========
   if (isFetching || !payrollDetail) {
     return (
@@ -198,6 +171,67 @@ export default function PayrollDetail() {
   })
 
   const isPaid = payrollDetail.status === PAYROLL_STATUS.PAID
+  const disableManageActions = isPaid || !canManagePayroll
+
+  const itemColumns = [
+    {
+      title: "Loại",
+      dataIndex: "item_type",
+      key: "item_type",
+      width: 100,
+      render: (type: number) => <Tag color={ITEM_TYPE_COLORS[type]}>{ITEM_TYPE_LABELS[type]}</Tag>
+    },
+    {
+      title: "Mã",
+      dataIndex: "code",
+      key: "code",
+      width: 120
+    },
+    {
+      title: "Mô tả",
+      dataIndex: "description",
+      key: "description",
+      ellipsis: true
+    },
+    {
+      title: "Số tiền",
+      dataIndex: "amount",
+      key: "amount",
+      width: 140,
+      align: "right" as const,
+      render: (_: any, record: PayrollItem) => (
+        <span className={`font-mono ${record.item_type === 0 ? "text-green-600" : "text-red-600"}`}>
+          {parseFloat(record.signed_amount) > 0 ? "+" : ""}
+          {formatCurrency(record.amount)}
+        </span>
+      )
+    },
+    {
+      title: "Hành động",
+      key: "action",
+      width: 100,
+      render: (_: any, record: PayrollItem) =>
+        canManagePayroll ? (
+          <div className="flex gap-2">
+            <Button
+              size="small"
+              type="text"
+              icon={<Edit size={14} />}
+              onClick={() => handleEditItem(record)}
+              disabled={disableManageActions}
+            />
+            <Button
+              size="small"
+              type="text"
+              danger
+              icon={<Trash2 size={14} />}
+              onClick={() => handleDeleteItem(record)}
+              disabled={disableManageActions}
+            />
+          </div>
+        ) : null
+    }
+  ]
 
   return (
     <div className="p-6">
@@ -225,7 +259,7 @@ export default function PayrollDetail() {
         </div>
 
         <div className="flex gap-2">
-          {!isPaid && (
+          {canManagePayroll && !isPaid && (
             <>
               <Button
                 type="primary"
@@ -285,7 +319,7 @@ export default function PayrollDetail() {
           {/* Salary Form Card */}
           <div className="bg-white rounded-lg shadow p-6">
             <h3 className="text-lg font-semibold mb-4">Thông tin lương cơ bản</h3>
-            <Form form={form} layout="vertical" disabled={isPaid}>
+            <Form form={form} layout="vertical" disabled={disableManageActions}>
               <div className="grid grid-cols-3 gap-4">
                 <Form.Item
                   name="base_salary"
@@ -337,7 +371,7 @@ export default function PayrollDetail() {
           <div className="bg-white rounded-lg shadow p-6">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-lg font-semibold">Chi tiết các khoản thu nhập & khấu trừ</h3>
-              {!isPaid && (
+              {canManagePayroll && !isPaid && (
                 <Button
                   type="dashed"
                   icon={<Plus size={16} />}
@@ -434,7 +468,7 @@ export default function PayrollDetail() {
               )}
             </div>
 
-            {!isPaid && (
+            {canManagePayroll && !isPaid && (
               <div className="mt-6 p-3 bg-yellow-50 rounded-lg">
                 <p className="text-xs text-gray-600">
                   <strong>Lưu ý:</strong> Tổng lương được tính tự động dựa trên các khoản mục. 
@@ -447,21 +481,23 @@ export default function PayrollDetail() {
       </div>
 
       {/* Item Modal */}
-      <PayrollItemModal
-        open={isItemModalOpen}
-        payrollId={id!}
-        item={selectedItem}
-        onClose={handleCloseItemModal}
-        onSuccess={() => {
-          queryClient.invalidateQueries({ queryKey: ["payroll", id] })
-          queryClient.invalidateQueries({ queryKey: ["payrolls"] })
-          handleCloseItemModal()
-        }}
-        disabled={isPaid}
-      />
+      {canManagePayroll && (
+        <PayrollItemModal
+          open={isItemModalOpen}
+          payrollId={id!}
+          item={selectedItem}
+          onClose={handleCloseItemModal}
+          onSuccess={() => {
+            queryClient.invalidateQueries({ queryKey: ["payroll", id] })
+            queryClient.invalidateQueries({ queryKey: ["payrolls"] })
+            handleCloseItemModal()
+          }}
+          disabled={disableManageActions}
+        />
+      )}
 
       {/* Payment Modal */}
-      {payrollDetail && (
+      {canManagePayroll && payrollDetail && (
         <PaymentModal
           open={isPaymentModalOpen}
           payroll={payrollDetail}

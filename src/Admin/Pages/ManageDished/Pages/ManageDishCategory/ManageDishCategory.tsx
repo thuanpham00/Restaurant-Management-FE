@@ -4,7 +4,7 @@ import { Button, Empty, Form, Input, Modal, Pagination, Spin, Table, Tag } from 
 import { ColumnsType } from "antd/es/table"
 import { isUndefined, omit, omitBy } from "lodash"
 import { Beef, Filter, RotateCcw } from "lucide-react"
-import { Fragment, useState } from "react"
+import { Fragment, useEffect, useState } from "react"
 import { Helmet } from "react-helmet-async"
 import { createSearchParams, Link, useNavigate, useSearchParams } from "react-router-dom"
 import { toast } from "react-toastify"
@@ -16,10 +16,13 @@ import { isError400 } from "src/Helpers/utils"
 import useQueryParams from "src/Hook/useQueryParams"
 import { CategoryDishes } from "src/Types/dishCategory.type"
 import { queryParamConfigCategoryDish } from "src/Types/queryParams.type"
+import { AppAbility, PermissionGate, useAuthorization } from "src/Authorization"
 
 export default function ManageDishCategory() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
+  const { can } = useAuthorization()
+  const canManageCategory = can(AppAbility.MENU_CATEGORY_MANAGE)
   const queryParams: queryParamConfigCategoryDish = useQueryParams()
   const queryConfig: queryParamConfigCategoryDish = omitBy(
     {
@@ -50,7 +53,19 @@ export default function ManageDishCategory() {
   const [editingId, setEditingId] = useState<string | null | boolean>(null)
   const [form] = Form.useForm<CategoryDishes>()
 
+  useEffect(() => {
+    if (!canManageCategory) {
+      setIsModalOpen(false)
+      setEditingId(null)
+      form.resetFields()
+    }
+  }, [canManageCategory, form])
+
   const handleEdit = async (record: any | boolean) => {
+    if (!canManageCategory) {
+      toast.warn("Bạn không có quyền quản lý thể loại món.")
+      return
+    }
     if (record === true) {
       form.setFieldsValue({
         name: "",
@@ -105,6 +120,10 @@ export default function ManageDishCategory() {
   })
 
   const handleUpdate = () => {
+    if (!canManageCategory) {
+      toast.warn("Bạn không có quyền quản lý thể loại món.")
+      return
+    }
     if (editingId === true) {
       form.validateFields().then((values) => {
         createMutation.mutate(values)
@@ -134,6 +153,10 @@ export default function ManageDishCategory() {
   })
 
   const handleDelete = (id: string) => {
+    if (!canManageCategory) {
+      toast.warn("Bạn không có quyền quản lý thể loại món.")
+      return
+    }
     Modal.confirm({
       title: "Bạn có chắc muốn xóa?",
       content: "Thể loại sẽ bị xóa vĩnh viễn.",
@@ -196,16 +219,21 @@ export default function ManageDishCategory() {
     {
       title: <div className="text-left">Hành động</div>,
       key: "actions",
-      render: (_, record) => (
-        <div className="text-left">
-          <Button type="link" onClick={() => handleEdit(record)}>
-            Sửa
-          </Button>
-          <Button danger type="link" onClick={() => handleDelete(record.id)}>
-            Xóa
-          </Button>
-        </div>
-      )
+      render: (_, record) => {
+        if (!canManageCategory) {
+          return <span className="text-gray-400 italic">Không có quyền</span>
+        }
+        return (
+          <div className="text-left">
+            <Button type="link" onClick={() => handleEdit(record)}>
+              Sửa
+            </Button>
+            <Button danger type="link" onClick={() => handleDelete(record.id)}>
+              Xóa
+            </Button>
+          </div>
+        )
+      }
     }
   ]
 
@@ -278,9 +306,11 @@ export default function ManageDishCategory() {
           </Form.Item>
         </Form>
 
-        <Button type="primary" icon={<Beef />} onClick={() => handleEdit(true)} className="whitespace-nowrap">
-          Thêm thể loại
-        </Button>
+        <PermissionGate ability={AppAbility.MENU_CATEGORY_MANAGE}>
+          <Button type="primary" icon={<Beef />} onClick={() => handleEdit(true)} className="whitespace-nowrap">
+            Thêm thể loại
+          </Button>
+        </PermissionGate>
       </div>
 
       {isFetching ? (
@@ -331,7 +361,7 @@ export default function ManageDishCategory() {
       {/* Modal Edit */}
       <Modal
         title="Thông tin thể loại"
-        open={isModalOpen}
+        open={canManageCategory && isModalOpen}
         onCancel={() => setIsModalOpen(false)}
         footer={false}
         onOk={handleUpdate}

@@ -33,6 +33,7 @@ import { PaginatedResponse } from "src/Types/utils.type"
 import { Employee, EmployeeCreateInput, EmployeeFormInput, queryParamConfigEmployee } from "src/Types/employee.type"
 import InputFileImage from "src/Components/InputFileImage"
 import { assets } from "src/Assets/assets"
+import { AppAbility, PermissionGate, useAuthorization } from "src/Authorization"
 
 const { Option } = Select
 
@@ -52,6 +53,8 @@ export default function ManageEmployee() {
   const [searchParams, setSearchParams] = useSearchParams()
   const queryConfig: queryParamConfigEmployee = useQueryParams()
   const queryClient = useQueryClient()
+  const { can } = useAuthorization()
+  const canManageEmployees = can(AppAbility.EMPLOYEES_MANAGE)
 
   // ========== STATE ==========
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false)
@@ -86,6 +89,14 @@ export default function ManageEmployee() {
       URL.revokeObjectURL(editAvatarPreview)
     }
   }, [editAvatarPreview])
+
+  useEffect(() => {
+    if (!canManageEmployees) {
+      setIsCreateModalOpen(false)
+      setIsEditMode(false)
+      setEditAvatarFile(null)
+    }
+  }, [canManageEmployees])
 
   // ========== QUERY ==========
   const { data, isFetching } = useQuery({
@@ -243,6 +254,10 @@ export default function ManageEmployee() {
   }
 
   const handleEdit = (record?: Employee) => {
+    if (!canManageEmployees) {
+      toast.warn("Bạn không có quyền quản lý nhân viên.")
+      return
+    }
     if (record) {
       setSelectedEmployee(record)
       setIsDetailModalOpen(true)
@@ -275,6 +290,10 @@ export default function ManageEmployee() {
   }
 
   const handleUpdate = () => {
+    if (!canManageEmployees) {
+      toast.warn("Bạn không có quyền quản lý nhân viên.")
+      return
+    }
     form.validateFields().then((values) => {
       const submitValues = {
         ...values,
@@ -292,6 +311,10 @@ export default function ManageEmployee() {
   }
 
   const handleCreate = () => {
+    if (!canManageEmployees) {
+      toast.warn("Bạn không có quyền quản lý nhân viên.")
+      return
+    }
     createForm.validateFields().then((values) => {
       const submitValues = {
         ...values,
@@ -323,6 +346,10 @@ export default function ManageEmployee() {
   }
 
   const handleDelete = (id: string, fullName: string) => {
+    if (!canManageEmployees) {
+      toast.warn("Bạn không có quyền quản lý nhân viên.")
+      return
+    }
     Modal.confirm({
       title: "Xác nhận xóa",
       content: `Bạn có chắc muốn xóa nhân viên "${fullName}"?`,
@@ -439,26 +466,30 @@ export default function ManageEmployee() {
           >
             Chi tiết
           </Button>
-          <Button
-            size="small"
-            type="primary"
-            icon={<Edit size={16} />}
-            onClick={(e) => {
-              e.stopPropagation()
-              handleEdit(record)
-            }}
-          >
-            Sửa
-          </Button>
-          <Button
-            size="small"
-            danger
-            icon={<Trash2 size={16} />}
-            onClick={(e) => {
-              e.stopPropagation()
-              handleDelete(record.id, record.full_name)
-            }}
-          />
+          {canManageEmployees && (
+            <>
+              <Button
+                size="small"
+                type="primary"
+                icon={<Edit size={16} />}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  handleEdit(record)
+                }}
+              >
+                Sửa
+              </Button>
+              <Button
+                size="small"
+                danger
+                icon={<Trash2 size={16} />}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  handleDelete(record.id, record.full_name)
+                }}
+              />
+            </>
+          )}
         </div>
       )
     }
@@ -475,9 +506,21 @@ export default function ManageEmployee() {
 
       <div className="flex justify-between items-center mb-4">
         <h1 className="text-2xl font-bold text-gray-800">Nhân viên</h1>
-        <Button type="primary" icon={<Plus size={16} />} onClick={() => setIsCreateModalOpen(true)}>
-          Thêm nhân viên
-        </Button>
+        <PermissionGate ability={AppAbility.EMPLOYEES_MANAGE}>
+          <Button
+            type="primary"
+            icon={<Plus size={16} />}
+            onClick={() => {
+              if (!canManageEmployees) {
+                toast.warn("Bạn không có quyền quản lý nhân viên.")
+                return
+              }
+              setIsCreateModalOpen(true)
+            }}
+          >
+            Thêm nhân viên
+          </Button>
+        </PermissionGate>
       </div>
 
       {/* Filter Form */}
@@ -582,12 +625,12 @@ export default function ManageEmployee() {
       {/* Create Modal */}
       <Modal
         title="Thêm nhân viên mới"
-        open={isCreateModalOpen}
+        open={canManageEmployees && isCreateModalOpen}
         onCancel={handleCloseCreateModal}
         footer={
           <div className="flex justify-end gap-2">
             <Button onClick={handleCloseCreateModal}>Hủy</Button>
-            <Button type="primary" onClick={handleCreate} loading={createMutation.isPending}>
+            <Button type="primary" onClick={handleCreate} loading={createMutation.isPending} disabled={!canManageEmployees}>
               Tạo mới
             </Button>
           </div>
@@ -764,9 +807,11 @@ export default function ManageEmployee() {
               {!isEditMode ? (
                 <>
                   <Button onClick={handleCloseModal}>Đóng</Button>
-                  <Button type="primary" icon={<Edit size={16} />} onClick={() => handleEdit()}>
-                    Chỉnh sửa
-                  </Button>
+                  {canManageEmployees && (
+                    <Button type="primary" icon={<Edit size={16} />} onClick={() => handleEdit()}>
+                      Chỉnh sửa
+                    </Button>
+                  )}
                 </>
               ) : (
                 <>
@@ -775,7 +820,7 @@ export default function ManageEmployee() {
                     type="primary"
                     onClick={handleUpdate}
                     loading={updateMutation.isPending}
-                    disabled={!hasChanges}
+                    disabled={!hasChanges || !canManageEmployees}
                   >
                     Cập nhật
                   </Button>
