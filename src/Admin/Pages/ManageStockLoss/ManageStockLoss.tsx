@@ -59,6 +59,7 @@ export default function ManageStockLoss() {
 
   const [form] = Form.useForm()
   const [filterForm] = Form.useForm()
+  const watchedIngredientId = Form.useWatch("ingredient_id", form)
 
   // ========== QUERIES ==========
   const { data, isFetching } = useQuery({
@@ -596,23 +597,15 @@ export default function ManageStockLoss() {
                 { type: "number", min: 0.01, message: "Số lượng phải lớn hơn 0" }
               ]}
             >
-              <Form.Item noStyle shouldUpdate={(prev, curr) => prev.ingredient_id !== curr.ingredient_id}>
-                {({ getFieldValue }) => {
-                  const selectedIngredientId = getFieldValue("ingredient_id")
-                  const selectedIngredient = ingredientsList.find((ing: any) => ing.id === selectedIngredientId)
-                  const unit = selectedIngredient?.unit || "đơn vị"
-
-                  return (
-                    <InputNumber
-                      placeholder="Nhập số lượng"
-                      style={{ width: "100%" }}
-                      min={0}
-                      precision={2}
-                      addonAfter={unit}
-                    />
-                  )
-                }}
-              </Form.Item>
+              <InputNumber
+                placeholder="Nhập số lượng"
+                style={{ width: "100%" }}
+                min={0}
+                precision={2}
+                addonAfter={
+                  ingredientsList.find((ing: any) => ing.id === watchedIngredientId)?.unit || "đơn vị"
+                }
+              />
             </Form.Item>
 
             <Form.Item label={<span className="text-sm font-medium">Người ghi nhận</span>} name="employee_id">

@@ -77,6 +77,7 @@ export default function ManageStockExport() {
 
   const [form] = Form.useForm()
   const [filterForm] = Form.useForm()
+  const watchedDetails = Form.useWatch("details", form)
 
   // ========== QUERIES ==========
   const { data, isFetching } = useQuery({
@@ -643,84 +644,77 @@ export default function ManageStockExport() {
                   </div>
 
                   <div className="space-y-3">
-                    {fields.map(({ key, name, ...restField }) => (
-                      <div key={key} className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                        <div className="grid grid-cols-12 gap-3">
-                          <Form.Item
-                            {...restField}
-                            name={[name, "ingredient_id"]}
-                            rules={[{ required: true, message: "Chọn nguyên liệu" }]}
-                            className="col-span-6 mb-0"
-                          >
-                            <Select
-                              placeholder="Chọn nguyên liệu"
-                              showSearch
-                              filterOption={(input, option) =>
-                                String(option?.children ?? "")
-                                  .toLowerCase()
-                                  .includes(input.toLowerCase())
-                              }
+                    {fields.map(({ key, name, ...restField }) => {
+                      const detailValues = watchedDetails?.[name]
+                      const ingredientId = detailValues?.ingredient_id
+                      const selectedIngredient = ingredientsList.find((ing: any) => ing.id === ingredientId)
+                      const unit = selectedIngredient?.unit || "đơn vị"
+
+                      return (
+                        <div key={key} className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                          <div className="grid grid-cols-12 gap-3">
+                            <Form.Item
+                              {...restField}
+                              name={[name, "ingredient_id"]}
+                              rules={[{ required: true, message: "Chọn nguyên liệu" }]}
+                              className="col-span-6 mb-0"
                             >
-                              {ingredientsList.map((ing: any) => (
-                                <Option key={ing.id} value={ing.id}>
-                                  {ing.name} ({ing.unit})
-                                </Option>
-                              ))}
-                            </Select>
-                          </Form.Item>
-
-                          <Form.Item
-                            {...restField}
-                            name={[name, "quantity"]}
-                            rules={[
-                              { required: true, message: "Nhập số lượng" },
-                              { type: "number", min: 0.01, message: "Phải > 0" }
-                            ]}
-                            className="col-span-4 mb-0"
-                          >
-                            <Form.Item noStyle shouldUpdate={(prev, curr) => {
-                              const prevIngredient = prev.details?.[name]?.ingredient_id
-                              const currIngredient = curr.details?.[name]?.ingredient_id
-                              return prevIngredient !== currIngredient
-                            }}>
-                              {({ getFieldValue }) => {
-                                const selectedIngredientId = getFieldValue(["details", name, "ingredient_id"])
-                                const selectedIngredient = ingredientsList.find((ing: any) => ing.id === selectedIngredientId)
-                                const unit = selectedIngredient?.unit || "đơn vị"
-
-                                return (
-                                  <InputNumber
-                                    placeholder="Số lượng xuất"
-                                    style={{ width: "100%" }}
-                                    min={0.01}
-                                    precision={2}
-                                    addonAfter={unit}
-                                    className="text-sm"
-                                  />
-                                )
-                              }}
+                              <Select
+                                placeholder="Chọn nguyên liệu"
+                                showSearch
+                                filterOption={(input, option) =>
+                                  String(option?.children ?? "")
+                                    .toLowerCase()
+                                    .includes(input.toLowerCase())
+                                }
+                              >
+                                {ingredientsList.map((ing: any) => (
+                                  <Option key={ing.id} value={ing.id}>
+                                    {ing.name} ({ing.unit})
+                                  </Option>
+                                ))}
+                              </Select>
                             </Form.Item>
-                          </Form.Item>
 
-                          <div className="col-span-2 flex items-start justify-center">
-                            <Button
-                              danger
-                              icon={<Minus size={16} />}
-                              onClick={() => remove(name)}
-                              disabled={fields.length === 1 || !canManageWarehouseExport}
-                              title="Xóa"
-                            />
+                            <Form.Item
+                              {...restField}
+                              name={[name, "quantity"]}
+                              rules={[
+                                { required: true, message: "Nhập số lượng" },
+                                { type: "number", min: 0.01, message: "Phải > 0" }
+                              ]}
+                              className="col-span-4 mb-0"
+                            >
+                              <InputNumber
+                                placeholder="Số lượng xuất"
+                                style={{ width: "100%" }}
+                                min={0.01}
+                                precision={2}
+                                addonAfter={unit}
+                                className="text-sm"
+                              />
+                            </Form.Item>
+
+                            <div className="col-span-2 flex items-start justify-center">
+                              <Button
+                                danger
+                                icon={<Minus size={16} />}
+                                onClick={() => remove(name)}
+                                disabled={fields.length === 1 || !canManageWarehouseExport}
+                                title="Xóa"
+                              />
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    ))}
+                      )
+                    })}
                   </div>
 
                   <Form.ErrorList errors={errors} />
 
                   <Button
                     type="dashed"
-                    onClick={() => add()}
+                    onClick={() => add({ ingredient_id: undefined, quantity: 0 })}
                     icon={<Plus size={16} />}
                     className="mt-3 w-full"
                     disabled={!canManageWarehouseExport}

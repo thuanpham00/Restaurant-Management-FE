@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { Button, DatePicker, Descriptions, Form, InputNumber, Modal, Select, Space, Spin, Table, Tag } from "antd"
+import type { InputNumberProps } from "antd"
 import { ColumnsType } from "antd/es/table"
 import { isUndefined, omitBy } from "lodash"
 import { Plus, Filter, RotateCcw, Edit, Trash2, Eye, AlertTriangle, Minus } from "lucide-react"
@@ -55,6 +56,12 @@ export default function ManageStockImport() {
   const [form] = Form.useForm()
   const [filterForm] = Form.useForm()
   const watchedDetails = Form.useWatch("details", form)
+  const parseNumericInput: NonNullable<InputNumberProps<number>["parser"]> = (value) => {
+    if (!value) return 0
+    const normalized = value.replace(/\s/g, "").replace(/,/g, "")
+    const parsed = Number(normalized)
+    return Number.isNaN(parsed) ? 0 : parsed
+  }
 
   // ========== QUERIES ==========
   const { data, isFetching } = useQuery({
@@ -650,7 +657,11 @@ export default function ManageStockImport() {
 
                   <div className="space-y-3">
                     {fields.map(({ key, name, ...restField }) => {
-                      console.log(name)
+                      const detailValues = watchedDetails?.[name]
+                      const ingredientId = detailValues?.ingredient_id
+                      const selectedIngredient = ingredientsList.find((ing: any) => ing.id === ingredientId)
+                      const ingredientUnit = selectedIngredient?.unit || "đơn vị"
+
                       return (
                         <div key={key} className="bg-gray-50 p-4 rounded-lg border border-gray-200">
                           <div className="grid grid-cols-12 gap-3">
@@ -686,33 +697,14 @@ export default function ManageStockImport() {
                               ]}
                               className="col-span-2 mb-0"
                             >
-                              <Form.Item
-                                noStyle
-                                shouldUpdate={(prev, curr) => {
-                                  const prevIngredient = prev.details?.[name]?.ingredient_id
-                                  const currIngredient = curr.details?.[name]?.ingredient_id
-                                  return prevIngredient !== currIngredient
-                                }}
-                              >
-                                {({ getFieldValue }) => {
-                                  const selectedIngredientId = getFieldValue(["details", name, "ingredient_id"])
-                                  const selectedIngredient = ingredientsList.find(
-                                    (ing: any) => ing.id === selectedIngredientId
-                                  )
-                                  const unit = selectedIngredient?.unit || "đơn vị"
-
-                                  return (
-                                    <InputNumber
-                                      placeholder="SL đặt"
-                                      style={{ width: "100%" }}
-                                      min={0}
-                                      precision={2}
-                                      addonAfter={unit}
-                                      className="text-sm"
-                                    />
-                                  )
-                                }}
-                              </Form.Item>
+                              <InputNumber
+                                placeholder="SL đặt"
+                                style={{ width: "100%" }}
+                                min={0}
+                                precision={2}
+                                addonAfter={ingredientUnit}
+                                className="text-sm"
+                              />
                             </Form.Item>
 
                             <Form.Item
@@ -724,33 +716,14 @@ export default function ManageStockImport() {
                               ]}
                               className="col-span-2 mb-0"
                             >
-                              <Form.Item
-                                noStyle
-                                shouldUpdate={(prev, curr) => {
-                                  const prevIngredient = prev.details?.[name]?.ingredient_id
-                                  const currIngredient = curr.details?.[name]?.ingredient_id
-                                  return prevIngredient !== currIngredient
-                                }}
-                              >
-                                {({ getFieldValue }) => {
-                                  const selectedIngredientId = getFieldValue(["details", name, "ingredient_id"])
-                                  const selectedIngredient = ingredientsList.find(
-                                    (ing: any) => ing.id === selectedIngredientId
-                                  )
-                                  const unit = selectedIngredient?.unit || "đơn vị"
-
-                                  return (
-                                    <InputNumber
-                                      placeholder="SL nhận"
-                                      style={{ width: "100%" }}
-                                      min={0}
-                                      precision={2}
-                                      addonAfter={unit}
-                                      className="text-sm"
-                                    />
-                                  )
-                                }}
-                              </Form.Item>
+                              <InputNumber
+                                placeholder="SL nhận"
+                                style={{ width: "100%" }}
+                                min={0}
+                                precision={2}
+                                addonAfter={ingredientUnit}
+                                className="text-sm"
+                              />
                             </Form.Item>
 
                             <Form.Item
@@ -767,6 +740,7 @@ export default function ManageStockImport() {
                                 style={{ width: "100%" }}
                                 min={0}
                                 formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
+                                parser={parseNumericInput}
                                 className="text-sm"
                               />
                             </Form.Item>
@@ -790,7 +764,9 @@ export default function ManageStockImport() {
 
                   <Button
                     type="dashed"
-                    onClick={() => add()}
+                    onClick={() =>
+                      add({ ingredient_id: undefined, ordered_quantity: 0, received_quantity: 0, unit_price: 0 })
+                    }
                     icon={<Plus size={16} />}
                     className="mt-3 w-full"
                     disabled={!canManageWarehouseImport}
