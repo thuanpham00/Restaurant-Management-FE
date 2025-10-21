@@ -784,6 +784,7 @@ export default function ManageStockImport() {
       <Modal
         title={<span className="text-lg font-semibold">Chi tiết phiếu nhập kho</span>}
         open={isDetailModalOpen}
+        style={{ top: 40 }}
         onCancel={() => {
           setIsDetailModalOpen(false)
           setSelectedStockImport(null)

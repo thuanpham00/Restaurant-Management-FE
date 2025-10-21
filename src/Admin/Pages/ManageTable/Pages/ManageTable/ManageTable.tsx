@@ -40,7 +40,8 @@ import TableSessionItem from "../../Components/TableSessionItem"
 import { TableSession } from "src/Types/tableSession.type"
 import { TableSessionStatus, TableSessionType } from "src/Types/product.type"
 import MergeIntoTable from "../../Components/MergeIntoTable"
-import { AppAbility, useAuthorization } from "src/Authorization"
+import { AppAbility, AppRole, resolveRole, useAuthorization } from "src/Authorization"
+import { useAppStore } from "src/StateGlobal/zustand"
 
 const { Title } = Typography
 
@@ -55,11 +56,13 @@ export default function ManageTable() {
     },
     isUndefined
   )
-
+  const { role } = useAppStore()
   const { can } = useAuthorization()
   const canViewTables = can(AppAbility.TABLES_VIEW)
   const canManageTables = can(AppAbility.TABLES_MANAGE)
-
+  const resolvedAppRole = resolveRole(String(role || ""))
+  const isWaiterStaff = resolvedAppRole === AppRole.WAITER
+  const isCashierStaff = resolvedAppRole === AppRole.CASHIER
   // ✅ Query danh sách bàn - Auto refetch every 30 seconds + always fresh on mount
   const { data, isFetching, isError } = useRealtimeQuery(
     ["listTableSession", queryConfig],
@@ -411,7 +414,7 @@ export default function ManageTable() {
             </Button>
           </Form.Item>
         </Form>
-        {canManageTables && (
+        {canManageTables && !isWaiterStaff && !isCashierStaff && (
           <Button
             type="primary"
             icon={<Table2 />}
@@ -430,7 +433,7 @@ export default function ManageTable() {
         )}
       </div>
 
-      {canManageTables && (
+      {canManageTables && !isWaiterStaff && (
         <div className="flex justify-start mb-2">
           <Button
             type="default"

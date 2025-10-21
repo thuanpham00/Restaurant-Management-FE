@@ -10,6 +10,7 @@ import { toast } from "react-toastify"
 import NavigateBack from "src/Admin/Components/NavigateBack"
 import { dishCategoryAPI, dishesAPI } from "src/Apis"
 import { assets } from "src/Assets/assets"
+import { AppAbility, useAuthorization } from "src/Authorization"
 import InputFileImage from "src/Components/InputFileImage"
 import { Dish } from "src/Types/dish.type"
 import { IngredientDish } from "src/Types/ingredientDish.type"
@@ -17,6 +18,8 @@ import { IngredientDish } from "src/Types/ingredientDish.type"
 export default function DishDetail() {
   const { state } = useLocation()
   const detailDish = state?.dataDish as Dish
+  const { can } = useAuthorization()
+  const canManageDish = can(AppAbility.DISH_MANAGE)
 
   const queryClient = useQueryClient()
   const navigate = useNavigate()
@@ -72,6 +75,23 @@ export default function DishDetail() {
       image?: File
     }) => {
       return dishesAPI.update(detailDish.id as string, values)
+    }
+  })
+
+  const deleteIngredientDishByIdDish = useMutation({
+    mutationFn: (body: { idIngredientDish: string }) => {
+      return dishesAPI.deleteIngredientDishByIdDish(detailDish.id, body.idIngredientDish)
+    },
+    onSuccess: () => {
+      toast.success("Xóa nguyên liệu khỏi món ăn thành công!", {
+        autoClose: 1500
+      })
+      queryClient.invalidateQueries({ queryKey: ["listIngredientInDish", detailDish] })
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || "Xóa nguyên liệu thất bại!", {
+        autoClose: 1500
+      })
     }
   })
 
@@ -181,34 +201,37 @@ export default function DishDetail() {
       title: "Hành động",
       key: "action",
       align: "center",
-      render: (record) => (
-        <div className="flex justify-center gap-2">
-          <Button type="link" onClick={() => handleUpdateDish(record)}>
-            <Edit size={16} />
-          </Button>
-          <Button
-            danger
-            type="link"
-            onClick={() => {
-              Modal.confirm({
-                title: "Xác nhận xóa",
-                content: `Bạn có chắc muốn xóa món "${record.dish_name}" khỏi thực đơn?`,
-                okText: "Xóa",
-                cancelText: "Hủy",
-                okType: "danger"
-                // onOk: () => {
-                //   deleteMenuItemMutation.mutate({
-                //     idMenu: detailMenu.id,
-                //     idMenuItem: record.id
-                //   })
-                // }
-              })
-            }}
-          >
-            <Trash2 size={16} />
-          </Button>
-        </div>
-      )
+      render: (record) => {
+        console.log(record)
+        return (
+          <div className="flex justify-center gap-2">
+            <Button type="link" onClick={() => handleUpdateDish(record)} disabled={!canManageDish}>
+              <Edit size={16} />
+            </Button>
+            <Button
+              danger
+              type="link"
+              disabled={!canManageDish}
+              onClick={() => {
+                Modal.confirm({
+                  title: "Xác nhận xóa",
+                  content: `Bạn có chắc muốn xóa món "${record.name}" khỏi danh sách nguyên liệu?`,
+                  okText: "Xóa",
+                  cancelText: "Hủy",
+                  okType: "danger",
+                  onOk: () => {
+                    deleteIngredientDishByIdDish.mutate({
+                      idIngredientDish: record.id
+                    })
+                  }
+                })
+              }}
+            >
+              <Trash2 size={16} />
+            </Button>
+          </div>
+        )
+      }
     }
   ]
 
@@ -228,10 +251,8 @@ export default function DishDetail() {
 
   const availableIngredients = availableIngredientsData?.data?.data || []
 
-  const handleDishChange = (ingredientId: string) => {
-    const selectedIngredient = availableIngredients.find((eng: any) => eng.id === ingredientId)
-    console.log(ingredientId)
-    console.log(availableIngredients)
+  const handleDishChange = (ingredientId: any) => {
+    const selectedIngredient = availableIngredients.find((eng: any) => eng.id === ingredientId.key)
     if (selectedIngredient) {
       formAddMenuItem.setFieldsValue({
         unit: selectedIngredient.unit,
@@ -323,8 +344,6 @@ export default function DishDetail() {
     })
   }
 
-  console.log(availableIngredients)
-
   return (
     <div>
       <Helmet>
@@ -383,32 +402,34 @@ export default function DishDetail() {
                     className="h-72 w-72 rounded-lg mx-auto"
                     alt="avatar default"
                   />
-                  <InputFileImage onChange={handleChangeImage} />
+                  {canManageDish && <InputFileImage onChange={handleChangeImage} />}
                 </div>
               </Form.Item>
             </div>
           </div>
 
           <div>
-            {checkUpdate ? (
-              <div className="flex items-center gap-2 justify-end">
-                <Button danger onClick={() => setCheckUpdate(false)}>
-                  Hủy
-                </Button>
-                <Button type="primary" disabled={loading} htmlType="submit" onClick={handleUpdate}>
-                  Lưu
-                </Button>
-              </div>
-            ) : (
-              <div className="flex justify-end gap-2">
-                <Button danger type="primary">
-                  Xóa
-                </Button>
-                <Button onClick={() => setCheckUpdate(true)} type="primary">
-                  Cập nhật
-                </Button>
-              </div>
-            )}
+            {canManageDish ? (
+              checkUpdate ? (
+                <div className="flex items-center gap-2 justify-end">
+                  <Button danger onClick={() => setCheckUpdate(false)}>
+                    Hủy
+                  </Button>
+                  <Button type="primary" disabled={loading} htmlType="submit" onClick={handleUpdate}>
+                    Lưu
+                  </Button>
+                </div>
+              ) : (
+                <div className="flex justify-end gap-2">
+                  <Button danger type="primary">
+                    Xóa
+                  </Button>
+                  <Button onClick={() => setCheckUpdate(true)} type="primary">
+                    Cập nhật
+                  </Button>
+                </div>
+              )
+            ) : null}
           </div>
         </Form>
       </div>
@@ -416,9 +437,11 @@ export default function DishDetail() {
       <div className="mt-6 bg-white border border-gray-200 rounded-lg shadow-md p-4">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-lg font-semibold text-gray-800">Danh sách nguyên liệu trong món ăn</h2>
-          <Button type="primary" onClick={() => handleUpdateDish(true)}>
-            + Thêm nguyên liệu
-          </Button>
+          {canManageDish && (
+            <Button type="primary" onClick={() => handleUpdateDish(true)}>
+              + Thêm nguyên liệu
+            </Button>
+          )}
         </div>
 
         {isFetching ? (

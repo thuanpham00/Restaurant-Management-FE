@@ -592,6 +592,7 @@ export default function ManageSupplier() {
           setIsDetailModalOpen(false)
           setSelectedSupplier(null)
         }}
+        style={{ top: 40 }}
         footer={
           canManageSuppliers
             ? [

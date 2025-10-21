@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import {
   Button,
@@ -42,7 +43,8 @@ import { employeesAPI } from "src/Apis/Admin/employees.api"
 import { EmployeeShift, SHIFT_STATUS, SHIFT_STATUS_LABELS, SHIFT_STATUS_COLORS, Shift } from "src/Types/shift.type"
 import { path } from "src/Constants/path"
 import type { ColumnsType } from "antd/es/table"
-import { AppAbility, useAuthorization } from "src/Authorization"
+import { AppAbility, AppRole, resolveRole, useAuthorization } from "src/Authorization"
+import { useAppStore } from "src/StateGlobal/zustand"
 
 // ========== TYPES ==========
 interface Employee {
@@ -67,7 +69,7 @@ interface ShiftTableRecord extends ShiftWithAssignments {
 export default function EmployeeShiftTab() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
-  const { can } = useAuthorization()
+  const { can, role } = useAuthorization()
   const canViewShifts = can(AppAbility.SHIFTS_VIEW)
   const canManageShifts = can(AppAbility.SHIFTS_MANAGE)
   const canViewEmployees = can(AppAbility.EMPLOYEES_VIEW)
@@ -153,9 +155,18 @@ export default function EmployeeShiftTab() {
     staleTime: 3 * 60 * 1000
   })
 
-  const employees: Employee[] = canViewEmployees ? ((employeesData?.data?.data as any)?.data || []) : []
-  const shifts: ShiftWithAssignments[] = canViewShifts ? ((shiftsData?.data?.data as any)?.data || []) : []
-  const employeeShifts: EmployeeShift[] = canViewShifts ? ((employeeShiftsData?.data?.data as any)?.data || []) : []
+  const employees: Employee[] = canViewEmployees ? (employeesData?.data?.data as any)?.data || [] : []
+  const shifts: ShiftWithAssignments[] = canViewShifts ? (shiftsData?.data?.data as any)?.data || [] : []
+  const employeeShifts: EmployeeShift[] = canViewShifts ? (employeeShiftsData?.data?.data as any)?.data || [] : []
+
+  // filter: only show assigned shifts for limited roles
+  const { employeeId } = useAppStore()
+  const resolvedRole = resolveRole(String(role ?? ""))
+  const limitedViewRoles = [AppRole.STAFF, AppRole.CASHIER, AppRole.KITCHEN_STAFF, AppRole.WAITER]
+  const isLimitedView = resolvedRole !== null && limitedViewRoles.includes(resolvedRole)
+  const visibleShifts = isLimitedView
+    ? shifts.filter((s) => (s.employee_assignments || []).some((a) => a.employee_id === employeeId))
+    : shifts
 
   const filteredEmployees = useMemo(() => {
     const keyword = employeeKeyword.trim().toLowerCase()
@@ -170,10 +181,10 @@ export default function EmployeeShiftTab() {
 
   // ========== COMPUTED DATA ==========
   const statistics = useMemo(() => {
-    const totalShifts = shifts.length
+    const totalShifts = visibleShifts.length
     const totalEmployees = employees.length
     const totalAssignments = employeeShifts.length
-    const assignedShifts = shifts.filter((s) => employeeShifts.some((es) => es.shift_id === s.id)).length
+    const assignedShifts = visibleShifts.filter((s) => employeeShifts.some((es) => es.shift_id === s.id)).length
     const unassignedShifts = totalShifts - assignedShifts
     const avgAssignmentsPerShift = totalShifts > 0 ? Number((totalAssignments / totalShifts).toFixed(1)) : 0
 
@@ -270,13 +281,14 @@ export default function EmployeeShiftTab() {
 
   // Filter shifts based on status
   const filteredShifts = useMemo(() => {
-    if (!filterStatus) return shifts
+    const base = visibleShifts
+    if (!filterStatus) return base
 
-    return shifts.filter((shift) => {
+    return base.filter((shift) => {
       const assignments = getShiftAssignments(shift.id)
       return assignments.some((a) => a.status === filterStatus)
     })
-  }, [shifts, filterStatus, employeeShifts])
+  }, [visibleShifts, filterStatus, employeeShifts])
 
   const shiftTableData = useMemo<ShiftTableRecord[]>(() => {
     return filteredShifts.map((shift) => {
@@ -409,6 +421,9 @@ export default function EmployeeShiftTab() {
       )
     }
   ]
+
+  const columns = isLimitedView ? shiftTableColumns.filter((c) => c.key !== "assignedCount") : shiftTableColumns
+
 
   if (!canViewShifts) {
     return null
@@ -609,7 +624,7 @@ export default function EmployeeShiftTab() {
           </h3>
         </div>
         <Table<ShiftTableRecord>
-          columns={shiftTableColumns}
+          columns={columns}
           dataSource={shiftTableData}
           rowKey="id"
           loading={isFetchingShifts}
@@ -646,7 +661,7 @@ export default function EmployeeShiftTab() {
             </div>
           </div>
         }
-  open={isBulkAssignModalOpen && canManageShifts}
+        open={isBulkAssignModalOpen && canManageShifts}
         onCancel={() => setIsBulkAssignModalOpen(false)}
         footer={
           <div className="flex justify-between items-center pt-4 border-t">
@@ -675,10 +690,10 @@ export default function EmployeeShiftTab() {
           </div>
         }
         width={1200}
-        centered 
+        centered
         styles={{
           body: {
-            maxHeight: "calc(100vh - 200px)", 
+            maxHeight: "calc(100vh - 200px)",
             overflowY: "auto",
             padding: "20px"
           }
@@ -710,15 +725,15 @@ export default function EmployeeShiftTab() {
                 </div>
 
                 <div className="bg-white rounded-lg p-3 max-h-96 overflow-y-auto space-y-2">
-                  {shifts.length === 0 ? (
+                  {visibleShifts.length === 0 ? (
                     <Empty description="Không có ca làm việc" image={Empty.PRESENTED_IMAGE_SIMPLE} />
                   ) : (
-                    shifts.map((shift) => {
+                    visibleShifts.map((shift) => {
                       const isSelected = selectedShifts.includes(shift.id)
                       const assignments = getShiftAssignments(shift.id)
 
                       return (
-                        <div
+                        <button
                           key={shift.id}
                           onClick={() => {
                             if (isSelected) {
@@ -757,7 +772,7 @@ export default function EmployeeShiftTab() {
                               )}
                             </div>
                           </div>
-                        </div>
+                        </button>
                       )
                     })
                   )}
@@ -809,7 +824,7 @@ export default function EmployeeShiftTab() {
                       const isSelected = selectedEmployees.includes(employee.id)
 
                       return (
-                        <div
+                        <button
                           key={employee.id}
                           onClick={() => {
                             if (isSelected) {
@@ -833,7 +848,7 @@ export default function EmployeeShiftTab() {
                             {employee.position && <div className="text-sm text-gray-500">{employee.position}</div>}
                           </div>
                           {employee.employee_code && <Tag>{employee.employee_code}</Tag>}
-                        </div>
+                        </button>
                       )
                     })
                   )}

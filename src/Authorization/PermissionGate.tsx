@@ -12,14 +12,7 @@ export type PermissionGateProps = {
   children: ReactNode
 }
 
-export function PermissionGate({
-  ability,
-  anyAbility,
-  roles,
-  hide = true,
-  fallback,
-  children
-}: PermissionGateProps) {
+export function PermissionGate({ ability, anyAbility, roles, hide = true, fallback, children }: PermissionGateProps) {
   const { role, can, canSome, hasAnyRole } = useAuthorization()
 
   const matchesAbility = ability ? can(ability) : true

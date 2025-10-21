@@ -55,6 +55,7 @@ const FEATURE_ROUTES: Array<{ path: string; feature: FeatureKey; Component: Guar
   { path: path.AdminReservations, feature: "reservations", Component: ManageReservation },
   { path: path.AdminCategoryDish, feature: "menuCategory", Component: ManageDishCategory },
   { path: path.AdminDish, feature: "dishes", Component: ManageDish },
+  { path: path.AdminDishDetail, feature: "dishes", Component: DishDetail },
   { path: path.AdminMenu, feature: "menu", Component: ManageMenu },
   { path: path.AdminMenuDetail, feature: "menu", Component: MenuDetail },
   { path: path.AdminCustomers, feature: "customers", Component: ManageCustomer },

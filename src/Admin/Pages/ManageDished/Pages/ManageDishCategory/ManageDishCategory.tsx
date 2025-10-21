@@ -22,7 +22,10 @@ export default function ManageDishCategory() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const { can } = useAuthorization()
+
+  const canViewCategory = can(AppAbility.MENU_CATEGORY_VIEW)
   const canManageCategory = can(AppAbility.MENU_CATEGORY_MANAGE)
+
   const queryParams: queryParamConfigCategoryDish = useQueryParams()
   const queryConfig: queryParamConfigCategoryDish = omitBy(
     {
@@ -43,7 +46,8 @@ export default function ManageDishCategory() {
     },
     retry: 0,
     staleTime: 3 * 60 * 1000,
-    placeholderData: keepPreviousData
+    placeholderData: keepPreviousData,
+    enabled: canViewCategory
   })
 
   const paginated = data?.data.data
@@ -62,10 +66,10 @@ export default function ManageDishCategory() {
   }, [canManageCategory, form])
 
   const handleEdit = async (record: any | boolean) => {
-    if (!canManageCategory) {
-      toast.warn("Bạn không có quyền quản lý thể loại món.")
-      return
-    }
+    // if (!canManageCategory) {
+    //   toast.warn("Bạn không có quyền quản lý thể loại món.")
+    //   return
+    // }
     if (record === true) {
       form.setFieldsValue({
         name: "",
@@ -220,15 +224,12 @@ export default function ManageDishCategory() {
       title: <div className="text-center">Hành động</div>,
       key: "actions",
       render: (_, record) => {
-        if (!canManageCategory) {
-          return <span className="text-gray-400 italic">Không có quyền</span>
-        }
         return (
           <div className="text-center">
-            <Button type="link" onClick={() => handleEdit(record)}>
+            <Button type="link" onClick={() => handleEdit(record)} disabled={!canManageCategory}>
               <Edit size={16} />
             </Button>
-            <Button danger type="link" onClick={() => handleDelete(record.id)}>
+            <Button danger type="link" onClick={() => handleDelete(record.id)} disabled={!canManageCategory}>
               <Trash2 size={16} />
             </Button>
           </div>
@@ -264,6 +265,8 @@ export default function ManageDishCategory() {
     navigate({ pathname: `${path.AdminCategoryDish}`, search: createSearchParams(filteredSearch).toString() })
     filterForm.resetFields()
   }
+
+  if (!canViewCategory) return null
 
   return (
     <div>
@@ -327,7 +330,7 @@ export default function ManageDishCategory() {
             <div style={{ minHeight: 100, width: 300, marginTop: 10 }} />
           </Spin>
         </div>
-      ) : (listCategoryDish as CategoryDishes[]).length === 0 ? (
+      ) : (listCategoryDish as CategoryDishes[])?.length === 0 ? (
         <Empty description="Không có thể loại hợp lệ" className="mt-16" />
       ) : (
         <Fragment>
@@ -343,6 +346,14 @@ export default function ManageDishCategory() {
                 ? "bg-[#f2f2f2] hover:bg-blue-50 transition-colors"
                 : "bg-white hover:bg-blue-50 transition-colors"
             }
+            onRow={(record) => ({
+              onClick: () => handleEdit(record),
+              style: {
+                cursor: canManageCategory ? "pointer" : "not-allowed",
+                opacity: canManageCategory ? 1 : 0.85
+              },
+              title: canManageCategory ? undefined : "Bạn không có quyền xem/chỉnh sửa"
+            })}
           />
 
           <div style={{ marginTop: 16, textAlign: "center", display: "flex", justifyContent: "flex-end" }}>
@@ -361,7 +372,7 @@ export default function ManageDishCategory() {
       {/* Modal Edit */}
       <Modal
         title="Thông tin thể loại"
-        open={canManageCategory && isModalOpen}
+        open={isModalOpen}
         onCancel={() => setIsModalOpen(false)}
         footer={false}
         onOk={handleUpdate}
@@ -369,20 +380,22 @@ export default function ManageDishCategory() {
       >
         <Form form={form} layout="vertical" onFinish={handleUpdate}>
           <Form.Item name="name" label="Tên thể loại" rules={[{ required: true, message: "Vui lòng nhập tên" }]}>
-            <Input />
+            <Input disabled={!canManageCategory} />
           </Form.Item>
           <Form.Item name="desc" label="Mô tả">
-            <Input.TextArea rows={3} />
+            <Input.TextArea rows={3} disabled={!canManageCategory} />
           </Form.Item>
 
-          <div className="flex justify-end mt-4">
-            <Button onClick={() => setIsModalOpen(false)} className="mr-2">
-              Hủy
-            </Button>
-            <Button type="primary" htmlType="submit" loading={updateMutation.isPending || createMutation.isPending}>
-              {typeof editingId === "string" ? "Cập nhật thể loại" : "Thêm thể loại"}
-            </Button>
-          </div>
+          {canManageCategory && (
+            <div className="flex justify-end mt-4">
+              <Button onClick={() => setIsModalOpen(false)} className="mr-2">
+                Hủy
+              </Button>
+              <Button type="primary" htmlType="submit" loading={updateMutation.isPending || createMutation.isPending}>
+                {typeof editingId === "string" ? "Cập nhật thể loại" : "Thêm thể loại"}
+              </Button>
+            </div>
+          )}
         </Form>
       </Modal>
     </div>

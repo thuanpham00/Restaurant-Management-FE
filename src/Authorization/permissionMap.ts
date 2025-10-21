@@ -49,54 +49,65 @@ export const ROLE_PERMISSIONS: Record<AppRole, AppAbility[]> = {
     AppAbility.TABLES_VIEW,
     AppAbility.RESERVATIONS_VIEW,
     AppAbility.CUSTOMERS_VIEW,
-    AppAbility.EMPLOYEES_VIEW,
     AppAbility.SHIFTS_VIEW,
+
     AppAbility.MENU_CATEGORY_VIEW,
     AppAbility.DISH_VIEW,
     AppAbility.MENU_VIEW,
+
     AppAbility.INGREDIENTS_VIEW,
     AppAbility.SUPPLIERS_VIEW,
     AppAbility.WAREHOUSE_IMPORT_VIEW,
     AppAbility.WAREHOUSE_EXPORT_VIEW,
-    AppAbility.WAREHOUSE_LOSS_VIEW,
-    AppAbility.INVOICES_VIEW,
-    AppAbility.PROMOTIONS_VIEW
+    AppAbility.WAREHOUSE_LOSS_VIEW
   ]),
   [AppRole.CASHIER]: unique([
-    AppAbility.DASHBOARD_VIEW,
-    AppAbility.CUSTOMERS_VIEW,
-    AppAbility.CUSTOMERS_MANAGE,
+    AppAbility.TABLES_VIEW,
+    AppAbility.TABLES_MANAGE,
     AppAbility.RESERVATIONS_VIEW,
+    AppAbility.RESERVATIONS_MANAGE,
+
+    AppAbility.CUSTOMERS_VIEW,
+    AppAbility.SHIFTS_VIEW,
+
+    AppAbility.MENU_CATEGORY_VIEW,
+    AppAbility.DISH_VIEW,
+    AppAbility.MENU_VIEW,
+
     AppAbility.INVOICES_VIEW,
     AppAbility.INVOICES_MANAGE,
     AppAbility.PROMOTIONS_VIEW,
     AppAbility.PROMOTIONS_MANAGE
   ]),
   [AppRole.KITCHEN_STAFF]: unique([
+    AppAbility.TABLES_VIEW,
+
+    AppAbility.SHIFTS_VIEW,
+
     AppAbility.MENU_CATEGORY_VIEW,
-    AppAbility.MENU_CATEGORY_MANAGE,
     AppAbility.DISH_VIEW,
-    AppAbility.DISH_MANAGE,
     AppAbility.MENU_VIEW,
-    AppAbility.MENU_MANAGE,
+
     AppAbility.INGREDIENTS_VIEW,
-    AppAbility.INGREDIENTS_MANAGE,
-    AppAbility.SUPPLIERS_VIEW,
+
     AppAbility.WAREHOUSE_IMPORT_VIEW,
-    AppAbility.WAREHOUSE_IMPORT_MANAGE,
     AppAbility.WAREHOUSE_EXPORT_VIEW,
     AppAbility.WAREHOUSE_EXPORT_MANAGE,
+
     AppAbility.WAREHOUSE_LOSS_VIEW,
     AppAbility.WAREHOUSE_LOSS_MANAGE
   ]),
   [AppRole.WAITER]: unique([
     AppAbility.TABLES_VIEW,
     AppAbility.TABLES_MANAGE,
-    AppAbility.RESERVATIONS_VIEW,
-    AppAbility.RESERVATIONS_MANAGE,
-    AppAbility.CUSTOMERS_VIEW,
+
+    AppAbility.SHIFTS_VIEW,
+
+    AppAbility.MENU_CATEGORY_VIEW,
+    AppAbility.DISH_VIEW,
     AppAbility.MENU_VIEW,
-    AppAbility.DISH_VIEW
+
+    AppAbility.PROMOTIONS_VIEW
   ])
 }
 

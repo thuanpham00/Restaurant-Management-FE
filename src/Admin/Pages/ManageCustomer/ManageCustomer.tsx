@@ -305,26 +305,24 @@ export default function ManageCustomer() {
       render: (status: number) => (
         <Badge status={status === 1 ? "success" : "error"} text={status === 1 ? "Hoạt động" : "Ngừng"} />
       )
-    }
-  ]
-
-  if (canManageCustomers) {
-    columns.push({
+    },
+    {
       title: "Hành động",
       key: "action",
       width: 150,
       render: (_: any, record: Customer) => (
         <div className="flex gap-2">
           <Button
+            disabled={!canManageCustomers}
             type="link"
             icon={<Edit size={16} />}
             onClick={(e) => {
               e.stopPropagation()
               handleEdit(record)
             }}
-          >
-          </Button>
+          ></Button>
           <Button
+            disabled={!canManageCustomers}
             type="link"
             danger
             icon={<Trash2 size={16} />}
@@ -332,12 +330,11 @@ export default function ManageCustomer() {
               e.stopPropagation()
               handleDelete(record.id, record.full_name)
             }}
-          >
-          </Button>
+          ></Button>
         </div>
       )
-    })
-  }
+    }
+  ]
 
   // ========== RENDER ==========
   return (

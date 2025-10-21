@@ -52,6 +52,7 @@ export default function IngredientListTab() {
   const queryParams: queryParamConfigIngredient = useQueryParams()
   const { can } = useAuthorization()
   const canManageIngredients = can(AppAbility.INGREDIENTS_MANAGE)
+  const canViewIngredients = can(AppAbility.INGREDIENTS_VIEW)
 
   // Parse category_ids[] from URL
   const categoryIdsFromUrl = searchParams.getAll("category_ids[]")
@@ -133,7 +134,8 @@ export default function IngredientListTab() {
       return ingredientsAPI.getList(queryConfig, controller.signal)
     },
     staleTime: 3 * 60 * 1000,
-    placeholderData: keepPreviousData
+    placeholderData: keepPreviousData,
+    enabled: canViewIngredients
   })
 
   const paginated = data?.data?.data as PaginatedResponse<Ingredient>
@@ -486,32 +488,35 @@ export default function IngredientListTab() {
       key: "actions",
       fixed: "right",
       width: 130,
-      render: (_, record) =>
-        canManageIngredients ? (
-          <Space size="small">
-            <Button
-              type="link"
-              icon={<Edit size={16} />}
-              onClick={(e) => {
-                e.stopPropagation()
-                handleOpenModal(record)
-              }}
-              title="Chỉnh sửa"
-            />
-            <Button
-              danger
-              type="link"
-              icon={<Trash2 size={16} />}
-              onClick={(e) => {
-                e.stopPropagation()
-                handleDelete(record.id)
-              }}
-              title="Xóa"
-            />
-          </Space>
-        ) : null
+      render: (_, record) => (
+        <Space size="small">
+          <Button
+            type="link"
+            icon={<Edit size={16} />}
+            onClick={(e) => {
+              e.stopPropagation()
+              handleOpenModal(record)
+            }}
+            disabled={!canManageIngredients}
+            title="Chỉnh sửa"
+          />
+          <Button
+            danger
+            type="link"
+            icon={<Trash2 size={16} />}
+            disabled={!canManageIngredients}
+            onClick={(e) => {
+              e.stopPropagation()
+              handleDelete(record.id)
+            }}
+            title="Xóa"
+          />
+        </Space>
+      )
     }
   ]
+
+  if (!canViewIngredients) return null
 
   return (
     <Fragment>

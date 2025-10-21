@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { Button, Form, Input, Modal, Table, DatePicker, TimePicker, Spin, Radio, Badge, Tag, Checkbox } from "antd"
 import { isUndefined, omitBy } from "lodash"
@@ -7,10 +8,11 @@ import { toast } from "react-toastify"
 import dayjs from "dayjs"
 import isoWeek from "dayjs/plugin/isoWeek"
 import { shiftsAPI } from "src/Apis/Admin"
-import { AppAbility, useAuthorization } from "src/Authorization"
+import { AppAbility, AppRole, resolveRole, useAuthorization } from "src/Authorization"
 import { Shift, ShiftFormInput, queryParamConfigShift } from "src/Types/shift.type"
 import { PaginatedResponse } from "src/Types/utils.type"
 import useQueryParams from "src/Hook/useQueryParams"
+import { useAppStore } from "src/StateGlobal/zustand"
 
 const { RangePicker } = DatePicker
 
@@ -56,7 +58,7 @@ const detectShiftType = (startTime: string | null, endTime: string | null): Shif
 export default function ShiftListTab() {
   const queryConfig: queryParamConfigShift = useQueryParams()
   const queryClient = useQueryClient()
-  const { can } = useAuthorization()
+  const { can, role } = useAuthorization()
   const canViewShifts = can(AppAbility.SHIFTS_VIEW)
   const canManageShifts = can(AppAbility.SHIFTS_MANAGE)
 
@@ -126,6 +128,15 @@ export default function ShiftListTab() {
 
   const paginated = (canViewShifts ? data?.data?.data : undefined) as PaginatedResponse<Shift> | undefined
   const listShifts = paginated?.data || []
+
+  // --- filter shifts for limited roles (show only shifts where current employee participates) ---
+  const { employeeId } = useAppStore()
+  const resolvedRole = resolveRole(String(role ?? ""))
+  const limitedViewRoles = [AppRole.STAFF, AppRole.CASHIER, AppRole.KITCHEN_STAFF, AppRole.WAITER]
+  const isLimitedView = resolvedRole !== null && limitedViewRoles.includes(resolvedRole)
+  const filteredShifts = isLimitedView
+    ? listShifts.filter((s) => (s.employee_assignments || []).some((a) => a.employee_id === employeeId))
+    : listShifts
 
   // ========== MUTATIONS ==========
   const createMutation = useMutation({
@@ -345,6 +356,7 @@ export default function ShiftListTab() {
 
       // Create shifts sequentially
       let successCount = 0
+      // eslint-disable-next-line prefer-const
       let skippedCount = shiftsToCreate.length - newShifts.length
 
       for (const shiftData of newShifts) {
@@ -358,7 +370,7 @@ export default function ShiftListTab() {
       }
 
       // Refresh data
-  await invalidateShiftRelatedQueries()
+      await invalidateShiftRelatedQueries()
 
       // Show result
       if (successCount > 0) {
@@ -443,7 +455,7 @@ export default function ShiftListTab() {
   }
 
   // ========== TABLE COLUMNS ==========
-  const columns = [
+  const baseColumns = [
     {
       title: "Ngày",
       dataIndex: "shift_date",
@@ -518,13 +530,11 @@ export default function ShiftListTab() {
       render: (_: any, record: Shift) => (
         <div className="flex gap-2 justify-center">
           <Button
-            
             type="link"
             icon={<Edit size={16} />}
             onClick={() => handleEdit(record)}
             disabled={!canManageShifts}
-          >
-          </Button>
+          ></Button>
           <Button
             type="link"
             danger
@@ -536,6 +546,8 @@ export default function ShiftListTab() {
       )
     }
   ]
+
+  const columns = isLimitedView ? baseColumns.filter((c) => c.key !== "employeeCount") : baseColumns
 
   if (!canViewShifts) {
     return null
@@ -563,7 +575,13 @@ export default function ShiftListTab() {
           >
             Tạo nhanh nhiều ca
           </Button>
-          <Button type="primary" icon={<Plus size={18} />} onClick={handleCreate} size="large" disabled={!canManageShifts}>
+          <Button
+            type="primary"
+            icon={<Plus size={18} />}
+            onClick={handleCreate}
+            size="large"
+            disabled={!canManageShifts}
+          >
             Thêm ca mới
           </Button>
         </div>
@@ -616,7 +634,7 @@ export default function ShiftListTab() {
           <span className="font-semibold">
             {queryConfig.shift_date_from || currentWeekStart} đến {queryConfig.shift_date_to || currentWeekEnd}
           </span>{" "}
-          ({listShifts.length} ca)
+          ({filteredShifts.length} ca)
         </div>
       </div>
 
@@ -630,21 +648,25 @@ export default function ShiftListTab() {
           <Table
             rowKey="id"
             columns={columns}
-            dataSource={listShifts}
-            pagination={{
-              current: parseInt(queryConfig.page as string) || 1,
-              total: paginated?.total,
-              pageSize: parseInt(queryConfig.per_page as string) || 15,
-              showSizeChanger: true,
-              showTotal: (total) => `Tổng ${total} ca`,
-              onChange: (page, pageSize) => {
-                const params = new URLSearchParams(window.location.search)
-                params.set("page", page.toString())
-                params.set("per_page", pageSize.toString())
-                window.history.pushState({}, "", `${window.location.pathname}?${params.toString()}`)
-                window.dispatchEvent(new PopStateEvent("popstate"))
-              }
-            }}
+            dataSource={filteredShifts}
+            pagination={
+              isLimitedView
+                ? false
+                : {
+                    current: parseInt(queryConfig.page as string) || 1,
+                    total: paginated?.total,
+                    pageSize: parseInt(queryConfig.per_page as string) || 15,
+                    showSizeChanger: true,
+                    showTotal: (total) => `Tổng ${total} ca`,
+                    onChange: (page, pageSize) => {
+                      const params = new URLSearchParams(window.location.search)
+                      params.set("page", page.toString())
+                      params.set("per_page", pageSize.toString())
+                      window.history.pushState({}, "", `${window.location.pathname}?${params.toString()}`)
+                      window.dispatchEvent(new PopStateEvent("popstate"))
+                    }
+                  }
+            }
             scroll={{
               y: "calc(100vh - 500px)",
               x: true
@@ -765,7 +787,7 @@ export default function ShiftListTab() {
 
           {shiftPreset !== "CUSTOM" && (
             <div className="bg-blue-50 border border-blue-200 rounded p-3 text-sm text-blue-700">
-              💡 <strong>Mẹo:</strong> Chọn "Tùy chỉnh" nếu bạn muốn thay đổi khung giờ cho ca đặc biệt
+              💡 <strong>Mẹo:</strong> Chọn `Tùy chỉnh` nếu bạn muốn thay đổi khung giờ cho ca đặc biệt
             </div>
           )}
         </Form>
@@ -832,7 +854,7 @@ export default function ShiftListTab() {
                 const isChecked = quickCreateForm.getFieldValue("create_morning") ?? true
                 return (
                   <Form.Item name="create_morning" valuePropName="checked" initialValue={true} noStyle>
-                    <div
+                    <button
                       className={`
                         border-2 rounded-lg p-4 transition-all duration-200 cursor-pointer
                         ${
@@ -858,7 +880,7 @@ export default function ShiftListTab() {
                           </div>
                         </div>
                       </Checkbox>
-                    </div>
+                    </button>
                   </Form.Item>
                 )
               }}
@@ -869,7 +891,7 @@ export default function ShiftListTab() {
                 const isChecked = quickCreateForm.getFieldValue("create_evening") ?? true
                 return (
                   <Form.Item name="create_evening" valuePropName="checked" initialValue={true} noStyle>
-                    <div
+                    <button
                       className={`
                         border-2 rounded-lg p-4 transition-all duration-200 cursor-pointer
                         ${
@@ -895,7 +917,7 @@ export default function ShiftListTab() {
                           </div>
                         </div>
                       </Checkbox>
-                    </div>
+                    </button>
                   </Form.Item>
                 )
               }}

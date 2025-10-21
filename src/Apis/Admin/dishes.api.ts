@@ -80,5 +80,9 @@ export const dishesAPI = {
     body: { ingredient_id: string; quantity: string; notes: string }
   ) => {
     return Http.put<SuccessResponse<any>>(`/api/dishes/${idDish}/ingredients/${idIngredientDish}`, body)
+  },
+
+  deleteIngredientDishByIdDish: (idDish: string, idIngredientDish: string) => {
+    return Http.delete<SuccessResponse<any>>(`/api/dishes/${idDish}/ingredients/${idIngredientDish}`)
   }
 }
