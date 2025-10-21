@@ -1,12 +1,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { Modal, Descriptions, Space, Button, InputNumber, Radio, Divider } from "antd"
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect } from "react"
 import { toast } from "react-toastify"
 import { invoicePaymentAPI } from "src/Apis/Admin/invoicePayment.api"
 import { useAppStore } from "src/StateGlobal/zustand"
 import { InvoicePaymentPayload } from "src/Types/invoicePayment.type"
 import PromotionForm from "../PromotionForm"
+import { AppAbility, useAuthorization } from "src/Authorization"
 
 interface CreateInvoiceModalProps {
   open: boolean
@@ -19,6 +20,8 @@ interface CreateInvoiceModalProps {
 const CreateInvoiceModal = ({ open, onClose, totalAmount, tableSessionId, idDiningTable }: CreateInvoiceModalProps) => {
   const queryClient = useQueryClient()
   const { employeeId } = useAppStore()
+  const { can } = useAuthorization()
+  const canManageInvoices = can(AppAbility.INVOICES_MANAGE)
 
   const [vat, setVat] = useState<number>(10) // Default 10%
   const [totalPercentage, setTotalPercentage] = useState<number>(0) // Discount từ promotions
@@ -26,6 +29,13 @@ const CreateInvoiceModal = ({ open, onClose, totalAmount, tableSessionId, idDini
     { promotion_id: string; discount_value: number }[] | null
   >(null)
   const [paymentMethod, setPaymentMethod] = useState<number>(0) // 0 = Cash, 1 = Bank Transfer
+
+  useEffect(() => {
+    if (open && !canManageInvoices) {
+      toast.warn("Bạn không có quyền tạo hóa đơn.", { autoClose: 1500 })
+      onClose()
+    }
+  }, [open, canManageInvoices, onClose])
 
   // Calculate final amount với discount + VAT
   const financialCalculation = useMemo(() => {
@@ -67,6 +77,10 @@ const CreateInvoiceModal = ({ open, onClose, totalAmount, tableSessionId, idDini
 
   // Handler: Lưu hóa đơn tạm (status = 0, không có payment)
   const handleSaveDraftInvoice = () => {
+    if (!canManageInvoices) {
+      toast.warn("Bạn không có quyền lưu hóa đơn.", { autoClose: 1500 })
+      return
+    }
     const payload: InvoicePaymentPayload = {
       table_session_id: tableSessionId,
       total_amount: financialCalculation.subtotal,
@@ -99,6 +113,10 @@ const CreateInvoiceModal = ({ open, onClose, totalAmount, tableSessionId, idDini
 
   // Handler: Thanh toán ngay (tạo invoice + payment)
   const handlePayNow = () => {
+    if (!canManageInvoices) {
+      toast.warn("Bạn không có quyền thanh toán hóa đơn.", { autoClose: 1500 })
+      return
+    }
     const payload: InvoicePaymentPayload = {
       table_session_id: tableSessionId,
       total_amount: financialCalculation.subtotal,
@@ -130,10 +148,14 @@ const CreateInvoiceModal = ({ open, onClose, totalAmount, tableSessionId, idDini
     })
   }
 
+  if (!canManageInvoices) {
+    return null
+  }
+
   return (
     <Modal
       title="Tạo hóa đơn"
-      open={open}
+      open={open && canManageInvoices}
       onCancel={onClose}
       footer={null}
       width={700}

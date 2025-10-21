@@ -7,6 +7,7 @@ import { diningTableAPI } from "src/Apis/Admin"
 import { isError422 } from "src/Helpers/utils"
 import { TableSession, TableSessionDetail, TableSessionOrder } from "src/Types/tableSession.type"
 import { ErrorResponse } from "src/Types/utils.type"
+import { AppAbility, useAuthorization } from "src/Authorization"
 
 export default function InfoTable({
   dataTable,
@@ -21,12 +22,21 @@ export default function InfoTable({
 }) {
   const [checkUpdate, setCheckUpdate] = useState(false)
   const [loading, setLoading] = useState(false)
+  const { can } = useAuthorization()
+  const canViewTables = can(AppAbility.TABLES_VIEW)
+  const canManageTables = can(AppAbility.TABLES_MANAGE)
 
   useEffect(() => {
     form.setFieldValue("table_number", dataTable.table_number)
     form.setFieldValue("capacity", dataTable.capacity)
     form.setFieldValue("is_active", dataTable.is_active)
   }, [dataTable, form])
+
+  useEffect(() => {
+    if (!canManageTables && checkUpdate) {
+      setCheckUpdate(false)
+    }
+  }, [canManageTables, checkUpdate])
 
   const updateDiningTableMutation = useMutation({
     mutationFn: (body: { table_number: number; capacity: number; is_active: boolean }) => {
@@ -57,11 +67,19 @@ export default function InfoTable({
   })
 
   const handleUpdateDiningTable = (values: { table_number: number; capacity: number; is_active: boolean }) => {
+    if (!canManageTables) {
+      toast.warn("Bạn không có quyền cập nhật bàn.", { autoClose: 1500 })
+      return
+    }
     setLoading(true)
     updateDiningTableMutation.mutate(values)
   }
 
   const handleCheckUpdate = () => {
+    if (!canManageTables) {
+      toast.warn("Bạn không có quyền cập nhật bàn.", { autoClose: 1500 })
+      return
+    }
     if (dataTableSessionDetail || dataTableSessionOrder) {
       toast.error("Đang có phiên bàn nên không thể tiến hành cập nhật!", {
         autoClose: 1500
@@ -72,6 +90,10 @@ export default function InfoTable({
   }
 
   const [showInfoTable, setShowInfoTable] = useState(false)
+
+  if (!canViewTables) {
+    return null
+  }
 
   return (
     <div>
@@ -92,15 +114,15 @@ export default function InfoTable({
         <Form form={form} layout="vertical" onFinish={handleUpdateDiningTable} initialValues={{ is_active: true }}>
           <h2 className="text-lg font-medium -tracking-wide mb-2">Thông tin bàn</h2>
           <Form.Item label="Số bàn" name="table_number" rules={[{ required: true, message: "Vui lòng nhập số bàn!" }]}>
-            <InputNumber style={{ width: "100%" }} disabled={!checkUpdate} />
+            <InputNumber style={{ width: "100%" }} disabled={!checkUpdate || !canManageTables} />
           </Form.Item>
 
           <Form.Item label="Sức chứa" name="capacity" rules={[{ required: true, message: "Vui lòng nhập sức chứa!" }]}>
-            <InputNumber style={{ width: "100%" }} disabled={!checkUpdate} />
+            <InputNumber style={{ width: "100%" }} disabled={!checkUpdate || !canManageTables} />
           </Form.Item>
 
           <Form.Item label="Hoạt động" name="is_active" valuePropName="checked">
-            <Switch defaultChecked disabled={!checkUpdate} />
+            <Switch defaultChecked disabled={!checkUpdate || !canManageTables} />
           </Form.Item>
 
           <div>
@@ -109,13 +131,13 @@ export default function InfoTable({
                 <Button danger onClick={() => setCheckUpdate(false)}>
                   Hủy
                 </Button>
-                <Button type="primary" disabled={loading} htmlType="submit">
+                <Button type="primary" disabled={loading || !canManageTables} htmlType="submit">
                   Lưu
                 </Button>
               </div>
             ) : (
               <div className="flex justify-end">
-                <Button onClick={handleCheckUpdate} type="primary">
+                <Button onClick={handleCheckUpdate} type="primary" disabled={!canManageTables}>
                   Cập nhật
                 </Button>
               </div>

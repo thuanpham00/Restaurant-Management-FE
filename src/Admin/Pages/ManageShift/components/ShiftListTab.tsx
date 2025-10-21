@@ -7,6 +7,7 @@ import { toast } from "react-toastify"
 import dayjs from "dayjs"
 import isoWeek from "dayjs/plugin/isoWeek"
 import { shiftsAPI } from "src/Apis/Admin"
+import { AppAbility, useAuthorization } from "src/Authorization"
 import { Shift, ShiftFormInput, queryParamConfigShift } from "src/Types/shift.type"
 import { PaginatedResponse } from "src/Types/utils.type"
 import useQueryParams from "src/Hook/useQueryParams"
@@ -55,6 +56,15 @@ const detectShiftType = (startTime: string | null, endTime: string | null): Shif
 export default function ShiftListTab() {
   const queryConfig: queryParamConfigShift = useQueryParams()
   const queryClient = useQueryClient()
+  const { can } = useAuthorization()
+  const canViewShifts = can(AppAbility.SHIFTS_VIEW)
+  const canManageShifts = can(AppAbility.SHIFTS_MANAGE)
+
+  const ensureManagePermission = useCallback(() => {
+    if (canManageShifts) return true
+    toast.warning("Bạn không có quyền quản lý ca làm việc!", { autoClose: 2000 })
+    return false
+  }, [canManageShifts])
 
   const invalidateShiftRelatedQueries = useCallback(() => {
     return Promise.all([
@@ -109,11 +119,12 @@ export default function ShiftListTab() {
 
       return shiftsAPI.getList(params, controller.signal)
     },
+    enabled: canViewShifts,
     staleTime: 3 * 60 * 1000,
     placeholderData: keepPreviousData
   })
 
-  const paginated = data?.data?.data as PaginatedResponse<Shift>
+  const paginated = (canViewShifts ? data?.data?.data : undefined) as PaginatedResponse<Shift> | undefined
   const listShifts = paginated?.data || []
 
   // ========== MUTATIONS ==========
@@ -154,6 +165,7 @@ export default function ShiftListTab() {
 
   // ========== HANDLERS ==========
   const handleCreate = () => {
+    if (!ensureManagePermission()) return
     setIsEditMode(false)
     setSelectedShift(null)
     setShiftPreset("MORNING")
@@ -171,6 +183,7 @@ export default function ShiftListTab() {
   }
 
   const handleQuickCreate = () => {
+    if (!ensureManagePermission()) return
     quickCreateForm.resetFields()
     quickCreateForm.setFieldsValue({
       date_range: [dayjs(), dayjs()],
@@ -201,6 +214,7 @@ export default function ShiftListTab() {
   }
 
   const handleEdit = (shift: Shift) => {
+    if (!ensureManagePermission()) return
     setIsEditMode(true)
     setSelectedShift(shift)
 
@@ -225,6 +239,7 @@ export default function ShiftListTab() {
   }
 
   const handleDelete = (shift: Shift) => {
+    if (!ensureManagePermission()) return
     Modal.confirm({
       title: "Xác nhận xóa",
       content: `Bạn có chắc muốn xóa ca "${shift.name}"?`,
@@ -236,6 +251,7 @@ export default function ShiftListTab() {
   }
 
   const handleSubmit = () => {
+    if (!ensureManagePermission()) return
     form.validateFields().then((values) => {
       const submitData: ShiftFormInput = {
         name: values.name,
@@ -262,6 +278,7 @@ export default function ShiftListTab() {
 
   // ========== QUICK CREATE HANDLERS ==========
   const handleQuickCreateSubmit = async () => {
+    if (!ensureManagePermission()) return
     try {
       const values = await quickCreateForm.validateFields()
       const [startDate, endDate] = values.date_range
@@ -500,14 +517,30 @@ export default function ShiftListTab() {
       align: "center" as const,
       render: (_: any, record: Shift) => (
         <div className="flex gap-2 justify-center">
-          <Button size="small" type="primary" icon={<Edit size={16} />} onClick={() => handleEdit(record)}>
+          <Button
+            size="small"
+            type="primary"
+            icon={<Edit size={16} />}
+            onClick={() => handleEdit(record)}
+            disabled={!canManageShifts}
+          >
             Sửa
           </Button>
-          <Button size="small" danger icon={<Trash2 size={16} />} onClick={() => handleDelete(record)} />
+          <Button
+            size="small"
+            danger
+            icon={<Trash2 size={16} />}
+            onClick={() => handleDelete(record)}
+            disabled={!canManageShifts}
+          />
         </div>
       )
     }
   ]
+
+  if (!canViewShifts) {
+    return null
+  }
 
   // ========== RENDER ==========
   return (
@@ -527,10 +560,11 @@ export default function ShiftListTab() {
             onClick={handleQuickCreate}
             size="large"
             className="text-white border-0 bg-gradient-to-r from-purple-500 to-pink-500 hover:brightness-110 transition-all duration-200 !text-white !bg-gradient-to-r !from-purple-500 !to-pink-500"
+            disabled={!canManageShifts}
           >
             Tạo nhanh nhiều ca
           </Button>
-          <Button type="primary" icon={<Plus size={18} />} onClick={handleCreate} size="large">
+          <Button type="primary" icon={<Plus size={18} />} onClick={handleCreate} size="large" disabled={!canManageShifts}>
             Thêm ca mới
           </Button>
         </div>
@@ -638,6 +672,7 @@ export default function ShiftListTab() {
               type="primary"
               onClick={handleSubmit}
               loading={createMutation.isPending || updateMutation.isPending}
+              disabled={!canManageShifts}
             >
               {isEditMode ? "Cập nhật" : "Tạo mới"}
             </Button>
@@ -758,6 +793,7 @@ export default function ShiftListTab() {
               onClick={handleQuickCreateSubmit}
               loading={quickCreateLoading}
               className="bg-gradient-to-r from-purple-500 to-pink-500 border-0"
+              disabled={!canManageShifts}
             >
               Tạo ca
             </Button>

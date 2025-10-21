@@ -18,6 +18,7 @@ import useQueryParams from "src/Hook/useQueryParams"
 import { queryParamConfigReservation } from "src/Types/queryParams.type"
 import { Reservation, ReservationCheckAssignTable } from "src/Types/reservation.type"
 import ArrangementTable from "../../Components/ArrangementTable"
+import { AppAbility, useAuthorization } from "src/Authorization"
 
 export default function ManageReservation() {
   const [currentPage, setCurrentPage] = useState(1)
@@ -36,6 +37,12 @@ export default function ManageReservation() {
 
   const [activeTab, setActiveTab] = useState<"pending" | "confirmed" | "completed" | "cancelled">("pending")
 
+  const { can } = useAuthorization()
+  const canViewReservations = can(AppAbility.RESERVATIONS_VIEW)
+  const canManageReservations = can(AppAbility.RESERVATIONS_MANAGE)
+  const canManageTables = can(AppAbility.TABLES_MANAGE)
+  const canAssignTable = canManageReservations && canManageTables
+
   const { data, isFetching } = useQuery({
     queryKey: ["listReservation", queryConfig],
     queryFn: () => {
@@ -43,7 +50,8 @@ export default function ManageReservation() {
       setTimeout(() => controller.abort(), 10000)
       return reservationsAPI.getList(queryConfig, controller.signal)
     },
-    retry: 0
+    retry: 0,
+    enabled: canViewReservations
   })
 
   const listReservation = data?.data.data
@@ -129,7 +137,7 @@ export default function ManageReservation() {
       key: "created_at",
       render: (date: string) => new Date(date).toLocaleString()
     },
-    activeTab === "pending" && {
+  activeTab === "pending" && canManageReservations && {
       title: <div className="text-center">Hành động</div>,
       key: "action",
       render: (_: any, record: any) => (
@@ -137,12 +145,17 @@ export default function ManageReservation() {
           <Button
             type="primary"
             onClick={() => {
+              if (!canAssignTable) {
+                toast.warn("Bạn không có quyền xếp bàn cho đặt bàn này.")
+                return
+              }
               setArrangement(record)
             }}
+            disabled={!canAssignTable}
           >
             Xác nhận
           </Button>
-          <Button danger onClick={() => handleAction(record)}>
+          <Button danger onClick={() => handleAction(record)} disabled={!canManageReservations}>
             Từ chối
           </Button>
         </div>
@@ -216,6 +229,10 @@ export default function ManageReservation() {
   })
 
   const handleAction = (record: any) => {
+    if (!canManageReservations) {
+      toast.warn("Bạn không có quyền cập nhật trạng thái đặt bàn.")
+      return
+    }
     mutationUpdateStatus.mutate({ id: record.id, status: 2 })
   }
 
@@ -252,12 +269,17 @@ export default function ManageReservation() {
     },
     retry: 0,
     staleTime: 3 * 60 * 1000,
-    placeholderData: keepPreviousData
+    placeholderData: keepPreviousData,
+    enabled: canViewReservations
   })
 
   const listCheckAssignedTable = dataListCheckAssignedTable?.data.data as ReservationCheckAssignTable[]
 
   const [arrangement, setArrangement] = useState<Reservation | null>(null)
+
+  if (!canViewReservations) {
+    return null
+  }
 
   return (
     <div>
@@ -333,7 +355,9 @@ export default function ManageReservation() {
             </Form.Item>
           </div>
           <div>
-            <ArrangementTable queryConfig={queryConfig} arrangement={arrangement} setArrangement={setArrangement} />
+            {canAssignTable && (
+              <ArrangementTable queryConfig={queryConfig} arrangement={arrangement} setArrangement={setArrangement} />
+            )}
           </div>
         </Form>
       </div>

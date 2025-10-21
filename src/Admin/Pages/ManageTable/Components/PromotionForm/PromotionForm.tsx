@@ -3,6 +3,7 @@ import { keepPreviousData, useQuery } from "@tanstack/react-query"
 import { Form, Select, Button, Tag, message } from "antd"
 import { useState } from "react"
 import { promotionAPI } from "src/Apis/Admin/promotion.api"
+import { AppAbility, useAuthorization } from "src/Authorization"
 
 export interface PromotionSelect {
   id: string
@@ -26,6 +27,9 @@ interface Props {
 const PromotionForm = ({ setListPromotionApply, setTotalPercentage }: Props) => {
   const [form] = Form.useForm()
   const [appliedPromotions, setAppliedPromotions] = useState<PromotionSelect[]>([])
+  const { can } = useAuthorization()
+  const canViewInvoices = can(AppAbility.INVOICES_VIEW)
+  const canManageInvoices = can(AppAbility.INVOICES_MANAGE)
 
   const { data } = useQuery({
     queryKey: ["listPromotion"],
@@ -34,6 +38,7 @@ const PromotionForm = ({ setListPromotionApply, setTotalPercentage }: Props) => 
       setTimeout(() => controller.abort(), 10000)
       return promotionAPI.getPromotionAll()
     },
+    enabled: canViewInvoices,
     retry: 0,
     staleTime: 3 * 60 * 1000,
     placeholderData: keepPreviousData
@@ -42,6 +47,10 @@ const PromotionForm = ({ setListPromotionApply, setTotalPercentage }: Props) => 
   const listPromotionSelect = (data?.data.data || []) as PromotionSelect[]
 
   const applyPromotion = (values: any) => {
+    if (!canManageInvoices) {
+      message.warning("Bạn không có quyền áp dụng khuyến mãi!")
+      return
+    }
     const selectedPromotionId = values.promotion
     if (!selectedPromotionId) {
       message.warning("Vui lòng chọn khuyến mãi!")
@@ -75,6 +84,10 @@ const PromotionForm = ({ setListPromotionApply, setTotalPercentage }: Props) => 
   }
 
   const removePromotion = (promotionId: string) => {
+    if (!canManageInvoices) {
+      message.warning("Bạn không có quyền xóa khuyến mãi!")
+      return
+    }
     setAppliedPromotions((prev) => prev.filter((p) => p.id !== promotionId))
 
     setListPromotionApply((prev) =>
@@ -88,11 +101,15 @@ const PromotionForm = ({ setListPromotionApply, setTotalPercentage }: Props) => 
     message.success("Đã xóa khuyến mãi")
   }
 
+  if (!canViewInvoices) {
+    return null
+  }
+
   return (
     <div className="mt-2">
       <Form form={form} layout="inline" onFinish={applyPromotion}>
         <Form.Item name="promotion" style={{ flex: 1 }}>
-          <Select placeholder="Áp dụng khuyến mãi" style={{ minWidth: 200 }}>
+          <Select placeholder="Áp dụng khuyến mãi" style={{ minWidth: 200 }} disabled={!canManageInvoices}>
             {listPromotionSelect.map((p) => (
               <Select.Option key={p.id} value={p.id}>
                 {p.name} - {p.discountValue}%
@@ -101,7 +118,7 @@ const PromotionForm = ({ setListPromotionApply, setTotalPercentage }: Props) => 
           </Select>
         </Form.Item>
         <Form.Item>
-          <Button type="primary" htmlType="submit">
+          <Button type="primary" htmlType="submit" disabled={!canManageInvoices}>
             Apply
           </Button>
         </Form.Item>
@@ -110,7 +127,12 @@ const PromotionForm = ({ setListPromotionApply, setTotalPercentage }: Props) => 
       {/* Hiển thị danh sách khuyến mãi đã áp dụng */}
       <div style={{ marginTop: 8 }}>
         {appliedPromotions.map((p) => (
-          <Tag key={p.id} closable onClose={() => removePromotion(p.id)} style={{ marginBottom: 4 }}>
+          <Tag
+            key={p.id}
+            closable={canManageInvoices}
+            onClose={() => removePromotion(p.id)}
+            style={{ marginBottom: 4 }}
+          >
             {p.name} ({p.discountValue}%)
           </Tag>
         ))}

@@ -17,7 +17,8 @@ import {
   Spin,
   Table,
   Tag,
-  Typography
+  Typography,
+  Alert
 } from "antd"
 import { Fragment, useEffect, useMemo, useState } from "react"
 import { Helmet } from "react-helmet-async"
@@ -48,6 +49,7 @@ import { useAppStore } from "src/StateGlobal/zustand"
 import { useRealtimeQuery } from "src/Hook/useRealtimeQuery"
 import type { Invoice } from "src/Types/invoicePayment.type"
 import PendingTableSessionSelector from "../../Components/PendingTableSessionSelector"
+import { AppAbility, useAuthorization } from "src/Authorization"
 
 const { Search } = Input
 const { Title } = Typography
@@ -179,6 +181,11 @@ type TableSessionOrderMerged = TableSessionOrder & { items: TableSessionOrder["i
 export default function TableDetail() {
   const { employeeId, role } = useAppStore()
   const queryClient = useQueryClient()
+  const { can } = useAuthorization()
+  const canViewTables = can(AppAbility.TABLES_VIEW)
+  const canManageTables = can(AppAbility.TABLES_MANAGE)
+  const canViewInvoices = can(AppAbility.INVOICES_VIEW)
+  const canManageInvoices = can(AppAbility.INVOICES_MANAGE)
 
   const { state } = useLocation()
   const dataTable = state?.dataTable
@@ -240,7 +247,7 @@ export default function TableDetail() {
       return tableSessionAPI.getDetailTableSessionByIdTable(idDiningTable)
     },
     {
-      enabled: Boolean(idDiningTable)
+      enabled: Boolean(idDiningTable) && canViewTables
     }
   )
 
@@ -261,7 +268,7 @@ export default function TableDetail() {
       return tableSessionAPI.getDetailTableSessionOrderByIdTable(dataTableSessionDetail?.session_id)
     },
     {
-      enabled: Boolean(dataTableSessionDetail)
+      enabled: Boolean(dataTableSessionDetail) && canViewTables
     }
   )
 
@@ -307,7 +314,7 @@ export default function TableDetail() {
       return tableSessionAPI.getListPendingTableSessionByIdTable(idDiningTable)
     },
     {
-      enabled: hasCurrentSession === false
+      enabled: hasCurrentSession === false && canViewTables
     }
   )
 
@@ -331,13 +338,13 @@ export default function TableDetail() {
       )
     },
     {
-      enabled: Boolean(idDiningTable) && Boolean(dataTableSessionDetail?.session_id)
+      enabled: Boolean(idDiningTable) && Boolean(dataTableSessionDetail?.session_id) && canViewInvoices
     }
   )
 
-  const invoiceList = dataListInvoices?.data?.data?.data || []
+  const invoiceList = canViewInvoices ? dataListInvoices?.data?.data?.data || [] : []
   const detailInvoice = invoiceList[0] || null // For backward compatibility
-  const isInitialInvoiceLoading = isLoadingInvoices && invoiceList.length === 0
+  const isInitialInvoiceLoading = canViewInvoices && isLoadingInvoices && invoiceList.length === 0
 
   // ✅ Calculate overall payment status across all invoices
   const paymentStatus = useMemo(() => {
@@ -420,6 +427,7 @@ export default function TableDetail() {
     type: keyof { status: number; quantity: number; notes: string },
     newValueChange: number | string
   ) => {
+    if (!canManageTables) return
     setUpdateOrderItemList((prev) => ({
       ...prev,
       [orderItemId]: {
@@ -474,6 +482,12 @@ export default function TableDetail() {
   })
 
   const handleUpdateOrderItemList = () => {
+    if (!canManageTables) {
+      toast.warn("Bạn không có quyền cập nhật order.", {
+        autoClose: 1500
+      })
+      return
+    }
     if (detailInvoice) {
       updateListOrderItemMutation.mutate(
         {
@@ -511,7 +525,7 @@ export default function TableDetail() {
   } = useQuery({
     queryKey: ["ListDishInMenuActive", dataTableSessionDetail?.session_id],
     queryFn: () => menusAPI.getMenuItemFromMenuActive(),
-    enabled: isModalOpen
+    enabled: isModalOpen && canManageTables
   })
 
   const listDishMenuInActive = listDishMenuInActiveData?.data?.data?.items
@@ -525,6 +539,7 @@ export default function TableDetail() {
           <Checkbox
             checked={listOrderAdd.some((item) => item.dish_id === record.dish_id)}
             onChange={(e) => handleChangeCheckOrder(record, e.target.checked)}
+            disabled={!canManageTables}
           />
         </div>
       )
@@ -606,6 +621,7 @@ export default function TableDetail() {
             newList[index].total_price = value * newList[index].price
             setListOrderAdd(newList)
           }}
+          disabled={!canManageTables}
         />
       )
     },
@@ -636,6 +652,7 @@ export default function TableDetail() {
             newList[index].notes = value
             setListOrderAdd(newList)
           }}
+          disabled={!canManageTables}
         />
       )
     }
@@ -654,6 +671,7 @@ export default function TableDetail() {
   >([])
 
   const handleChangeCheckOrder = (record: any, checked: any) => {
+    if (!canManageTables) return
     if (checked === true) {
       setListOrderAdd((prev) => [
         ...prev,
@@ -704,6 +722,12 @@ export default function TableDetail() {
   })
 
   const handleAddOrderItemList = () => {
+    if (!canManageTables) {
+      toast.warn("Bạn không có quyền cập nhật order.", {
+        autoClose: 1500
+      })
+      return
+    }
     if (dataTableSessionOrder?.order_id) {
       if (detailInvoice) {
         addListOrderItemMutation.mutate(
@@ -761,6 +785,7 @@ export default function TableDetail() {
   // ✅ Auto-check and complete session when all invoices are paid
   useEffect(() => {
     if (
+      canManageTables &&
       paymentStatus.allPaid &&
       dataTableSessionDetail?.session_status === 1 && // Only if session is "Đang phục vụ"
       !completeTableSessionMutation.isPending
@@ -768,7 +793,12 @@ export default function TableDetail() {
       // All invoices paid, complete the session
       completeTableSessionMutation.mutate(dataTableSessionDetail.session_id)
     }
-  }, [paymentStatus.allPaid, dataTableSessionDetail?.session_status, dataTableSessionDetail?.session_id])
+  }, [
+    canManageTables,
+    paymentStatus.allPaid,
+    dataTableSessionDetail?.session_status,
+    dataTableSessionDetail?.session_id
+  ])
 
   const createTableSessionMutation = useMutation({
     mutationFn: ({ employee_id, dining_table_id }: { employee_id: string; dining_table_id: string }) =>
@@ -791,10 +821,32 @@ export default function TableDetail() {
   })
 
   const handleCreateTableSession = async () => {
+    if (!canManageTables) {
+      toast.warn("Bạn không có quyền tạo phiên bàn.", {
+        autoClose: 1500
+      })
+      return
+    }
     createTableSessionMutation.mutate({
       employee_id: employeeId as string,
       dining_table_id: idDiningTable as string
     })
+  }
+
+  if (!canViewTables) {
+    return (
+      <div className="p-6">
+        <Helmet>
+          <title>Chi tiết bàn</title>
+        </Helmet>
+        <Alert
+          message="Bạn không có quyền xem chi tiết bàn"
+          description="Vui lòng liên hệ quản trị viên để được cấp quyền phù hợp."
+          type="warning"
+          showIcon
+        />
+      </div>
+    )
   }
 
   return (
@@ -829,8 +881,15 @@ export default function TableDetail() {
                 className="py-4 shadow-md"
                 type="default"
                 icon={<Split />}
-                onClick={() => setShowSplitTableModal(true)}
+                onClick={() => {
+                  if (!canManageTables) {
+                    toast.warn("Bạn không có quyền tách bàn.", { autoClose: 1500 })
+                    return
+                  }
+                  setShowSplitTableModal(true)
+                }}
                 disabled={
+                  !canManageTables ||
                   !dataTableSessionOrder?.items ||
                   dataTableSessionOrder.items.length < 2 ||
                   paymentStatus.allPaid || // ✅ Disable khi tất cả hóa đơn đã thanh toán
@@ -844,67 +903,71 @@ export default function TableDetail() {
               >
                 Tách bàn
               </Button>
-              <Button
-                className="py-4 shadow-md"
-                type="primary"
-                icon={<HandCoins />}
-                onClick={() => {
-                  // ✅ Check if there are items ordered
-                  if (!dataTableSessionOrder?.items || dataTableSessionOrder.items.length === 0) {
-                    toast.error("Vui lòng order món trước khi tạo hóa đơn", {
-                      autoClose: 1500
-                    })
-                    return
-                  }
-                  // ✅ NEW LOGIC: Check if invoices exist
-                  if (invoiceList.length === 0) {
-                    // No invoices → Open CreateInvoiceModal
-                    setShowCreateInvoiceModal(true)
-                  } else {
-                    // Has invoices → Check payment status
-                    if (paymentStatus.allPaid) {
-                      toast.success("Tất cả hóa đơn đã được thanh toán đầy đủ!", {
+              {canViewInvoices && (
+                <Button
+                  className="py-4 shadow-md"
+                  type="primary"
+                  icon={<HandCoins />}
+                  onClick={() => {
+                    if (!canManageInvoices) {
+                      toast.warn("Bạn không có quyền quản lý hóa đơn.", { autoClose: 1500 })
+                      return
+                    }
+                    if (!dataTableSessionOrder?.items || dataTableSessionOrder.items.length === 0) {
+                      toast.error("Vui lòng order món trước khi tạo hóa đơn", {
                         autoClose: 1500
                       })
                       return
                     }
+                    if (invoiceList.length === 0) {
+                      setShowCreateInvoiceModal(true)
+                    } else {
+                      if (paymentStatus.allPaid) {
+                        toast.success("Tất cả hóa đơn đã được thanh toán đầy đủ!", {
+                          autoClose: 1500
+                        })
+                        return
+                      }
 
-                    // Find first unpaid or partial paid invoice
-                    const unpaidInvoice = invoiceList.find((inv) => inv.status !== 2)
-                    if (unpaidInvoice) {
-                      setSelectedInvoiceForDetail(unpaidInvoice)
-                      setShowInvoiceDetailModal(true)
+                      const unpaidInvoice = invoiceList.find((inv) => inv.status !== 2)
+                      if (unpaidInvoice) {
+                        setSelectedInvoiceForDetail(unpaidInvoice)
+                        setShowInvoiceDetailModal(true)
+                      }
                     }
+                  }}
+                  disabled={
+                    !canManageInvoices || (paymentStatus.allPaid && invoiceList.length > 0)
                   }
-                }}
-                disabled={paymentStatus.allPaid && invoiceList.length > 0} // Disable only when all paid
-                style={{
-                  backgroundColor: paymentStatus.allPaid && invoiceList.length > 0 ? "#95de64" : "#f56a00",
-                  borderColor: paymentStatus.allPaid && invoiceList.length > 0 ? "#95de64" : "#f56a00",
-                  width: "100%",
-                  transition: "background-color 0.2s ease, border-color 0.2s ease"
-                }}
-                onMouseEnter={(e) => {
-                  if (!paymentStatus.allPaid || invoiceList.length === 0) {
-                    e.currentTarget.style.backgroundColor = "#ff7a45"
-                    e.currentTarget.style.borderColor = "#ff7a45"
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (!paymentStatus.allPaid || invoiceList.length === 0) {
-                    e.currentTarget.style.backgroundColor = "#f56a00"
-                    e.currentTarget.style.borderColor = "#f56a00"
-                  }
-                }}
-              >
-                {invoiceList.length === 0
-                  ? "Tạo hóa đơn"
-                  : paymentStatus.allPaid
-                    ? "✓ Đã thanh toán"
-                    : paymentStatus.hasPendingPayments
-                      ? `Thanh toán (${paymentStatus.unpaidCount + paymentStatus.partialPaidCount}/${paymentStatus.totalInvoices} HĐ)`
-                      : "Thanh toán"}
-              </Button>
+                  style={{
+                    backgroundColor:
+                      paymentStatus.allPaid && invoiceList.length > 0 ? "#95de64" : "#f56a00",
+                    borderColor: paymentStatus.allPaid && invoiceList.length > 0 ? "#95de64" : "#f56a00",
+                    width: "100%",
+                    transition: "background-color 0.2s ease, border-color 0.2s ease"
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!paymentStatus.allPaid || invoiceList.length === 0) {
+                      e.currentTarget.style.backgroundColor = "#ff7a45"
+                      e.currentTarget.style.borderColor = "#ff7a45"
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!paymentStatus.allPaid || invoiceList.length === 0) {
+                      e.currentTarget.style.backgroundColor = "#f56a00"
+                      e.currentTarget.style.borderColor = "#f56a00"
+                    }
+                  }}
+                >
+                  {invoiceList.length === 0
+                    ? "Tạo hóa đơn"
+                    : paymentStatus.allPaid
+                      ? "✓ Đã thanh toán"
+                      : paymentStatus.hasPendingPayments
+                        ? `Thanh toán (${paymentStatus.unpaidCount + paymentStatus.partialPaidCount}/${paymentStatus.totalInvoices} HĐ)`
+                        : "Thanh toán"}
+                </Button>
+              )}
             </>
           )}
           {hasCurrentSession === false && (
@@ -925,6 +988,7 @@ export default function TableDetail() {
                 e.currentTarget.style.backgroundColor = "#f56a00"
                 e.currentTarget.style.borderColor = "#f56a00"
               }}
+              disabled={!canManageTables}
               onClick={handleCreateTableSession}
             >
               Tạo phiên bàn mới (Offline)
@@ -1154,7 +1218,7 @@ export default function TableDetail() {
                                         onChange={(newValueChange) =>
                                           handleChangeItem(record.order_item_id, "quantity", newValueChange || 0)
                                         }
-                                        disabled={record.item_status !== 0}
+                                        disabled={!canManageTables || record.item_status !== 0}
                                       />
                                     )
                                   }
@@ -1185,6 +1249,7 @@ export default function TableDetail() {
                                         handleChangeItem(record.order_item_id, "status", newValueChange)
                                       }
                                       options={getStatusOptionsForRecord(record.item_status)}
+                                    disabled={!canManageTables}
                                     />
                                   ),
                                   align: "center"
@@ -1203,6 +1268,7 @@ export default function TableDetail() {
                                         const newValueChange = e.target.value || ""
                                         handleChangeItem(record.order_item_id, "notes", newValueChange)
                                       }}
+                                    disabled={!canManageTables}
                                     />
                                   )
                                 },
@@ -1230,7 +1296,14 @@ export default function TableDetail() {
                                 className="mt-2 py-4 bg-lime-600 hover:!bg-lime-700"
                                 type="primary"
                                 icon={<ChefHat />}
-                                onClick={() => setIsModalOpen(true)}
+                                onClick={() => {
+                              if (!canManageTables) {
+                                toast.warn("Bạn không có quyền thêm order.", { autoClose: 1500 })
+                                return
+                              }
+                              setIsModalOpen(true)
+                            }}
+                            disabled={!canManageTables}
                               >
                                 Thêm Order
                               </Button>
@@ -1239,6 +1312,7 @@ export default function TableDetail() {
                                 type="primary"
                                 icon={<CookingPot />}
                                 onClick={handleUpdateOrderItemList}
+                            disabled={!canManageTables}
                               >
                                 Cập nhật order
                               </Button>
@@ -1248,6 +1322,7 @@ export default function TableDetail() {
                       )}
                     </Panel>
 
+                  {canViewInvoices && (
                     <Panel
                       key="invoiceInfo"
                       header={<h2 className="text-lg font-semibold text-gray-700">Hóa đơn ({invoiceList.length})</h2>}
@@ -1258,7 +1333,10 @@ export default function TableDetail() {
                             <Spin tip="Đang tải hóa đơn..." />
                           </div>
                         ) : (
-                          <Spin spinning={isFetchingInvoices && !isInitialInvoiceLoading} tip="Đang đồng bộ hóa đơn...">
+                          <Spin
+                            spinning={isFetchingInvoices && !isInitialInvoiceLoading}
+                            tip="Đang đồng bộ hóa đơn..."
+                          >
                             <InvoiceListSummary
                               invoices={invoiceList}
                               tableSessionId={dataTableSessionDetail?.session_id}
@@ -1271,29 +1349,32 @@ export default function TableDetail() {
                         )}
                       </div>
                     </Panel>
+                  )}
                   </Collapse>
 
                   {/* Invoice Detail Modal */}
-                  <InvoiceDetailModal
-                    open={showInvoiceDetailModal}
-                    onClose={() => {
-                      setShowInvoiceDetailModal(false)
-                      setSelectedInvoiceForDetail(null)
-                    }}
-                    invoiceId={selectedInvoiceForDetail?.id || null}
-                    tableSessionId={dataTableSessionDetail?.session_id || ""}
-                    idDiningTable={idDiningTable}
-                    onSplitInvoice={(invoice) => {
-                      setSelectedInvoiceForDetail(invoice as any)
-                      setShowSplitInvoiceModal(true)
-                    }}
-                    onPaymentSuccess={() => {
-                      queryClient.invalidateQueries({ queryKey: ["detailTableSession", idDiningTable] })
-                      queryClient.invalidateQueries({
-                        queryKey: ["listInvoicesForTableSession", dataTableSessionDetail?.session_id]
-                      })
-                    }}
-                  />
+                  {canViewInvoices && (
+                    <InvoiceDetailModal
+                        open={showInvoiceDetailModal}
+                        onClose={() => {
+                          setShowInvoiceDetailModal(false)
+                          setSelectedInvoiceForDetail(null)
+                        }}
+                        invoiceId={selectedInvoiceForDetail?.id || null}
+                        tableSessionId={dataTableSessionDetail?.session_id || ""}
+                        idDiningTable={idDiningTable}
+                        onSplitInvoice={(invoice) => {
+                          setSelectedInvoiceForDetail(invoice as any)
+                          setShowSplitInvoiceModal(true)
+                        }}
+                        onPaymentSuccess={() => {
+                          queryClient.invalidateQueries({ queryKey: ["detailTableSession", idDiningTable] })
+                          queryClient.invalidateQueries({
+                            queryKey: ["listInvoicesForTableSession", dataTableSessionDetail?.session_id]
+                          })
+                        }}
+                    />
+                  )}
                 </div>
               </Spin>
             )
@@ -1390,6 +1471,7 @@ export default function TableDetail() {
                   htmlType="submit"
                   loading={addListOrderItemMutation.isPending}
                   onClick={handleAddOrderItemList}
+                  disabled={!canManageTables}
                 >
                   Thêm order
                 </Button>
@@ -1411,7 +1493,7 @@ export default function TableDetail() {
         />
 
         {/* Modal tách hóa đơn - Will be opened from InvoiceDetailModal */}
-        {selectedInvoiceForDetail && (
+        {canManageInvoices && selectedInvoiceForDetail && (
           <SplitInvoiceModal
             visible={showSplitInvoiceModal}
             onCancel={() => setShowSplitInvoiceModal(false)}
@@ -1426,13 +1508,15 @@ export default function TableDetail() {
         )}
 
         {/* Modal tạo hóa đơn mới */}
-        <CreateInvoiceModal
-          open={showCreateInvoiceModal}
-          onClose={() => setShowCreateInvoiceModal(false)}
-          totalAmount={Number(dataTableSessionOrder?.total_amount || 0)}
-          tableSessionId={dataTableSessionDetail?.session_id || ""}
-          idDiningTable={idDiningTable}
-        />
+        {canManageInvoices && (
+          <CreateInvoiceModal
+            open={showCreateInvoiceModal}
+            onClose={() => setShowCreateInvoiceModal(false)}
+            totalAmount={Number(dataTableSessionOrder?.total_amount || 0)}
+            tableSessionId={dataTableSessionDetail?.session_id || ""}
+            idDiningTable={idDiningTable}
+          />
+        )}
       </Row>
     </div>
   )

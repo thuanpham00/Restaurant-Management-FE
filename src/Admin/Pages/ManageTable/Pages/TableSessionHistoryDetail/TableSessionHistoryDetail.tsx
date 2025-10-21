@@ -18,7 +18,8 @@ import {
   Divider,
   Form,
   Space,
-  Badge
+  Badge,
+  Alert
 } from "antd"
 import { ColumnsType } from "antd/es/table"
 import { useLocation } from "react-router-dom"
@@ -35,12 +36,18 @@ import { toast } from "react-toastify"
 import PromotionForm from "../../Components/PromotionForm"
 import PaymentDetailModal from "../../Components/PaymentDetailModal"
 import { invoicePaymentAPI } from "src/Apis/Admin/invoicePayment.api"
+import { AppAbility, useAuthorization } from "src/Authorization"
 
 const { Search } = Input
 const { Title } = Typography
 
 export default function TableSessionHistoryDetail() {
   const queryClient = useQueryClient()
+  const { can } = useAuthorization()
+  const canViewTables = can(AppAbility.TABLES_VIEW)
+  const canManageTables = can(AppAbility.TABLES_MANAGE)
+  const canViewInvoices = can(AppAbility.INVOICES_VIEW)
+  const canManageInvoices = can(AppAbility.INVOICES_MANAGE)
   const { state } = useLocation()
   const idDiningTable = state?.idDiningTable
   const idTableSession = state?.idTableSession
@@ -63,7 +70,7 @@ export default function TableSessionHistoryDetail() {
       return tableSessionAPI.getHistoryTableSessionDetailByIdTableAndIdTableSession(idDiningTable, idTableSession)
     },
     retry: 0,
-    enabled: Boolean(idDiningTable) && Boolean(idTableSession)
+    enabled: Boolean(idDiningTable) && Boolean(idTableSession) && canViewTables
   })
 
   const dataHistoryTableSessionDetail = data?.data?.data as HistoryTableSessionDetail
@@ -76,7 +83,7 @@ export default function TableSessionHistoryDetail() {
       return invoicePaymentAPI.getDetailInvoiceFromIdTableSession(idTableSession)
     },
     retry: 0,
-    enabled: Boolean(idDiningTable) && Boolean(idTableSession)
+    enabled: Boolean(idDiningTable) && Boolean(idTableSession) && canViewInvoices
   })
 
   const detailInvoice = dataDetailInvoice?.data.data
@@ -160,8 +167,12 @@ export default function TableSessionHistoryDetail() {
           <Button
             type="primary"
             danger
-            disabled={detailInvoice !== undefined}
+            disabled={!canManageTables || detailInvoice !== undefined}
             onClick={() => {
+              if (!canManageTables) {
+                toast.warn("Bạn không có quyền quản lý order.", { autoClose: 1500 })
+                return
+              }
               deleteMenuMutation.mutate({
                 idOrderItem: item.order_item_id,
                 idOrder: dataHistoryTableSessionDetail.orders[0].order_id
@@ -178,7 +189,7 @@ export default function TableSessionHistoryDetail() {
   const { data: listDishMenuInActiveData, isLoading: isLoadingDishes } = useQuery({
     queryKey: ["ListDishInMenuActive", idTableSession],
     queryFn: () => menusAPI.getMenuItemFromMenuActive(),
-    enabled: isModalOpen
+    enabled: isModalOpen && canManageTables
   })
 
   const listDishMenuInActive = listDishMenuInActiveData?.data?.data?.items
@@ -205,6 +216,7 @@ export default function TableSessionHistoryDetail() {
   >([])
 
   const handleChangeCheckOrder = (record: any, checked: any) => {
+    if (!canManageTables) return
     if (checked === true) {
       setListOrderAdd((prev) => [
         ...prev,
@@ -232,6 +244,7 @@ export default function TableSessionHistoryDetail() {
           <Checkbox
             checked={listOrderAdd.some((item) => item.dish_id === record.dish_id)}
             onChange={(e) => handleChangeCheckOrder(record, e.target.checked)}
+            disabled={!canManageTables}
           />
         </div>
       )
@@ -304,6 +317,7 @@ export default function TableSessionHistoryDetail() {
             newList[index].total_price = value * newList[index].price
             setListOrderAdd(newList)
           }}
+          disabled={!canManageTables}
         />
       )
     },
@@ -334,6 +348,7 @@ export default function TableSessionHistoryDetail() {
             newList[index].notes = value
             setListOrderAdd(newList)
           }}
+          disabled={!canManageTables}
         />
       )
     }
@@ -370,6 +385,12 @@ export default function TableSessionHistoryDetail() {
   })
 
   const handleAddOrderItemList = () => {
+    if (!canManageTables) {
+      toast.warn("Bạn không có quyền cập nhật order.", {
+        autoClose: 1500
+      })
+      return
+    }
     addListOrderItemMutation.mutate({
       items: listOrderAdd,
       order_id: orderId as string
@@ -397,7 +418,7 @@ export default function TableSessionHistoryDetail() {
       return tableSessionAPI.getDetailTableSessionOrderByIdTable(idTableSession)
     },
     retry: 0,
-    enabled: Boolean(showInvoice)
+    enabled: Boolean(showInvoice) && canViewInvoices
   })
 
   const dataTableSessionOrder = dataTableSessionOrderRes?.data?.data[0] as TableSessionOrder
@@ -420,6 +441,22 @@ export default function TableSessionHistoryDetail() {
   const remainingAmount = useMemo(() => {
     return finalAmount - paymentBefore
   }, [finalAmount, paymentBefore])
+
+  if (!canViewTables) {
+    return (
+      <div className="p-6">
+        <Helmet>
+          <title>Lịch sử chi tiết phiên bàn</title>
+        </Helmet>
+        <Alert
+          message="Bạn không có quyền xem lịch sử phiên bàn"
+          description="Vui lòng liên hệ quản trị viên để được cấp quyền phù hợp."
+          type="warning"
+          showIcon
+        />
+      </div>
+    )
+  }
 
   if (isFetching) return <Spin size="large" className="block mx-auto my-10" />
   if (isError || !dataHistoryTableSessionDetail)
@@ -535,6 +572,18 @@ export default function TableSessionHistoryDetail() {
                   type="primary"
                   icon={<HandCoins />}
                   onClick={() => {
+                    if (!canManageInvoices) {
+                      toast.warn("Bạn không có quyền quản lý hóa đơn.", {
+                        autoClose: 1500
+                      })
+                      return
+                    }
+                    if (!canViewInvoices) {
+                      toast.warn("Bạn không có quyền xem hóa đơn.", {
+                        autoClose: 1500
+                      })
+                      return
+                    }
                     if (order.items.length === 0) {
                       toast.error("Vui lòng order món trước khi đặt cọc", {
                         autoClose: 1500
@@ -543,6 +592,7 @@ export default function TableSessionHistoryDetail() {
                       setShowInvoice(true)
                     }
                   }}
+                  disabled={!canManageInvoices}
                   style={{
                     backgroundColor: "#f56a00", // đỏ cam
                     borderColor: "#f56a00",
@@ -563,7 +613,14 @@ export default function TableSessionHistoryDetail() {
                   className="py-4 bg-lime-600 hover:!bg-lime-700"
                   type="primary"
                   icon={<ChefHat />}
-                  onClick={() => setIsModalOpen(true)}
+                  onClick={() => {
+                    if (!canManageTables) {
+                      toast.warn("Bạn không có quyền thêm order.", { autoClose: 1500 })
+                      return
+                    }
+                    setIsModalOpen(true)
+                  }}
+                  disabled={!canManageTables}
                 >
                   Thêm Order
                 </Button>
@@ -573,7 +630,8 @@ export default function TableSessionHistoryDetail() {
         </Card>
       ))}
 
-      <div className="py-4 px-0 bg-white shadow rounded-lg space-y-6">
+      {canViewInvoices && (
+        <div className="py-4 px-0 bg-white shadow rounded-lg space-y-6">
         {/* 1. Thông tin tổng quan hóa đơn */}
         <div className="flex justify-between items-center bg-blue-50 p-2 border-b border-gray-200">
           <div className="text-lg font-semibold text-blue-700">Hóa đơn: {detailInvoice?.id}</div>
@@ -676,7 +734,8 @@ export default function TableSessionHistoryDetail() {
             }
           />
         </div>
-      </div>
+        </div>
+      )}
 
       <Modal
         title="Thêm order"
@@ -749,6 +808,7 @@ export default function TableSessionHistoryDetail() {
                 htmlType="submit"
                 loading={addListOrderItemMutation.isPending}
                 onClick={handleAddOrderItemList}
+                disabled={!canManageTables}
               >
                 Thêm order
               </Button>
@@ -757,20 +817,21 @@ export default function TableSessionHistoryDetail() {
         )}
       </Modal>
 
-      <Modal
-        title={`Hóa đơn của phiên bàn ${idTableSession}`}
-        open={showInvoice}
-        onCancel={() => setShowInvoice(false)}
-        footer={null}
-        width={1000}
-        style={{ top: 50 }}
-        styles={{
-          body: {
-            height: 500,
-            overflowY: "auto"
-          }
-        }}
-      >
+      {canViewInvoices && (
+        <Modal
+          title={`Hóa đơn của phiên bàn ${idTableSession}`}
+          open={showInvoice}
+          onCancel={() => setShowInvoice(false)}
+          footer={null}
+          width={1000}
+          style={{ top: 50 }}
+          styles={{
+            body: {
+              height: 500,
+              overflowY: "auto"
+            }
+          }}
+        >
         <Card
           title={`Bàn ${dataHistoryTableSessionDetail.table_number}`}
           extra={<Badge status={statusColor[0]} text={statusText[0]} />}
@@ -889,27 +950,40 @@ export default function TableSessionHistoryDetail() {
             </Descriptions>
 
             <Space className="mt-4">
-              <Button type="primary" onClick={() => setShowPaymentModal(true)}>
+              <Button
+                type="primary"
+                onClick={() => {
+                  if (!canManageInvoices) {
+                    toast.warn("Bạn không có quyền quản lý hóa đơn.", { autoClose: 1500 })
+                    return
+                  }
+                  setShowPaymentModal(true)
+                }}
+                disabled={!canManageInvoices}
+              >
                 Tiến hành đặt cọc
               </Button>
             </Space>
           </Form>
         </Card>
-      </Modal>
+        </Modal>
+      )}
 
-      <PaymentDetailModal
-        open={showPaymentModal}
-        onClosePayment={() => setShowPaymentModal(false)}
-        onCloseInvoice={() => setShowInvoice(false)}
-        totalAmount={Number(dataTableSessionOrder?.total_amount) || 0}
-        totalPercentage={totalPercentage}
-        vat={vat}
-        finalAmount={finalAmount}
-        paymentBefore={paymentBefore} // trả trước
-        setPrePaymentValue={setPrePaymentValue} // dùng để check trạng thái đặt cọc 1 lần
-        listPromotionApply={listPromotionApply}
-        table_session_id={idTableSession}
-      />
+      {canViewInvoices && (
+        <PaymentDetailModal
+          open={showPaymentModal}
+          onClosePayment={() => setShowPaymentModal(false)}
+          onCloseInvoice={() => setShowInvoice(false)}
+          totalAmount={Number(dataTableSessionOrder?.total_amount) || 0}
+          totalPercentage={totalPercentage}
+          vat={vat}
+          finalAmount={finalAmount}
+          paymentBefore={paymentBefore} // trả trước
+          setPrePaymentValue={setPrePaymentValue} // dùng để check trạng thái đặt cọc 1 lần
+          listPromotionApply={listPromotionApply}
+          table_session_id={idTableSession}
+        />
+      )}
     </div>
   )
 }

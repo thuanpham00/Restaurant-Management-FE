@@ -10,6 +10,7 @@ import { diningTableAPI } from "src/Apis"
 import { useNavigate } from "react-router-dom"
 import { toast } from "react-toastify"
 import "./HistoryTableSession.css"
+import { AppAbility, useAuthorization } from "src/Authorization"
 
 export default function HistoryTableSession({
   idDiningTable,
@@ -21,6 +22,8 @@ export default function HistoryTableSession({
   const calendarRef = useRef<any>(null)
   const navigate = useNavigate()
   const [viewCalendar, setViewCalendar] = useState(false)
+  const { can } = useAuthorization()
+  const canViewTables = can(AppAbility.TABLES_VIEW)
 
   useEffect(() => {
     if (viewCalendar && calendarRef.current) {
@@ -30,6 +33,13 @@ export default function HistoryTableSession({
     }
   }, [viewCalendar])
 
+  useEffect(() => {
+    if (!canViewTables && viewCalendar) {
+      setViewCalendar(false)
+      toast.warn("Bạn không có quyền xem lịch bàn.", { autoClose: 1500 })
+    }
+  }, [canViewTables, viewCalendar])
+
   const { data } = useQuery({
     queryKey: ["listReservationTableByIdTable", idDiningTable],
     queryFn: () => {
@@ -38,7 +48,7 @@ export default function HistoryTableSession({
       return diningTableAPI.getListReservationAndOfflineTableSessionByIdTable(idDiningTable)
     },
     retry: 0,
-    enabled: Boolean(viewCalendar)
+    enabled: Boolean(viewCalendar) && canViewTables
   })
 
   const listReservationFromTable = data?.data.data
@@ -69,6 +79,10 @@ export default function HistoryTableSession({
   })
 
   const handleEventClick = (info: any) => {
+    if (!canViewTables) {
+      toast.warn("Bạn không có quyền xem chi tiết bàn.", { autoClose: 1500 })
+      return
+    }
     const event = info.event
     if (event.extendedProps.status_table_session === 1) {
       toast.info("Phiên đang phục vụ", { autoClose: 1500 })
@@ -83,6 +97,10 @@ export default function HistoryTableSession({
     }
   }
 
+  if (!canViewTables) {
+    return null
+  }
+
   return (
     <div className="flex gap-2">
       <Button
@@ -92,6 +110,7 @@ export default function HistoryTableSession({
           width: "140px"
         }}
         onClick={() => setViewCalendar(true)}
+        disabled={!canViewTables}
       >
         Lịch đặt bàn
       </Button>
@@ -100,7 +119,7 @@ export default function HistoryTableSession({
         width={1200}
         title={`Lịch đặt bàn ${tableNumber} - ${idDiningTable} | Giờ hoạt động (10:00AM - 0:00PM)`}
         closable={{ "aria-label": "Custom Close Button" }}
-        open={viewCalendar === true}
+        open={viewCalendar === true && canViewTables}
         onCancel={() => setViewCalendar(false)}
         footer={null}
         style={{ top: 30 }}

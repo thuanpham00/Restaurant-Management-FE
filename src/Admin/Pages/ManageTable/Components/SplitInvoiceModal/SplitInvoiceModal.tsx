@@ -1,26 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import {
-  Alert,
-  Card,
-  Col,
-  Descriptions,
-  Divider,
-  Input,
-  InputNumber,
-  Modal,
-  Progress,
-  Row,
-  Slider,
-  Space,
-  Statistic,
-  Tabs,
-  Typography
-} from "antd"
-import { useMemo, useState } from "react"
+import { Alert, Card, Col, Descriptions, Input, Modal, Progress, Row, Slider, Space, Statistic, Typography } from "antd"
+import { useEffect, useMemo, useState } from "react"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { invoicePaymentAPI } from "src/Apis/Admin/invoicePayment.api"
 import { InvoiceDetail } from "src/Types/invoicePayment.type"
-import { Calculator, AlertCircle, Split, ArrowRightCircle, ArrowDown, Plus } from "lucide-react"
+import { Calculator, Split } from "lucide-react"
+import { toast } from "react-toastify"
+import { AppAbility, useAuthorization } from "src/Authorization"
 
 const { Text } = Typography
 
@@ -38,6 +24,16 @@ export const SplitInvoiceModal = ({ visible, onCancel, invoice, employeeId, onSu
   const [splitAmount, setSplitAmount] = useState<number>(0) // ✅ Số tiền muốn tách
   const [inputMode, setInputMode] = useState<"percentage" | "amount">("percentage") // ✅ Chế độ input
   const [note, setNote] = useState<string>("")
+  const { can } = useAuthorization()
+  const canViewInvoices = can(AppAbility.INVOICES_VIEW)
+  const canManageInvoices = can(AppAbility.INVOICES_MANAGE)
+
+  useEffect(() => {
+    if (visible && !canViewInvoices) {
+      toast.warn("Bạn không có quyền xem chi tiết hóa đơn.", { autoClose: 1500 })
+      onCancel()
+    }
+  }, [visible, canViewInvoices, onCancel])
 
   // Tính toán số tiền đã thanh toán và số tiền còn lại
   const financialInfo = useMemo(() => {
@@ -200,6 +196,10 @@ export const SplitInvoiceModal = ({ visible, onCancel, invoice, employeeId, onSu
   })
 
   const handleSplit = () => {
+    if (!canManageInvoices) {
+      toast.warn("Bạn không có quyền tách hóa đơn.", { autoClose: 1500 })
+      return
+    }
     if (!canSplit) return
     splitInvoiceMutation.mutate()
   }
@@ -216,7 +216,7 @@ export const SplitInvoiceModal = ({ visible, onCancel, invoice, employeeId, onSu
     return value.toLocaleString("vi-VN") + " VNĐ"
   }
 
-  if (!invoice) return null
+  if (!invoice || !canViewInvoices) return null
 
   return (
     <Modal
@@ -235,7 +235,7 @@ export const SplitInvoiceModal = ({ visible, onCancel, invoice, employeeId, onSu
       centered // ✅ Center modal vertically
       zIndex={1100} // ✅ Higher z-index để hiển thị đè lên InvoiceDetailModal (default: 1000)
       okButtonProps={{
-        disabled: !canSplit,
+        disabled: !canSplit || !canManageInvoices,
         loading: splitInvoiceMutation.isPending
       }}
       styles={{
@@ -303,6 +303,7 @@ export const SplitInvoiceModal = ({ visible, onCancel, invoice, employeeId, onSu
                   formatter: (value) => `${value}%`
                 }}
                 style={{ marginTop: 16, marginBottom: 24 }}
+                disabled={!canManageInvoices}
               />
             </div>
 
@@ -362,6 +363,7 @@ export const SplitInvoiceModal = ({ visible, onCancel, invoice, employeeId, onSu
                 style={{ marginTop: 8 }}
                 maxLength={200}
                 showCount
+                disabled={!canManageInvoices}
               />
             </div>
           </Space>

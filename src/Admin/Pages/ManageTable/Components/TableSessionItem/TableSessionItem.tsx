@@ -6,6 +6,7 @@ import { assets } from "src/Assets/assets"
 import { path } from "src/Constants/path"
 import { TableSessionStatus, TableSessionType } from "src/Types/product.type"
 import { TableSession } from "src/Types/tableSession.type"
+import { AppAbility, useAuthorization } from "src/Authorization"
 
 export default function TableSessionItem({
   table,
@@ -24,8 +25,13 @@ export default function TableSessionItem({
   mainTableId?: string | number | null
   subTables?: any[]
 }) {
+  const { can } = useAuthorization()
+  const canManageTables = can(AppAbility.TABLES_MANAGE)
+  const canViewTables = can(AppAbility.TABLES_VIEW)
+  const hasSubTables = Array.isArray(subTables) && subTables.length > 0
+
   const handleToggleSelect = () => {
-    if (!table.session_id || !setMergeTableSessionSelected) return
+    if (!table.session_id || !setMergeTableSessionSelected || !canManageTables) return
     setMergeTableSessionSelected((prev) => {
       const exists = (prev as any[]).some((item) => item === table.session_id)
       if (exists) {
@@ -126,7 +132,7 @@ export default function TableSessionItem({
       <div className="absolute inset-0 bg-black/50"></div>
 
       <div className="relative z-10 p-4 text-white">
-        {type_show === "merge_table" && (
+        {type_show === "merge_table" && canManageTables && (
           <Checkbox
             className="absolute top-2 right-2"
             checked={(mergeTableSessionSelected as any[]).some((item) => item === table.session_id)}
@@ -169,8 +175,13 @@ export default function TableSessionItem({
               <strong>Bắt đầu:</strong> {table.started_at}
             </p>
           )}
+          {hasSubTables && (
+            <p>
+              <strong>Bàn gộp:</strong> {subTables?.length}
+            </p>
+          )}
 
-          {type_show === "merge_table" && (
+          {type_show === "merge_table" && canViewTables && (
             <Link
               to={`${path.AdminTables}/${table.dining_table_id}`}
               state={{ tableName: table.table_number, dataTable: table }}
@@ -186,7 +197,7 @@ export default function TableSessionItem({
 
   return (
     <Fragment>
-      {type_show === "merge_table" ? (
+      {type_show === "merge_table" && canManageTables ? (
         <button
           className={`block relative w-full rounded-xl overflow-hidden cursor-pointer transition duration-300 hover:shadow-lg ${mergeTableSessionSelected?.some((item) => item === table.session_id) ? " border-green-500 shadow-[0_0_14px_#22c55e]" : "border-transparent"}`}
           onClick={handleToggleSelect}
@@ -209,13 +220,15 @@ export default function TableSessionItem({
         <div>
           <CardContent />
         </div>
-      ) : (
+      ) : canViewTables ? (
         <Link
           to={`${path.AdminTables}/${table.dining_table_id}`}
           state={{ tableName: table.table_number, dataTable: table }}
         >
           <CardContent />
         </Link>
+      ) : (
+        <CardContent />
       )}
     </Fragment>
   )

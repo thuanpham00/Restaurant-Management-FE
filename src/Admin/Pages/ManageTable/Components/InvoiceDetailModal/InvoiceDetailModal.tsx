@@ -1,6 +1,6 @@
 import { Modal, Space, Button, Descriptions, Tag, Row, Col, Card, Radio, Divider } from 'antd'
 import { FileText, CreditCard, Split } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { isAxiosError } from 'axios'
 import { invoicePaymentAPI } from 'src/Apis/Admin/invoicePayment.api'
@@ -11,6 +11,7 @@ import type {
   InvoicePaymentUpdatePayload,
   InvoicePromotion
 } from '../../../../../Types/invoicePayment.type'
+import { AppAbility, useAuthorization } from 'src/Authorization'
 
 interface InvoiceDetailModalProps {
   open: boolean
@@ -34,12 +35,28 @@ export const InvoiceDetailModal = ({
   const queryClient = useQueryClient()
   const { employeeId } = useAppStore()
   const [paymentMethod, setPaymentMethod] = useState<number | null>(null) // 0 = Cash, 1 = Bank Transfer
+  const { can } = useAuthorization()
+  const canViewInvoices = can(AppAbility.INVOICES_VIEW)
+  const canManageInvoices = can(AppAbility.INVOICES_MANAGE)
+
+  useEffect(() => {
+    if (open && !canViewInvoices) {
+      toast.warn('Bạn không có quyền xem chi tiết hóa đơn.', { autoClose: 1500 })
+      onClose()
+    }
+  }, [open, canViewInvoices, onClose])
+
+  useEffect(() => {
+    if (!canManageInvoices) {
+      setPaymentMethod(null)
+    }
+  }, [canManageInvoices])
 
   // Fetch full invoice detail
   const { data: invoiceDetailData, isLoading } = useQuery({
     queryKey: ['invoiceDetail', invoiceId],
     queryFn: () => invoicePaymentAPI.getDetailInvoice(invoiceId!),
-    enabled: Boolean(invoiceId && open),
+    enabled: Boolean(invoiceId && open && canViewInvoices),
     staleTime: 30000
   })
 
@@ -231,6 +248,10 @@ export const InvoiceDetailModal = ({
 
   // Handle thanh toán
   const handlePayment = () => {
+    if (!canManageInvoices) {
+      toast.warn('Bạn không có quyền thanh toán hóa đơn.', { autoClose: 1500 })
+      return
+    }
     if (paymentMethod === null || !invoiceDetail) return
 
     const payload: InvoicePaymentUpdatePayload = {
@@ -279,6 +300,10 @@ export const InvoiceDetailModal = ({
 
   const statusInfo = invoiceDetail ? getStatusInfo(invoiceDetail.status) : null
 
+  if (!canViewInvoices) {
+    return null
+  }
+
   return (
     <Modal
       title={
@@ -287,7 +312,7 @@ export const InvoiceDetailModal = ({
           <span>Chi tiết hóa đơn #{invoiceId}</span>
         </Space>
       }
-      open={open}
+  open={open && canViewInvoices}
       onCancel={onClose}
       footer={null}
       width={700}
@@ -650,8 +675,12 @@ export const InvoiceDetailModal = ({
                     </div>
                     <Radio.Group 
                       value={paymentMethod} 
-                      onChange={(e) => setPaymentMethod(e.target.value)}
+                      onChange={(e) => {
+                        if (!canManageInvoices) return
+                        setPaymentMethod(e.target.value)
+                      }}
                       style={{ width: '100%' }}
+                      disabled={!canManageInvoices}
                     >
                       <Space direction="vertical" style={{ width: '100%' }}>
                         <Radio value={0} style={{ fontSize: '15px' }}>
@@ -671,7 +700,7 @@ export const InvoiceDetailModal = ({
           {/* Action Buttons */}
           <Space style={{ width: '100%', justifyContent: 'flex-end', marginTop: '16px' }}>
             {/* ✅ Nút tách hóa đơn - Chỉ hiện khi status = 0 hoặc 1 */}
-            {onSplitInvoice && (invoiceDetail.status === 0 || invoiceDetail.status === 1) && (
+            {onSplitInvoice && canManageInvoices && (invoiceDetail.status === 0 || invoiceDetail.status === 1) && (
               <Button
                 size="large"
                 icon={<Split size={18} />}
@@ -697,16 +726,20 @@ export const InvoiceDetailModal = ({
                 size="large"
                 icon={<CreditCard size={18} />}
                 onClick={handlePayment}
-                disabled={paymentMethod === null}
+                disabled={paymentMethod === null || !canManageInvoices}
                 loading={paymentMutation.isPending}
                 style={{
-                  backgroundColor: paymentMethod !== null ? '#52c41a' : undefined,
-                  borderColor: paymentMethod !== null ? '#52c41a' : undefined,
+                  backgroundColor:
+                    paymentMethod !== null && canManageInvoices ? '#52c41a' : undefined,
+                  borderColor:
+                    paymentMethod !== null && canManageInvoices ? '#52c41a' : undefined,
                   height: '44px',
                   fontSize: '15px'
                 }}
               >
-                {paymentMethod === null
+                {!canManageInvoices
+                  ? 'Bạn không có quyền thanh toán'
+                  : paymentMethod === null
                   ? 'Chọn phương thức thanh toán'
                   : `Thanh toán ${formatCurrency(financialInfo.remaining)}`}
               </Button>

@@ -4,7 +4,7 @@ import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tansta
 import { Button, Empty, Form, Input, Modal, Select, Space, Spin, Table, Tag } from "antd"
 import type { ColumnsType } from "antd/es/table"
 import dayjs from "dayjs"
-import { useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
 import { Calendar, dayjsLocalizer } from "react-big-calendar"
 import "react-big-calendar/lib/css/react-big-calendar.css"
 import { toast } from "react-toastify"
@@ -14,6 +14,7 @@ import { EmployeeShift, SHIFT_STATUS, SHIFT_STATUS_COLORS, SHIFT_STATUS_LABELS, 
 import { PaginatedResponse } from "src/Types/utils.type"
 import { CalendarDays, Clock, Edit, Plus, Trash2, Users } from "lucide-react"
 import "./ManageShift.css"
+import { AppAbility, useAuthorization } from "src/Authorization"
 
 const localizer = dayjsLocalizer(dayjs)
 
@@ -84,6 +85,20 @@ const statusSelectOptions = Object.entries(SHIFT_STATUS_LABELS).map(([key, label
 
 export default function ShiftCalendarView() {
   const queryClient = useQueryClient()
+  const { can } = useAuthorization()
+  const canViewShifts = can(AppAbility.SHIFTS_VIEW)
+  const canManageShifts = can(AppAbility.SHIFTS_MANAGE)
+  const canViewEmployees = can(AppAbility.EMPLOYEES_VIEW)
+
+  const ensureManagePermission = useCallback(() => {
+    if (canManageShifts) return true
+    toast.warning("Bạn không có quyền quản lý phân công ca làm việc!", { autoClose: 2000 })
+    return false
+  }, [canManageShifts])
+  
+  if (!canViewShifts) {
+    return null
+  }
 
   const [selectedMonth, setSelectedMonth] = useState(dayjs())
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false)
@@ -130,19 +145,20 @@ export default function ShiftCalendarView() {
 
       return shiftsAPI.getList(params, controller.signal)
     },
+    enabled: canViewShifts,
     staleTime: 3 * 60 * 1000,
     placeholderData: keepPreviousData
   })
 
   const { data: shiftDetailResponse, isFetching: isFetchingShiftDetail } = useQuery({
     queryKey: ["shift-detail", selectedShiftId],
-    enabled: isDetailModalOpen && Boolean(selectedShiftId),
+    enabled: isDetailModalOpen && Boolean(selectedShiftId) && canViewShifts,
     queryFn: () => shiftsAPI.getDetail(selectedShiftId as string)
   })
 
   const { data: assignmentsResponse, isFetching: isFetchingAssignments } = useQuery({
     queryKey: ["shift-assignments", selectedShiftId],
-    enabled: isDetailModalOpen && Boolean(selectedShiftId),
+    enabled: isDetailModalOpen && Boolean(selectedShiftId) && canViewShifts,
     queryFn: () => {
       const controller = new AbortController()
       return employeeShiftsAPI.getList({ per_page: "999", shift_id: selectedShiftId as string }, controller.signal)
@@ -151,7 +167,7 @@ export default function ShiftCalendarView() {
 
   const { data: employeesResponse, isFetching: isFetchingEmployees } = useQuery({
     queryKey: ["employees-active"],
-    enabled: isDetailModalOpen,
+    enabled: isDetailModalOpen && canViewEmployees,
     queryFn: () => {
       const controller = new AbortController()
       return employeesAPI.getList({ per_page: "999", is_active: "1" }, controller.signal)
@@ -160,13 +176,13 @@ export default function ShiftCalendarView() {
   })
 
   const shiftPaginated = shiftsResponse?.data?.data as PaginatedResponse<Shift> | undefined
-  const shifts = shiftPaginated?.data || []
+  const shifts = canViewShifts ? shiftPaginated?.data || [] : []
   const events = useMemo(() => convertToCalendarEvents(shifts), [shifts])
 
   const shiftDetail = shiftDetailResponse?.data?.data as Shift | undefined
   const assignmentsPaginated = assignmentsResponse?.data?.data as PaginatedResponse<EmployeeShift> | undefined
   const assignments = assignmentsPaginated?.data || []
-  const employees: EmployeeOption[] = (employeesResponse?.data?.data as any)?.data || []
+  const employees: EmployeeOption[] = canViewEmployees ? ((employeesResponse?.data?.data as any)?.data || []) : []
 
   const availableEmployees = useMemo(() => {
     const assignedIds = new Set(assignments.map((assignment) => assignment.employee_id))
@@ -196,6 +212,20 @@ export default function ShiftCalendarView() {
     queryClient.invalidateQueries({ queryKey: ["shifts-with-assignments"], exact: false })
     queryClient.invalidateQueries({ queryKey: ["employee-shifts-stats"], exact: false })
   }
+
+  useEffect(() => {
+    if (!canManageShifts || !canViewEmployees) {
+      if (isAssignModalOpen) {
+        setIsAssignModalOpen(false)
+        assignForm.resetFields()
+      }
+      if (isUpdateModalOpen) {
+        setIsUpdateModalOpen(false)
+        updateForm.resetFields()
+        setSelectedAssignment(null)
+      }
+    }
+  }, [canManageShifts, canViewEmployees, isAssignModalOpen, isUpdateModalOpen, assignForm, updateForm])
 
   const bulkAssignMutation = useMutation({
     mutationFn: async (values: AssignFormValues) => {
@@ -258,13 +288,24 @@ export default function ShiftCalendarView() {
   }
 
   const handleOpenAssignModal = () => {
+    if (!ensureManagePermission()) return
+    if (!canViewEmployees) {
+      toast.warning("Bạn không có quyền xem danh sách nhân viên", { autoClose: 2000 })
+      return
+    }
     assignForm.resetFields()
     assignForm.setFieldsValue({ status: SHIFT_STATUS.SCHEDULED })
     setIsAssignModalOpen(true)
   }
 
   const handleSubmitAssign = () => {
+    if (!ensureManagePermission()) return
+    if (!canViewEmployees) {
+      toast.warning("Bạn không có quyền xem danh sách nhân viên", { autoClose: 2000 })
+      return
+    }
     assignForm.validateFields().then((values) => {
+      if (!ensureManagePermission()) return
       if (!selectedShiftId) {
         toast.error("Không tìm thấy ca làm việc", { autoClose: 2000 })
         return
@@ -278,6 +319,7 @@ export default function ShiftCalendarView() {
   }
 
   const handleOpenUpdateModal = (record: EmployeeShift) => {
+    if (!ensureManagePermission()) return
     setSelectedAssignment(record)
     updateForm.setFieldsValue({
       status: record.status,
@@ -287,7 +329,9 @@ export default function ShiftCalendarView() {
   }
 
   const handleSubmitUpdate = () => {
+    if (!ensureManagePermission()) return
     updateForm.validateFields().then((values) => {
+      if (!ensureManagePermission()) return
       if (!selectedAssignment) {
         toast.error("Không tìm thấy phân công", { autoClose: 2000 })
         return
@@ -297,13 +341,17 @@ export default function ShiftCalendarView() {
   }
 
   const handleDeleteAssignment = (record: EmployeeShift) => {
+    if (!ensureManagePermission()) return
     Modal.confirm({
       title: "Xác nhận xóa",
       content: `Xóa phân công của nhân viên "${record.employee?.full_name || "N/A"}"?`,
       okText: "Xóa",
       okType: "danger",
       cancelText: "Hủy",
-      onOk: () => deleteAssignmentMutation.mutate(record.id)
+      onOk: () => {
+        if (!ensureManagePermission()) return
+        deleteAssignmentMutation.mutate(record.id)
+      }
     })
   }
 
@@ -325,7 +373,7 @@ export default function ShiftCalendarView() {
     }
   }
 
-  const columns: ColumnsType<EmployeeShift> = [
+  const baseColumns: ColumnsType<EmployeeShift> = [
     {
       title: "Nhân viên",
       key: "employee",
@@ -351,31 +399,39 @@ export default function ShiftCalendarView() {
       dataIndex: "notes",
       key: "notes",
       render: (value: string | null) => (value ? value : <span className="text-gray-400">-</span>)
-    },
-    {
-      title: "Thao tác",
-      key: "actions",
-      render: (_: unknown, record) => (
-        <Space size="small" wrap>
-          <Button
-            size="small"
-            icon={<Edit size={14} />}
-            onClick={() => handleOpenUpdateModal(record)}
-            loading={updateAssignmentMutation.isPending && selectedAssignment?.id === record.id}
-          >
-            Cập nhật
-          </Button>
-          <Button
-            size="small"
-            danger
-            icon={<Trash2 size={14} />}
-            onClick={() => handleDeleteAssignment(record)}
-            loading={deleteAssignmentMutation.isPending}
-          />
-        </Space>
-      )
     }
   ]
+
+  const columns: ColumnsType<EmployeeShift> = canManageShifts
+    ? [
+        ...baseColumns,
+        {
+          title: "Thao tác",
+          key: "actions",
+          render: (_: unknown, record) => (
+            <Space size="small" wrap>
+              <Button
+                size="small"
+                icon={<Edit size={14} />}
+                onClick={() => handleOpenUpdateModal(record)}
+                loading={updateAssignmentMutation.isPending && selectedAssignment?.id === record.id}
+                disabled={!canManageShifts}
+              >
+                Cập nhật
+              </Button>
+              <Button
+                size="small"
+                danger
+                icon={<Trash2 size={14} />}
+                onClick={() => handleDeleteAssignment(record)}
+                loading={deleteAssignmentMutation.isPending}
+                disabled={!canManageShifts}
+              />
+            </Space>
+          )
+        }
+      ]
+    : baseColumns
 
   return (
     <div className="shift-calendar-container">
@@ -442,8 +498,8 @@ export default function ShiftCalendarView() {
         width={900}
         centered
         style={{
-          maxHeight : "calc(100vh - 50px)",
-          overflowY: "auto",
+          maxHeight: "calc(100vh - 50px)",
+          overflowY: "auto"
         }}
       >
         {isFetchingShiftDetail ? (
@@ -494,7 +550,12 @@ export default function ShiftCalendarView() {
 
             <div className="flex items-center justify-between">
               <h4 className="text-base font-semibold text-gray-800">Danh sách phân công</h4>
-              <Button type="primary" icon={<Plus size={16} />} onClick={handleOpenAssignModal}>
+              <Button
+                type="primary"
+                icon={<Plus size={16} />}
+                onClick={handleOpenAssignModal}
+                disabled={!canManageShifts || !canViewEmployees}
+              >
                 Phân công nhân viên
               </Button>
             </div>
@@ -523,7 +584,9 @@ export default function ShiftCalendarView() {
         cancelText="Hủy"
         width={520}
       >
-        {isFetchingEmployees ? (
+        {!canViewEmployees ? (
+          <Empty description="Bạn không có quyền xem danh sách nhân viên" />
+        ) : isFetchingEmployees ? (
           <div className="flex justify-center py-10">
             <Spin />
           </div>

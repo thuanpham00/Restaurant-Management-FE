@@ -33,7 +33,7 @@ import {
   RotateCcw,
   Eye
 } from "lucide-react"
-import { useState, useMemo, useCallback } from "react"
+import { useState, useMemo, useCallback, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 import { toast } from "react-toastify"
 import dayjs from "dayjs"
@@ -42,6 +42,7 @@ import { employeesAPI } from "src/Apis/Admin/employees.api"
 import { EmployeeShift, SHIFT_STATUS, SHIFT_STATUS_LABELS, SHIFT_STATUS_COLORS, Shift } from "src/Types/shift.type"
 import { path } from "src/Constants/path"
 import type { ColumnsType } from "antd/es/table"
+import { AppAbility, useAuthorization } from "src/Authorization"
 
 // ========== TYPES ==========
 interface Employee {
@@ -66,6 +67,16 @@ interface ShiftTableRecord extends ShiftWithAssignments {
 export default function EmployeeShiftTab() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
+  const { can } = useAuthorization()
+  const canViewShifts = can(AppAbility.SHIFTS_VIEW)
+  const canManageShifts = can(AppAbility.SHIFTS_MANAGE)
+  const canViewEmployees = can(AppAbility.EMPLOYEES_VIEW)
+
+  const ensureManagePermission = useCallback(() => {
+    if (canManageShifts) return true
+    toast.warning("Bạn không có quyền quản lý phân công ca làm việc!", { autoClose: 2000 })
+    return false
+  }, [canManageShifts])
 
   const invalidateShiftQueries = useCallback(() => {
     return Promise.all([
@@ -88,6 +99,12 @@ export default function EmployeeShiftTab() {
   const [bulkAssignForm] = Form.useForm()
   const [filterForm] = Form.useForm()
 
+  useEffect(() => {
+    if (!canManageShifts) {
+      setIsBulkAssignModalOpen(false)
+    }
+  }, [canManageShifts])
+
   // ========== QUERIES ==========
   // Get all employees
   const { data: employeesData, isFetching: isFetchingEmployees } = useQuery({
@@ -96,6 +113,7 @@ export default function EmployeeShiftTab() {
       const controller = new AbortController()
       return employeesAPI.getList({ per_page: "999", is_active: "1" }, controller.signal)
     },
+    enabled: canViewEmployees,
     staleTime: 5 * 60 * 1000
   })
 
@@ -113,6 +131,7 @@ export default function EmployeeShiftTab() {
 
       return shiftsAPI.getList(params, controller.signal)
     },
+    enabled: canViewShifts,
     staleTime: 3 * 60 * 1000
   })
 
@@ -130,12 +149,13 @@ export default function EmployeeShiftTab() {
 
       return employeeShiftsAPI.getList(params, controller.signal)
     },
+    enabled: canViewShifts,
     staleTime: 3 * 60 * 1000
   })
 
-  const employees: Employee[] = (employeesData?.data?.data as any)?.data || []
-  const shifts: ShiftWithAssignments[] = (shiftsData?.data?.data as any)?.data || []
-  const employeeShifts: EmployeeShift[] = (employeeShiftsData?.data?.data as any)?.data || []
+  const employees: Employee[] = canViewEmployees ? ((employeesData?.data?.data as any)?.data || []) : []
+  const shifts: ShiftWithAssignments[] = canViewShifts ? ((shiftsData?.data?.data as any)?.data || []) : []
+  const employeeShifts: EmployeeShift[] = canViewShifts ? ((employeeShiftsData?.data?.data as any)?.data || []) : []
 
   const filteredEmployees = useMemo(() => {
     const keyword = employeeKeyword.trim().toLowerCase()
@@ -198,6 +218,7 @@ export default function EmployeeShiftTab() {
 
   // ========== HANDLERS ==========
   const handleOpenBulkAssignModal = (initialShiftIds?: string[]) => {
+    if (!ensureManagePermission()) return
     bulkAssignForm.resetFields()
     setSelectedEmployees([])
     setSelectedShifts(initialShiftIds ?? [])
@@ -206,6 +227,7 @@ export default function EmployeeShiftTab() {
   }
 
   const handleSubmitBulkAssign = async () => {
+    if (!ensureManagePermission()) return
     if (selectedShifts.length === 0) {
       toast.warning("Vui lòng chọn ít nhất 1 ca làm việc!", { autoClose: 2000 })
       return
@@ -368,6 +390,7 @@ export default function EmployeeShiftTab() {
               event.stopPropagation()
               handleOpenBulkAssignModal([record.id])
             }}
+            disabled={!canManageShifts}
           >
             Phân công
           </Button>
@@ -386,6 +409,10 @@ export default function EmployeeShiftTab() {
       )
     }
   ]
+
+  if (!canViewShifts) {
+    return null
+  }
 
   // ========== RENDER ==========
   return (
@@ -406,6 +433,7 @@ export default function EmployeeShiftTab() {
             icon={<Zap size={20} />}
             onClick={() => handleOpenBulkAssignModal()}
             className="bg-white text-blue-600 border-0 hover:bg-blue-50 font-semibold shadow-lg h-12 px-8"
+            disabled={!canManageShifts}
           >
             Phân công
           </Button>
@@ -596,7 +624,7 @@ export default function EmployeeShiftTab() {
                 description="Không có ca làm việc nào trong khoảng thời gian này"
                 image={Empty.PRESENTED_IMAGE_SIMPLE}
               >
-                <Button type="primary" onClick={() => handleOpenBulkAssignModal()}>
+                <Button type="primary" onClick={() => handleOpenBulkAssignModal()} disabled={!canManageShifts}>
                   Tạo phân công mới
                 </Button>
               </Empty>
@@ -618,7 +646,7 @@ export default function EmployeeShiftTab() {
             </div>
           </div>
         }
-        open={isBulkAssignModalOpen}
+  open={isBulkAssignModalOpen && canManageShifts}
         onCancel={() => setIsBulkAssignModalOpen(false)}
         footer={
           <div className="flex justify-between items-center pt-4 border-t">
@@ -637,7 +665,7 @@ export default function EmployeeShiftTab() {
                 size="large"
                 onClick={handleSubmitBulkAssign}
                 loading={bulkAssignMutation.isPending}
-                disabled={selectedShifts.length === 0 || selectedEmployees.length === 0}
+                disabled={!canManageShifts || selectedShifts.length === 0 || selectedEmployees.length === 0}
                 className="bg-gradient-to-r from-blue-500 to-purple-500 border-0"
                 icon={<CheckCircle size={18} />}
               >

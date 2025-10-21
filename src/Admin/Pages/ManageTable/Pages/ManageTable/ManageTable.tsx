@@ -40,6 +40,7 @@ import TableSessionItem from "../../Components/TableSessionItem"
 import { TableSession } from "src/Types/tableSession.type"
 import { TableSessionStatus, TableSessionType } from "src/Types/product.type"
 import MergeIntoTable from "../../Components/MergeIntoTable"
+import { AppAbility, useAuthorization } from "src/Authorization"
 
 const { Title } = Typography
 
@@ -55,6 +56,10 @@ export default function ManageTable() {
     isUndefined
   )
 
+  const { can } = useAuthorization()
+  const canViewTables = can(AppAbility.TABLES_VIEW)
+  const canManageTables = can(AppAbility.TABLES_MANAGE)
+
   // ✅ Query danh sách bàn - Auto refetch every 30 seconds + always fresh on mount
   const { data, isFetching, isError } = useRealtimeQuery(
     ["listTableSession", queryConfig],
@@ -64,6 +69,7 @@ export default function ManageTable() {
       return tableSessionAPI.getListTableSession(queryConfig, controller.signal)
     },
     {
+      enabled: canViewTables
       // refetchInterval: 30000 // Auto refetch every 30 seconds for table status updates
     }
   )
@@ -71,17 +77,21 @@ export default function ManageTable() {
   const listTableSession = (data?.data.data || []) as TableSession[]
 
   // ✅ Query bàn active - Fresh data when needed (for merge table feature)
-  const { data: dataTableSessionActive } = useRealtimeQuery(["listTableSessionActive"], () => {
-    const controller = new AbortController()
-    setTimeout(() => controller.abort(), 10000)
-    return tableSessionAPI.getListTableSession(
-      {
-        page: "1",
-        per_page: "100"
-      },
-      controller.signal
-    )
-  })
+  const { data: dataTableSessionActive } = useRealtimeQuery(
+    ["listTableSessionActive"],
+    () => {
+      const controller = new AbortController()
+      setTimeout(() => controller.abort(), 10000)
+      return tableSessionAPI.getListTableSession(
+        {
+          page: "1",
+          per_page: "100"
+        },
+        controller.signal
+      )
+    },
+    { enabled: canViewTables }
+  )
 
   const listTableSessionActive = (dataTableSessionActive?.data.data || []) as TableSession[]
 
@@ -131,6 +141,10 @@ export default function ManageTable() {
   })
 
   const handleAddDiningTable = (values: { table_number: number; capacity: number; is_active: boolean }) => {
+    if (!canManageTables) {
+      toast.warn("Bạn không có quyền quản lý bàn.")
+      return
+    }
     setLoading(true)
     createDiningTableMutation.mutate(values)
   }
@@ -157,6 +171,13 @@ export default function ManageTable() {
 
   const [mergedTable, setMergedTable] = useState(false)
   const [expandedGroupKeys, setExpandedGroupKeys] = useState<string[]>([])
+
+  useEffect(() => {
+    if (!canManageTables) {
+      setAddItem(false)
+      setMergedTable(false)
+    }
+  }, [canManageTables])
 
   const getStatusMeta = (table: TableSession) => {
     if (!table.session_id) {
@@ -332,6 +353,10 @@ export default function ManageTable() {
     }
   })
 
+  if (!canViewTables) {
+    return null
+  }
+
   return (
     <div>
       <Helmet>
@@ -386,33 +411,43 @@ export default function ManageTable() {
             </Button>
           </Form.Item>
         </Form>
-        <Button
-          type="primary"
-          icon={<Table2 />}
-          onClick={() => setAddItem(true)}
-          disabled={loading}
-          className="whitespace-nowrap"
-        >
-          Thêm bàn mới
-        </Button>
+        {canManageTables && (
+          <Button
+            type="primary"
+            icon={<Table2 />}
+            onClick={() => {
+              if (!canManageTables) {
+                toast.warn("Bạn không có quyền quản lý bàn.")
+                return
+              }
+              setAddItem(true)
+            }}
+            disabled={loading}
+            className="whitespace-nowrap"
+          >
+            Thêm bàn mới
+          </Button>
+        )}
       </div>
 
-      <div className="flex justify-start mb-2">
-        <Button
-          type="default"
-          icon={<TabletSmartphone size={16} />}
-          onClick={() => setMergedTable(true)}
-          disabled={loading}
-          style={{
-            backgroundColor: "#ffc300",
-            borderColor: "#ffc300",
-            color: "#fff"
-          }}
-          className="whitespace-nowrap hover:opacity-90"
-        >
-          Gộp bàn
-        </Button>
-      </div>
+      {canManageTables && (
+        <div className="flex justify-start mb-2">
+          <Button
+            type="default"
+            icon={<TabletSmartphone size={16} />}
+            onClick={() => setMergedTable(true)}
+            disabled={loading}
+            style={{
+              backgroundColor: "#ffc300",
+              borderColor: "#ffc300",
+              color: "#fff"
+            }}
+            className="whitespace-nowrap hover:opacity-90"
+          >
+            Gộp bàn
+          </Button>
+        </div>
+      )}
 
       {isFetching ? (
         <div
@@ -477,17 +512,19 @@ export default function ManageTable() {
         </>
       )}
 
-      <MergeIntoTable
-        listTableSessionActiveData={listTableSessionActiveData}
-        mergedTable={mergedTable}
-        setMergedTable={setMergedTable}
-        queryConfig={queryConfig}
-      />
+      {canManageTables && (
+        <MergeIntoTable
+          listTableSessionActiveData={listTableSessionActiveData}
+          mergedTable={mergedTable}
+          setMergedTable={setMergedTable}
+          queryConfig={queryConfig}
+        />
+      )}
 
       <Modal
         title="Thêm bàn mới"
         closable={{ "aria-label": "Custom Close Button" }}
-        open={addItem === true}
+        open={canManageTables && addItem === true}
         onCancel={() => setAddItem(false)}
         okText="Tạo"
         onOk={() => addTableForm.submit()}

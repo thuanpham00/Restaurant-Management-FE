@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react"
 import { Tabs } from "antd"
 import { Calendar, Users } from "lucide-react"
+import { AppAbility, useAuthorization } from "src/Authorization"
 import ShiftListTab from "./ShiftListTab.tsx"
 import EmployeeShiftTab from "./EmployeeShiftTab.tsx"
 
@@ -18,11 +19,17 @@ const getInitialTab = (): TabKey => {
 
 export default function ShiftTableView() {
   const [activeTab, setActiveTab] = useState<TabKey>(getInitialTab)
+  const { can } = useAuthorization()
+  const canViewShifts = can(AppAbility.SHIFTS_VIEW)
 
   useEffect(() => {
     if (typeof window === "undefined") return
     window.localStorage.setItem(TAB_STORAGE_KEY, activeTab)
   }, [activeTab])
+
+  if (!canViewShifts) {
+    return null
+  }
 
   return (
     <Tabs
