@@ -33,6 +33,7 @@ import {
   queryParamConfigIngredient
 } from "src/Types/ingredient.type"
 import { PaginatedResponse } from "src/Types/utils.type"
+import { AppAbility, PermissionGate, useAuthorization } from "src/Authorization"
 
 const { Option } = Select
 
@@ -49,6 +50,8 @@ export default function IngredientListTab() {
   const queryClient = useQueryClient()
   const [searchParams, setSearchParams] = useSearchParams()
   const queryParams: queryParamConfigIngredient = useQueryParams()
+  const { can } = useAuthorization()
+  const canManageIngredients = can(AppAbility.INGREDIENTS_MANAGE)
 
   // Parse category_ids[] from URL
   const categoryIdsFromUrl = searchParams.getAll("category_ids[]")
@@ -175,6 +178,15 @@ export default function IngredientListTab() {
     }
   }, [fileList])
 
+  useEffect(() => {
+    if (!canManageIngredients) {
+      setIsModalOpen(false)
+      setEditingId(null)
+      setFileList([])
+      setSelectedImageFile(null)
+    }
+  }, [canManageIngredients])
+
   // ========== MUTATIONS ==========
   const createMutation = useMutation({
     mutationFn: (values: IngredientCreateInput) => {
@@ -223,6 +235,10 @@ export default function IngredientListTab() {
 
   // ========== HANDLERS ==========
   const handleOpenModal = (record?: Ingredient) => {
+    if (!canManageIngredients) {
+      toast.warn("Bạn không có quyền quản lý nguyên liệu.")
+      return
+    }
     setSelectedImageFile(null)
     if (record) {
       setEditingId(record.id)
@@ -259,6 +275,10 @@ export default function IngredientListTab() {
   }
 
   const handleSubmit = async () => {
+    if (!canManageIngredients) {
+      toast.warn("Bạn không có quyền quản lý nguyên liệu.")
+      return
+    }
     try {
       const values = await form.validateFields()
       const payload = {
@@ -283,6 +303,10 @@ export default function IngredientListTab() {
   }
 
   const handleDelete = (id: string) => {
+    if (!canManageIngredients) {
+      toast.warn("Bạn không có quyền quản lý nguyên liệu.")
+      return
+    }
     Modal.confirm({
       title: "Xác nhận xóa",
       content: "Bạn có chắc chắn muốn xóa nguyên liệu này?",
@@ -464,29 +488,30 @@ export default function IngredientListTab() {
       key: "actions",
       fixed: "right",
       width: 130,
-      render: (_, record) => (
-        <Space size="small">
-          <Button
-            type="link"
-            icon={<Edit size={16} />}
-            onClick={(e) => {
-              e.stopPropagation()
-              handleOpenModal(record)
-            }}
-            title="Chỉnh sửa"
-          />
-          <Button
-            danger
-            type="link"
-            icon={<Trash2 size={16} />}
-            onClick={(e) => {
-              e.stopPropagation()
-              handleDelete(record.id)
-            }}
-            title="Xóa"
-          />
-        </Space>
-      )
+      render: (_, record) =>
+        canManageIngredients ? (
+          <Space size="small">
+            <Button
+              type="link"
+              icon={<Edit size={16} />}
+              onClick={(e) => {
+                e.stopPropagation()
+                handleOpenModal(record)
+              }}
+              title="Chỉnh sửa"
+            />
+            <Button
+              danger
+              type="link"
+              icon={<Trash2 size={16} />}
+              onClick={(e) => {
+                e.stopPropagation()
+                handleDelete(record.id)
+              }}
+              title="Xóa"
+            />
+          </Space>
+        ) : null
     }
   ]
 
@@ -544,9 +569,15 @@ export default function IngredientListTab() {
           <div className="text-sm text-gray-600">
             Tổng số: <span className="font-semibold">{paginated?.total || 0}</span> nguyên liệu
           </div>
-          <Button type="primary" icon={<Plus size={16} />} onClick={() => handleOpenModal()}>
-            Thêm nguyên liệu
-          </Button>
+          <PermissionGate ability={AppAbility.INGREDIENTS_MANAGE}>
+            <Button
+              type="primary"
+              icon={<Plus size={16} />}
+              onClick={() => handleOpenModal()}
+            >
+              Thêm nguyên liệu
+            </Button>
+          </PermissionGate>
         </div>
 
         {/* Table */}
@@ -573,7 +604,7 @@ export default function IngredientListTab() {
       {/* Create/Edit Modal */}
       <Modal
         title={<span className="text-base">{editingId ? "Cập nhật nguyên liệu" : "Thêm nguyên liệu mới"}</span>}
-        open={isModalOpen}
+        open={canManageIngredients && isModalOpen}
         onOk={handleSubmit}
         onCancel={() => {
           setIsModalOpen(false)
@@ -586,6 +617,7 @@ export default function IngredientListTab() {
         cancelText="Hủy"
         width={650}
         confirmLoading={createMutation.isPending || updateMutation.isPending}
+        okButtonProps={{ disabled: !canManageIngredients }}
         styles={{
           body: {
             maxHeight: "calc(100vh - 200px)",
@@ -689,16 +721,18 @@ export default function IngredientListTab() {
           <Button key="close" onClick={() => setIsDetailModalOpen(false)}>
             Đóng
           </Button>,
-          <Button
-            key="edit"
-            type="primary"
-            onClick={() => {
-              setIsDetailModalOpen(false)
-              handleOpenModal(selectedIngredient!)
-            }}
-          >
-            Chỉnh sửa
-          </Button>
+          canManageIngredients ? (
+            <Button
+              key="edit"
+              type="primary"
+              onClick={() => {
+                setIsDetailModalOpen(false)
+                handleOpenModal(selectedIngredient!)
+              }}
+            >
+              Chỉnh sửa
+            </Button>
+          ) : null
         ]}
         width={750}
         styles={{

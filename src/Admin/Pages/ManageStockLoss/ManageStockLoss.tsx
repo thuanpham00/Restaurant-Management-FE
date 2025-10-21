@@ -24,6 +24,7 @@ import useQueryParams from "src/Hook/useQueryParams"
 import { cleanObject } from "src/Helpers/common"
 import { path } from "src/Constants/path"
 import NavigateBack from "src/Admin/Components/NavigateBack"
+import { AppAbility, useAuthorization } from "src/Authorization"
 
 const { RangePicker } = DatePicker
 const { Option } = Select
@@ -46,6 +47,10 @@ export default function ManageStockLoss() {
     isUndefined
   )
 
+  const { can } = useAuthorization()
+  const canViewWarehouseLoss = can(AppAbility.WAREHOUSE_LOSS_VIEW)
+  const canManageWarehouseLoss = can(AppAbility.WAREHOUSE_LOSS_MANAGE)
+
   // ========== STATE ==========
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false)
@@ -64,7 +69,8 @@ export default function ManageStockLoss() {
       return stockLossesAPI.getList(queryConfig, controller.signal)
     },
     staleTime: 3 * 60 * 1000,
-    placeholderData: keepPreviousData
+    placeholderData: keepPreviousData,
+    enabled: canViewWarehouseLoss
   })
 
   const paginated = data?.data?.data as PaginatedResponse<StockLoss>
@@ -78,7 +84,8 @@ export default function ManageStockLoss() {
       setTimeout(() => controller.abort(), 10000)
       return ingredientsAPI.getList({ per_page: "1000" }, controller.signal)
     },
-    staleTime: 5 * 60 * 1000
+    staleTime: 5 * 60 * 1000,
+    enabled: canViewWarehouseLoss
   })
 
   const ingredientsList = (ingredientsData?.data?.data as any)?.data || []
@@ -91,7 +98,8 @@ export default function ManageStockLoss() {
       setTimeout(() => controller.abort(), 10000)
       return employeesAPI.getList({ per_page: "1000" }, controller.signal)
     },
-    staleTime: 5 * 60 * 1000
+    staleTime: 5 * 60 * 1000,
+    enabled: canManageWarehouseLoss
   })
 
   const employeesList = (employeesData?.data?.data as any)?.data || []
@@ -100,7 +108,7 @@ export default function ManageStockLoss() {
   const { data: detailData, isFetching: isFetchingDetail } = useQuery({
     queryKey: ["stockLossDetail", selectedStockLoss?.id],
     queryFn: () => stockLossesAPI.getDetail(selectedStockLoss?.id as string),
-    enabled: !!selectedStockLoss?.id && isDetailModalOpen,
+    enabled: !!selectedStockLoss?.id && isDetailModalOpen && canViewWarehouseLoss,
     staleTime: 2 * 60 * 1000
   })
 
@@ -167,8 +175,24 @@ export default function ManageStockLoss() {
     })
   }, [queryParams, filterForm])
 
+  useEffect(() => {
+    if (!canManageWarehouseLoss) {
+      setIsModalOpen(false)
+      setEditingId(null)
+      form.resetFields()
+    }
+  }, [canManageWarehouseLoss, form])
+
+  if (!canViewWarehouseLoss) {
+    return null
+  }
+
   // ========== HANDLERS ==========
   const handleOpenModal = (record?: StockLoss) => {
+    if (!canManageWarehouseLoss) {
+      toast.warn("Bạn không có quyền quản lý phiếu hao hụt.")
+      return
+    }
     setIsModalOpen(true)
 
     if (record) {
@@ -191,6 +215,10 @@ export default function ManageStockLoss() {
   }
 
   const handleSubmit = async () => {
+    if (!canManageWarehouseLoss) {
+      toast.warn("Bạn không có quyền quản lý phiếu hao hụt.")
+      return
+    }
     try {
       const values = await form.validateFields()
       const formattedValues = {
@@ -212,6 +240,10 @@ export default function ManageStockLoss() {
   }
 
   const handleDelete = (id: string) => {
+    if (!canManageWarehouseLoss) {
+      toast.warn("Bạn không có quyền quản lý phiếu hao hụt.")
+      return
+    }
     Modal.confirm({
       title: "Xác nhận xóa",
       content: "Bạn có chắc chắn muốn xóa phiếu hao hụt này? Hành động này sẽ ảnh hưởng đến số lượng tồn kho.",
@@ -363,25 +395,29 @@ export default function ManageStockLoss() {
             }}
             title="Xem chi tiết"
           />
-          <Button
-            type="link"
-            icon={<Edit size={16} />}
-            onClick={(e) => {
-              e.stopPropagation()
-              handleOpenModal(record)
-            }}
-            title="Chỉnh sửa"
-          />
-          <Button
-            danger
-            type="link"
-            icon={<Trash2 size={16} />}
-            onClick={(e) => {
-              e.stopPropagation()
-              handleDelete(record.id)
-            }}
-            title="Xóa"
-          />
+          {canManageWarehouseLoss && (
+            <>
+              <Button
+                type="link"
+                icon={<Edit size={16} />}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  handleOpenModal(record)
+                }}
+                title="Chỉnh sửa"
+              />
+              <Button
+                danger
+                type="link"
+                icon={<Trash2 size={16} />}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  handleDelete(record.id)
+                }}
+                title="Xóa"
+              />
+            </>
+          )}
         </Space>
       )
     }
@@ -438,9 +474,11 @@ export default function ManageStockLoss() {
           <div className="text-sm text-gray-600">
             Tổng số: <span className="font-semibold">{paginated?.total || 0}</span> phiếu hao hụt
           </div>
-          <Button type="primary" icon={<Plus size={16} />} onClick={() => handleOpenModal()}>
-            Thêm phiếu hao hụt
-          </Button>
+          {canManageWarehouseLoss && (
+            <Button type="primary" icon={<Plus size={16} />} onClick={() => handleOpenModal()}>
+              Thêm phiếu hao hụt
+            </Button>
+          )}
         </div>
 
         {/* Table */}
@@ -471,7 +509,7 @@ export default function ManageStockLoss() {
             {editingId ? "Chỉnh sửa phiếu hao hụt" : "Thêm phiếu hao hụt mới"}
           </span>
         }
-        open={isModalOpen}
+        open={isModalOpen && canManageWarehouseLoss}
         onCancel={() => {
           setIsModalOpen(false)
           setEditingId(null)
@@ -493,6 +531,7 @@ export default function ManageStockLoss() {
             type="primary"
             onClick={handleSubmit}
             loading={createMutation.isPending || updateMutation.isPending}
+            disabled={!canManageWarehouseLoss}
           >
             {editingId ? "Cập nhật" : "Thêm mới"}
           </Button>
@@ -606,29 +645,43 @@ export default function ManageStockLoss() {
           setIsDetailModalOpen(false)
           setSelectedStockLoss(null)
         }}
-        footer={[
-          <Button
-            key="close"
-            onClick={() => {
-              setIsDetailModalOpen(false)
-              setSelectedStockLoss(null)
-            }}
-          >
-            Đóng
-          </Button>,
-          <Button
-            key="edit"
-            type="primary"
-            onClick={() => {
-              setIsDetailModalOpen(false)
-              if (stockLossDetail) {
-                handleOpenModal(stockLossDetail)
-              }
-            }}
-          >
-            Chỉnh sửa
-          </Button>
-        ]}
+        footer={
+          canManageWarehouseLoss
+            ? [
+                <Button
+                  key="close"
+                  onClick={() => {
+                    setIsDetailModalOpen(false)
+                    setSelectedStockLoss(null)
+                  }}
+                >
+                  Đóng
+                </Button>,
+                <Button
+                  key="edit"
+                  type="primary"
+                  onClick={() => {
+                    setIsDetailModalOpen(false)
+                    if (stockLossDetail) {
+                      handleOpenModal(stockLossDetail)
+                    }
+                  }}
+                >
+                  Chỉnh sửa
+                </Button>
+              ]
+            : [
+                <Button
+                  key="close"
+                  onClick={() => {
+                    setIsDetailModalOpen(false)
+                    setSelectedStockLoss(null)
+                  }}
+                >
+                  Đóng
+                </Button>
+              ]
+        }
         width={800}
         styles={{
           body: {

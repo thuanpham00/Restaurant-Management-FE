@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Checkbox, Spin, Typography, Card, Button, Collapse, Space, Badge, Tooltip } from "antd"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { rolesAPI, permissionsAPI } from "src/Apis/Admin"
@@ -8,6 +9,7 @@ import { Save, RotateCcw, List } from "lucide-react"
 import { Helmet } from "react-helmet-async"
 import { useNavigate } from "react-router-dom"
 import NavigateBack from "src/Admin/Components/NavigateBack"
+import { AppAbility, useAuthorization } from "src/Authorization"
 import "./ManagePermissionMatrix.css"
 
 const { Title } = Typography
@@ -16,7 +18,10 @@ const { Panel } = Collapse
 export default function ManagePermissionMatrix() {
   const queryClient = useQueryClient()
   const navigate = useNavigate()
-  
+  const { can } = useAuthorization()
+  const canViewPermissionMatrix = can(AppAbility.PERMISSION_MATRIX_VIEW)
+  const canManagePermissionMatrix = can(AppAbility.PERMISSION_MATRIX_MANAGE)
+
   const [pendingChanges, setPendingChanges] = useState<Record<string, string[]>>({})
   const [hasChanges, setHasChanges] = useState(false)
 
@@ -24,20 +29,25 @@ export default function ManagePermissionMatrix() {
   const { data: rolesData, isLoading: rolesLoading } = useQuery({
     queryKey: ["roles-matrix"],
     queryFn: () => rolesAPI.getList({ per_page: "99" }),
-    staleTime: 5 * 60 * 1000
+    staleTime: 5 * 60 * 1000,
+    enabled: canViewPermissionMatrix
   })
 
   // Fetch all permissions
   const { data: permissionsData, isLoading: permissionsLoading } = useQuery({
     queryKey: ["permissions-matrix"],
     queryFn: () => permissionsAPI.getList({ per_page: "99" }),
-    staleTime: 5 * 60 * 1000
+    staleTime: 5 * 60 * 1000,
+    enabled: canViewPermissionMatrix
   })
 
   const roles = rolesData?.data?.data?.data || []
   const permissions = permissionsData?.data?.data?.data || []
 
   useMemo(() => {
+    if (!canViewPermissionMatrix) {
+      return
+    }
     if (roles.length > 0 && Object.keys(pendingChanges).length === 0) {
       const initialChanges: Record<string, string[]> = {}
       roles.forEach((role) => {
@@ -45,7 +55,7 @@ export default function ManagePermissionMatrix() {
       })
       setPendingChanges(initialChanges)
     }
-  }, [roles])
+  }, [roles, canViewPermissionMatrix])
 
   const batchSyncMutation = useMutation({
     mutationFn: async (changes: Record<string, string[]>) => {
@@ -67,6 +77,10 @@ export default function ManagePermissionMatrix() {
 
   // Handle checkbox change (store in pending changes)
   const handlePermissionToggle = (roleId: string, permissionId: string, checked: boolean) => {
+    if (!canManagePermissionMatrix) {
+      toast.warn("Bạn không có quyền quản lý ma trận phân quyền.")
+      return
+    }
     setPendingChanges((prev) => {
       const currentPermissions = prev[roleId] || []
       const newPermissions = checked
@@ -83,11 +97,19 @@ export default function ManagePermissionMatrix() {
 
   // Save all changes
   const handleSaveChanges = () => {
+    if (!canManagePermissionMatrix) {
+      toast.warn("Bạn không có quyền quản lý ma trận phân quyền.")
+      return
+    }
     batchSyncMutation.mutate(pendingChanges)
   }
 
   // Reset to original state
   const handleReset = () => {
+    if (!canManagePermissionMatrix) {
+      toast.warn("Bạn không có quyền quản lý ma trận phân quyền.")
+      return
+    }
     const initialChanges: Record<string, string[]> = {}
     roles.forEach((role) => {
       initialChanges[role.id] = role.permissions?.map((p) => p.id) || []
@@ -106,13 +128,13 @@ export default function ManagePermissionMatrix() {
     roles.forEach((role) => {
       const original = new Set(role.permissions?.map((p: Permission) => p.id) || [])
       const current = new Set(pendingChanges[role.id] || [])
-      
+
       current.forEach((permId: string) => {
         if (!original.has(permId)) {
           count++
         }
       })
-      
+
       // Đếm số permission bị xóa (có trong original nhưng không có trong current)
       original.forEach((permId: string) => {
         if (!current.has(permId)) {
@@ -153,17 +175,14 @@ export default function ManagePermissionMatrix() {
       <div className="">
         <NavigateBack />
 
-        <Card style={{border : 0}}>
+        <Card style={{ border: 0 }}>
           <div className="flex items-center justify-between mb-4">
             <Title level={4} className="mb-0">
               Ma trận Phân quyền
             </Title>
-            
+
             <Space>
-              <Button 
-                icon={<List size={16} />} 
-                onClick={() => navigate("/admin/roles")}
-              >
+              <Button icon={<List size={16} />} onClick={() => navigate("/admin/roles")}>
                 Danh sách Vai trò
               </Button>
               {hasChanges && (
@@ -171,7 +190,7 @@ export default function ManagePermissionMatrix() {
                   <Button
                     icon={<RotateCcw size={16} />}
                     onClick={handleReset}
-                    disabled={batchSyncMutation.isPending}
+                    disabled={batchSyncMutation.isPending || !canManagePermissionMatrix}
                   >
                     Đặt lại
                   </Button>
@@ -182,7 +201,7 @@ export default function ManagePermissionMatrix() {
                 icon={<Save size={16} />}
                 onClick={handleSaveChanges}
                 loading={batchSyncMutation.isPending}
-                disabled={!hasChanges}
+                disabled={!hasChanges || !canManagePermissionMatrix}
               >
                 Lưu thay đổi {hasChanges && `(${changedCount})`}
               </Button>
@@ -191,7 +210,7 @@ export default function ManagePermissionMatrix() {
 
           <div className="overflow-x-auto max-h-[calc(100vh-280px)] border border-gray-300 rounded">
             <div className="min-w-full">
-              <Collapse 
+              <Collapse
                 defaultActiveKey={Object.keys(groupedPermissions).slice(0, 3)}
                 className="permission-matrix-collapse"
               >
@@ -199,9 +218,7 @@ export default function ManagePermissionMatrix() {
                   <Panel
                     header={
                       <div className="flex items-center justify-between">
-                        <span className="font-semibold text-blue-700">
-                          {module.toUpperCase()}
-                        </span>
+                        <span className="font-semibold text-blue-700">{module.toUpperCase()}</span>
                         <Badge count={perms.length} showZero color="blue" />
                       </div>
                     }
@@ -221,9 +238,7 @@ export default function ManagePermissionMatrix() {
                               >
                                 <div className="flex flex-col items-center gap-1">
                                   <span className="text-xs">{role.name}</span>
-                                  {!role.is_active && (
-                                    <span className="text-[10px] text-red-500">(Inactive)</span>
-                                  )}
+                                  {!role.is_active && <span className="text-[10px] text-red-500">(Inactive)</span>}
                                 </div>
                               </th>
                             ))}
@@ -233,7 +248,7 @@ export default function ManagePermissionMatrix() {
                           {perms.map((permission) => (
                             <tr key={permission.id} className="hover:bg-gray-50">
                               <td className="border border-gray-300 px-3 py-2 sticky left-0 bg-white z-10">
-                                <Tooltip 
+                                <Tooltip
                                   title={
                                     <div>
                                       <div className="font-semibold mb-1">{permission.name}</div>
@@ -254,11 +269,14 @@ export default function ManagePermissionMatrix() {
                                 const checked = hasPermission(role.id, permission.id)
 
                                 return (
-                                  <td key={`${role.id}-${permission.id}`} className="border border-gray-300 px-3 py-2 text-center bg-white">
+                                  <td
+                                    key={`${role.id}-${permission.id}`}
+                                    className="border border-gray-300 px-3 py-2 text-center bg-white"
+                                  >
                                     <Checkbox
                                       checked={checked}
                                       onChange={(e) => handlePermissionToggle(role.id, permission.id, e.target.checked)}
-                                      disabled={!role.is_active || !permission.is_active}
+                                      disabled={!role.is_active || !permission.is_active || !canManagePermissionMatrix}
                                     />
                                   </td>
                                 )
@@ -275,7 +293,7 @@ export default function ManagePermissionMatrix() {
           </div>
 
           <div className="mt-3 text-xs text-gray-500 space-y-1">
-            <p>💡 Click checkbox để chọn/bỏ chọn quyền, sau đó nhấn "Lưu thay đổi" để cập nhật</p>
+            <p>💡 Click checkbox để chọn/bỏ chọn quyền, sau đó nhấn `Lưu thay đổi` để cập nhật</p>
             <p>⚠️ Các vai trò hoặc quyền không hoạt động sẽ không thể chỉnh sửa</p>
           </div>
         </Card>

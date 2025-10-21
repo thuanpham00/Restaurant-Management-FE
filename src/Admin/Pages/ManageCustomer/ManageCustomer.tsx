@@ -2,6 +2,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { Button, Form, Input, Modal, Select, Spin, Table, Tag, Descriptions, Badge } from "antd"
+import type { ColumnsType } from "antd/es/table"
 import { isUndefined, omitBy } from "lodash"
 import { UserCircle, Edit, Trash2, Filter, RotateCcw } from "lucide-react"
 import { Fragment, useState, useEffect } from "react"
@@ -15,6 +16,7 @@ import { cleanObject } from "src/Helpers/common"
 import useQueryParams from "src/Hook/useQueryParams"
 import { queryParamConfigCustomer, Customer } from "src/Types/customers.type"
 import { PaginatedResponse } from "src/Types/utils.type"
+import { AppAbility, useAuthorization } from "src/Authorization"
 
 const { Option } = Select
 
@@ -36,6 +38,9 @@ export default function ManageCustomer() {
   const [searchParams, setSearchParams] = useSearchParams()
   const queryConfig: queryParamConfigCustomer = useQueryParams()
   const queryClient = useQueryClient()
+  const { can } = useAuthorization()
+  const canViewCustomers = can(AppAbility.CUSTOMERS_VIEW)
+  const canManageCustomers = can(AppAbility.CUSTOMERS_MANAGE)
 
   // ========== STATE ==========
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false)
@@ -69,7 +74,8 @@ export default function ManageCustomer() {
       return customersAPI.getList(params, controller.signal)
     },
     staleTime: 3 * 60 * 1000,
-    placeholderData: keepPreviousData
+    placeholderData: keepPreviousData,
+    enabled: canViewCustomers
   })
 
   const paginated = data?.data?.data as PaginatedResponse<Customer>
@@ -106,7 +112,7 @@ export default function ManageCustomer() {
   const { data: detailData, isFetching: isFetchingDetail } = useQuery({
     queryKey: ["customerDetail", selectedCustomer?.id],
     queryFn: () => customersAPI.getDetail(selectedCustomer?.id as string),
-    enabled: !!selectedCustomer?.id && isDetailModalOpen,
+    enabled: !!selectedCustomer?.id && isDetailModalOpen && canViewCustomers,
     staleTime: 2 * 60 * 1000
   })
 
@@ -119,6 +125,16 @@ export default function ManageCustomer() {
       setHasChanges(isChanged)
     }
   }, [form, isEditMode, customerDetail, initialFormValues])
+
+  useEffect(() => {
+    if (!canManageCustomers) {
+      setIsEditMode(false)
+    }
+  }, [canManageCustomers])
+
+  if (!canViewCustomers) {
+    return null
+  }
 
   // ========== HANDLERS ==========
   const handleRowClick = (record: Customer) => {
@@ -139,6 +155,10 @@ export default function ManageCustomer() {
   }
 
   const handleEdit = (record?: Customer) => {
+    if (!canManageCustomers) {
+      toast.warn("Bạn không có quyền quản lý khách hàng.")
+      return
+    }
     if (record) {
       setSelectedCustomer(record)
       setIsDetailModalOpen(true)
@@ -165,6 +185,10 @@ export default function ManageCustomer() {
   }
 
   const handleUpdate = () => {
+    if (!canManageCustomers) {
+      toast.warn("Bạn không có quyền quản lý khách hàng.")
+      return
+    }
     form.validateFields().then((values) => {
       const cleanedValues = Object.fromEntries(
         Object.entries(values).filter(([_, v]) => v !== null && v !== undefined && v !== "")
@@ -183,6 +207,10 @@ export default function ManageCustomer() {
   }
 
   const handleDelete = (id: string, fullName: string) => {
+    if (!canManageCustomers) {
+      toast.warn("Bạn không có quyền quản lý khách hàng.")
+      return
+    }
     Modal.confirm({
       title: "Xác nhận xóa",
       content: `Bạn có chắc muốn xóa khách hàng "${fullName}"?`,
@@ -224,7 +252,7 @@ export default function ManageCustomer() {
   }
 
   // ========== TABLE COLUMNS ==========
-  const columns = [
+  const columns: ColumnsType<Customer> = [
     {
       title: "Tên khách hàng",
       dataIndex: "full_name",
@@ -277,8 +305,11 @@ export default function ManageCustomer() {
       render: (status: number) => (
         <Badge status={status === 1 ? "success" : "error"} text={status === 1 ? "Hoạt động" : "Ngừng"} />
       )
-    },
-    {
+    }
+  ]
+
+  if (canManageCustomers) {
+    columns.push({
       title: "Hành động",
       key: "action",
       width: 150,
@@ -305,8 +336,8 @@ export default function ManageCustomer() {
           </Button>
         </div>
       )
-    }
-  ]
+    })
+  }
 
   // ========== RENDER ==========
   return (
@@ -407,13 +438,21 @@ export default function ManageCustomer() {
             {!isEditMode ? (
               <>
                 <Button onClick={handleCloseModal}>Đóng</Button>
-                <Button type="primary" icon={<Edit size={16} />} onClick={() => handleEdit()}>
-                </Button>
+                {canManageCustomers && (
+                  <Button type="primary" icon={<Edit size={16} />} onClick={() => handleEdit()}>
+                    Chỉnh sửa
+                  </Button>
+                )}
               </>
             ) : (
               <>
                 <Button onClick={handleCancelEdit}>Hủy</Button>
-                <Button type="primary" onClick={handleUpdate} loading={updateMutation.isPending} disabled={!hasChanges}>
+                <Button
+                  type="primary"
+                  onClick={handleUpdate}
+                  loading={updateMutation.isPending}
+                  disabled={!hasChanges || !canManageCustomers}
+                >
                   Cập nhật
                 </Button>
               </>

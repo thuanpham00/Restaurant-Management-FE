@@ -1,11 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { Modal, Descriptions, Space, Button, Radio } from "antd"
-import { useState, useMemo } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { toast } from "react-toastify"
 import { invoicePaymentAPI } from "src/Apis/Admin/invoicePayment.api"
 import { useAppStore } from "src/StateGlobal/zustand"
 import { InvoiceDetail, InvoicePaymentPayload, InvoicePaymentUpdatePayload } from "src/Types/invoicePayment.type"
+import { AppAbility, useAuthorization } from "src/Authorization"
 
 interface PaymentDetailModalProps {
   open: boolean
@@ -48,6 +49,21 @@ const PaymentDetailModal = ({
   const queryClient = useQueryClient()
   const { employeeId } = useAppStore()
   const [paymentMethod, setPaymentMethod] = useState<number>(0) // 0 = Cash, 1 = Bank Transfer
+  const { can } = useAuthorization()
+  const canViewInvoices = can(AppAbility.INVOICES_VIEW)
+  const canManageInvoices = can(AppAbility.INVOICES_MANAGE)
+
+  useEffect(() => {
+    if (open && !canViewInvoices) {
+      toast.warn("Bạn không có quyền xem chi tiết hóa đơn.", { autoClose: 1500 })
+      onClosePayment()
+    }
+  }, [open, canViewInvoices, onClosePayment])
+
+  const handlePaymentMethodChange = (value: number) => {
+    if (!canManageInvoices) return
+    setPaymentMethod(value)
+  }
 
   const totalPaid = useMemo(() => {
     if (!detailInvoice?.payments) return 0
@@ -72,8 +88,11 @@ const PaymentDetailModal = ({
       return invoicePaymentAPI.update(body.id, body.payload)
     }
   })
-  console.log(detailInvoice)
   const handleInvoicePayment = () => {
+    if (!canManageInvoices) {
+      toast.warn("Bạn không có quyền thanh toán hóa đơn.", { autoClose: 1500 })
+      return
+    }
     if (detailInvoice && detailInvoice?.total_amount !== "0.00" && detailInvoice?.payments.length > 0) {
       // dành cho trả 1 phần trước đó
       const payload: InvoicePaymentUpdatePayload = {
@@ -216,7 +235,11 @@ const PaymentDetailModal = ({
             <b>{paymentBefore ? paymentBefore.toLocaleString("vi-VN") : finalAmount.toLocaleString("vi-VN")} đ</b>
           </Descriptions.Item>
           <Descriptions.Item label="Phương thức thanh toán">
-            <Radio.Group value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value)}>
+            <Radio.Group
+              value={paymentMethod}
+              onChange={(e) => handlePaymentMethodChange(e.target.value)}
+              disabled={!canManageInvoices}
+            >
               <Radio value={0}>Tiền mặt</Radio>
               <Radio value={1}>Chuyển khoản ngân hàng</Radio>
             </Radio.Group>
@@ -237,7 +260,11 @@ const PaymentDetailModal = ({
             <b>{paymentBefore ? paymentBefore.toLocaleString("vi-VN") : finalAmount.toLocaleString("vi-VN")} đ</b>
           </Descriptions.Item>
           <Descriptions.Item label="Phương thức thanh toán">
-            <Radio.Group value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value)}>
+            <Radio.Group
+              value={paymentMethod}
+              onChange={(e) => handlePaymentMethodChange(e.target.value)}
+              disabled={!canManageInvoices}
+            >
               <Radio value={0}>Tiền mặt</Radio>
               <Radio value={1}>Chuyển khoản ngân hàng</Radio>
             </Radio.Group>
@@ -258,13 +285,21 @@ const PaymentDetailModal = ({
           <span className="text-red-600 font-semibold text-base">{remainingAmount.toLocaleString("vi-VN")} đ</span>
         </Descriptions.Item>
         <Descriptions.Item label="Phương thức thanh toán">
-          <Radio.Group value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value)}>
+          <Radio.Group
+            value={paymentMethod}
+            onChange={(e) => handlePaymentMethodChange(e.target.value)}
+            disabled={!canManageInvoices}
+          >
             <Radio value={0}>Tiền mặt</Radio>
             <Radio value={1}>Chuyển khoản ngân hàng</Radio>
           </Radio.Group>
         </Descriptions.Item>
       </Descriptions>
     )
+  }
+
+  if (!canViewInvoices) {
+    return null
   }
 
   return (
@@ -278,7 +313,7 @@ const PaymentDetailModal = ({
     >
       {renderDescriptions()}
       <Space className="mt-4 flex justify-end items-center">
-        <Button type="primary" onClick={handleInvoicePayment}>
+        <Button type="primary" onClick={handleInvoicePayment} disabled={!canManageInvoices}>
           Xác nhận thanh toán
         </Button>
         <Button onClick={onClosePayment}>Hủy</Button>

@@ -10,7 +10,7 @@ import {
   Filter,
   RotateCcw
 } from "lucide-react"
-import { Fragment, useState } from "react"
+import { Fragment, useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { toast } from "react-toastify"
 import dayjs from "dayjs"
@@ -27,19 +27,29 @@ import { PaginatedResponse } from "src/Types/utils.type"
 import useQueryParams from "src/Hook/useQueryParams"
 import { path } from "src/Constants/path"
 import PaymentModal from "./PaymentModal"
+import { AppAbility, PermissionGate, useAuthorization } from "src/Authorization"
 
 export default function PayrollListTab() {
   const queryConfig: queryParamConfigPayroll = useQueryParams()
   const queryClient = useQueryClient()
   const navigate = useNavigate()
+  const { can } = useAuthorization()
+  const canViewPayroll = can(AppAbility.PAYROLL_VIEW)
+  const canManagePayroll = can(AppAbility.PAYROLL_MANAGE)
 
   // ========== STATE ==========
   const [isGenerateModalOpen, setIsGenerateModalOpen] = useState(false)
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false)
   const [selectedPayroll, setSelectedPayroll] = useState<Payroll | null>(null)
-  
   const [generateForm] = Form.useForm()
   const [filterForm] = Form.useForm()
+  useEffect(() => {
+    if (!canManagePayroll) {
+      setIsGenerateModalOpen(false)
+      setIsPaymentModalOpen(false)
+      setSelectedPayroll(null)
+    }
+  }, [canManagePayroll])
 
   // ========== QUERIES ==========
   const { data, isFetching } = useQuery({
@@ -63,7 +73,8 @@ export default function PayrollListTab() {
       return payrollAPI.getList(params, controller.signal)
     },
     staleTime: 3 * 60 * 1000,
-    placeholderData: keepPreviousData
+    placeholderData: keepPreviousData,
+    enabled: canViewPayroll
   })
 
   const { data: employeesData } = useQuery({
@@ -72,12 +83,17 @@ export default function PayrollListTab() {
       const controller = new AbortController()
       return employeesAPI.getList({ is_active: "true", per_page: "1000" }, controller.signal)
     },
-    staleTime: 5 * 60 * 1000
+    staleTime: 5 * 60 * 1000,
+    enabled: canViewPayroll
   })
 
   const paginated = data?.data?.data as PaginatedResponse<Payroll>
   const listPayrolls = paginated?.data || []
   const activeEmployees = employeesData?.data?.data?.data || []
+
+  if (!canViewPayroll) {
+    return null
+  }
 
   // ========== MUTATIONS ==========
   const generateMutation = useMutation({
@@ -94,6 +110,10 @@ export default function PayrollListTab() {
 
   // ========== HANDLERS ==========
   const handleOpenGenerateModal = () => {
+    if (!canManagePayroll) {
+      toast.warn("Bạn không có quyền quản lý bảng lương.")
+      return
+    }
     generateForm.resetFields()
     // Set default to current month/year
     generateForm.setFieldsValue({
@@ -109,6 +129,10 @@ export default function PayrollListTab() {
   }
 
   const handleGenerate = () => {
+    if (!canManagePayroll) {
+      toast.warn("Bạn không có quyền quản lý bảng lương.")
+      return
+    }
     generateForm.validateFields().then((values) => {
       const monthDate = dayjs(values.month_year)
       generateMutation.mutate({
@@ -119,6 +143,10 @@ export default function PayrollListTab() {
   }
 
   const handleOpenPaymentModal = (payroll: Payroll) => {
+    if (!canManagePayroll) {
+      toast.warn("Bạn không có quyền quản lý bảng lương.")
+      return
+    }
     setSelectedPayroll(payroll)
     setIsPaymentModalOpen(true)
   }
@@ -287,7 +315,7 @@ export default function PayrollListTab() {
               }}
             />
           </Tooltip>
-          {record.status === PAYROLL_STATUS.DRAFT && (
+          {canManagePayroll && record.status === PAYROLL_STATUS.DRAFT && (
             <Tooltip title="Thanh toán">
               <Button
                 size="small"
@@ -315,15 +343,17 @@ export default function PayrollListTab() {
           <h3 className="text-lg font-semibold">Danh sách Bảng lương</h3>
           <p className="text-gray-500 text-sm">Quản lý bảng lương nhân viên theo tháng</p>
         </div>
-        <Button
-          type="primary"
-          icon={<Plus size={18} />}
-          onClick={handleOpenGenerateModal}
-          size="large"
-          className="bg-blue-500 hover:bg-blue-600"
-        >
-          Tạo bảng lương
-        </Button>
+        <PermissionGate ability={AppAbility.PAYROLL_MANAGE}>
+          <Button
+            type="primary"
+            icon={<Plus size={18} />}
+            onClick={handleOpenGenerateModal}
+            size="large"
+            className="bg-blue-500 hover:bg-blue-600"
+          >
+            Tạo bảng lương
+          </Button>
+        </PermissionGate>
       </div>
 
       {/* Filter Form */}
@@ -444,7 +474,7 @@ export default function PayrollListTab() {
             <span>Tạo bảng lương mới</span>
           </div>
         }
-        open={isGenerateModalOpen}
+        open={canManagePayroll && isGenerateModalOpen}
         onCancel={handleCloseGenerateModal}
         footer={
           <div className="flex justify-end gap-2">
@@ -454,6 +484,7 @@ export default function PayrollListTab() {
               onClick={handleGenerate}
               loading={generateMutation.isPending}
               className="bg-blue-500 hover:bg-blue-600"
+              disabled={!canManagePayroll}
             >
               Tạo bảng lương
             </Button>
@@ -486,7 +517,7 @@ export default function PayrollListTab() {
       </Modal>
 
       {/* Payment Modal */}
-      {selectedPayroll && (
+      {canManagePayroll && selectedPayroll && (
         <PaymentModal
           open={isPaymentModalOpen}
           payroll={selectedPayroll}

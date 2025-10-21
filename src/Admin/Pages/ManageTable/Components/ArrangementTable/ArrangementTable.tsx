@@ -32,6 +32,7 @@ import localeData from "dayjs/plugin/localeData"
 import weekOfYear from "dayjs/plugin/weekOfYear"
 import weekYear from "dayjs/plugin/weekYear"
 import { useNavigate } from "react-router-dom"
+import { AppAbility, useAuthorization } from "src/Authorization"
 
 // Kích hoạt plugin
 dayjs.extend(customParseFormat)
@@ -76,6 +77,10 @@ export default function ArrangementTable({
   const [selectedReservation, setSelectedReservation] = useState<SelectReservation | null>(null)
   const [filters, setFilters] = useState({ number: "", minCapacity: null as number | null })
   const [filteredTables, setFilteredTables] = useState<DiningTable[]>([])
+  const { can } = useAuthorization()
+  const canManageTables = can(AppAbility.TABLES_MANAGE)
+  const canManageReservations = can(AppAbility.RESERVATIONS_MANAGE)
+  const canAssignTable = canManageTables && canManageReservations
 
   const {
     data: dataListTableArrangement,
@@ -92,7 +97,7 @@ export default function ArrangementTable({
       )
     },
     retry: 0,
-    enabled: Boolean(selectedReservation)
+    enabled: Boolean(selectedReservation) && canAssignTable
   })
 
   const listTableArrangement = useMemo(() => {
@@ -104,6 +109,12 @@ export default function ArrangementTable({
   }, [listTableArrangement])
 
   useEffect(() => {
+    if (!canAssignTable && arrangement !== null) {
+      setArrangement(null)
+      setSelectedReservation(null)
+      return
+    }
+
     if (arrangement !== null) {
       let reservedAt = arrangement.reserved_at
       if (reservedAt) {
@@ -114,7 +125,13 @@ export default function ArrangementTable({
         number_of_people: arrangement?.number_of_people as number
       })
     }
-  }, [arrangement])
+  }, [arrangement, canAssignTable, setArrangement])
+
+  useEffect(() => {
+    if (!canAssignTable) {
+      setSelectedTableId(null)
+    }
+  }, [canAssignTable])
 
   const [selectedTableId, setSelectedTableId] = useState<string | null>(null)
 
@@ -158,6 +175,11 @@ export default function ArrangementTable({
   })
 
   const handleCreateTableSession = async (type: string) => {
+    if (!canAssignTable) {
+      toast.warn("Bạn không có quyền xếp bàn.")
+      return
+    }
+
     if (type === "no_pre-order") {
       createTableSessionMutation.mutate({
         employee_id: employeeId as string,
@@ -194,6 +216,10 @@ export default function ArrangementTable({
   const [loading, setLoading] = useState(false)
 
   const handleCheckUpdate = () => {
+    if (!canManageReservations) {
+      toast.warn("Bạn không có quyền cập nhật thông tin đặt bàn.")
+      return
+    }
     if (selectedTableId) {
       toast.error("Đang có phiên bàn nên không thể tiến hành cập nhật!", {
         autoClose: 1500
@@ -235,6 +261,10 @@ export default function ArrangementTable({
 
   // update reservation
   const handleUpdate = () => {
+    if (!canManageReservations) {
+      toast.warn("Bạn không có quyền cập nhật thông tin đặt bàn.")
+      return
+    }
     const values = form.getFieldsValue()
     const { id, reserved_at, number_of_people } = values
 
@@ -278,7 +308,7 @@ export default function ArrangementTable({
         width={1450}
         title="Xếp bàn"
         closable={{ "aria-label": "Custom Close Button" }}
-        open={arrangement !== null}
+        open={arrangement !== null && canAssignTable}
         onCancel={() => setArrangement(null)}
         footer={null}
         style={{ top: 15, overflow: "hidden" }}
@@ -365,7 +395,7 @@ export default function ArrangementTable({
                       </Button>
                       <Button
                         type="primary"
-                        disabled={loading}
+                        disabled={loading || !canManageReservations}
                         htmlType="submit"
                         onClick={handleUpdate}
                         loading={mutationUpdateStatus.isPending}
@@ -375,7 +405,11 @@ export default function ArrangementTable({
                     </div>
                   ) : (
                     <div className="flex justify-end">
-                      <Button type="primary" onClick={handleCheckUpdate} disabled={selectedTableId !== null}>
+                      <Button
+                        type="primary"
+                        onClick={handleCheckUpdate}
+                        disabled={selectedTableId !== null || !canManageReservations}
+                      >
                         Cập nhật
                       </Button>
                     </div>
@@ -394,16 +428,16 @@ export default function ArrangementTable({
                   />
                   <button
                     className={`p-2 py-1 px-3 rounded-md text-white duration-150 
-    ${selectedTableId === null ? "bg-gray-400 cursor-not-allowed" : "bg-blue-500 hover:bg-blue-400"}`}
-                    disabled={selectedTableId === null}
+    ${selectedTableId === null || !canAssignTable ? "bg-gray-400 cursor-not-allowed" : "bg-blue-500 hover:bg-blue-400"}`}
+                    disabled={selectedTableId === null || !canAssignTable}
                     onClick={() => handleCreateTableSession("no_pre-order")}
                   >
                     Xếp bàn
                   </button>
                   <button
                     className={`p-2 py-1 px-3 rounded-md text-white duration-150 
-    ${selectedTableId === null ? "bg-gray-400 cursor-not-allowed" : "bg-orange-500 hover:bg-orange-400"}`}
-                    disabled={selectedTableId === null}
+    ${selectedTableId === null || !canAssignTable ? "bg-gray-400 cursor-not-allowed" : "bg-orange-500 hover:bg-orange-400"}`}
+                    disabled={selectedTableId === null || !canAssignTable}
                     onClick={() => handleCreateTableSession("pre-order")}
                   >
                     Xếp bàn & Đặt món

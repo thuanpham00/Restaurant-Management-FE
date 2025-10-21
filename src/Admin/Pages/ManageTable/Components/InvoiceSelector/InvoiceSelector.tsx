@@ -2,6 +2,7 @@ import { Card, Radio, Space, Typography, Tag, Button, Alert } from 'antd'
 import { CreditCard, AlertCircle } from 'lucide-react'
 import { useMemo } from 'react'
 import type { Invoice, InvoiceDetail } from '../../../../../Types/invoicePayment.type'
+import { AppAbility, useAuthorization } from 'src/Authorization'
 
 const { Text } = Typography
 
@@ -22,9 +23,17 @@ export const InvoiceSelector = ({
   onProceedPayment,
   disabled
 }: InvoiceSelectorProps) => {
+  const { can } = useAuthorization()
+  const canViewInvoices = can(AppAbility.INVOICES_VIEW)
+  const canManageInvoices = can(AppAbility.INVOICES_MANAGE)
+
+  if (!canViewInvoices) {
+    return null
+  }
+
   // Calculate remaining amount for each invoice
   const getRemaining = (invoice: Invoice | InvoiceDetail) => {
-    const payments = 'payments' in invoice ? invoice.payments : []
+    const payments = 'payments' in invoice && Array.isArray(invoice.payments) ? invoice.payments : []
     const totalPaid = payments.filter((p) => p.status === 1).reduce((sum, p) => sum + Number(p.amount), 0)
     return Number(invoice.final_amount) - totalPaid
   }
@@ -137,7 +146,7 @@ export const InvoiceSelector = ({
             block
             icon={<CreditCard size={16} />}
             onClick={onProceedPayment}
-            disabled={disabled}
+            disabled={disabled || !canManageInvoices}
           >
             Tiến hành thanh toán #{singleInvoice.invoice.id}
           </Button>
@@ -172,8 +181,12 @@ export const InvoiceSelector = ({
 
         <Radio.Group
           value={selectedInvoiceId}
-          onChange={(e) => onSelectInvoice(e.target.value)}
+          onChange={(e) => {
+            if (!canManageInvoices) return
+            onSelectInvoice(e.target.value)
+          }}
           style={{ width: '100%' }}
+          disabled={!canManageInvoices}
         >
           <Space direction="vertical" style={{ width: '100%' }} size="small">
             {selectableInvoices.map((item) => (
@@ -187,7 +200,10 @@ export const InvoiceSelector = ({
                     selectedInvoiceId === item.invoice.id ? '2px solid #1890ff' : '1px solid #d9d9d9',
                   cursor: 'pointer'
                 }}
-                onClick={() => onSelectInvoice(item.invoice.id)}
+                onClick={() => {
+                  if (!canManageInvoices) return
+                  onSelectInvoice(item.invoice.id)
+                }}
               >
                 <Radio value={item.invoice.id}>
                   <Space direction="vertical" style={{ marginLeft: 8 }}>
@@ -237,8 +253,11 @@ export const InvoiceSelector = ({
           size="large"
           block
           icon={<CreditCard size={16} />}
-          onClick={onProceedPayment}
-          disabled={disabled || !selectedInfo}
+          onClick={() => {
+            if (!canManageInvoices) return
+            onProceedPayment()
+          }}
+          disabled={disabled || !selectedInfo || !canManageInvoices}
         >
           Thanh toán hóa đơn #{selectedInvoiceId}
         </Button>

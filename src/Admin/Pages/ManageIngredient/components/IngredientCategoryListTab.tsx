@@ -4,7 +4,7 @@ import { Button, Descriptions, Form, Input, Modal, Space, Spin, Switch, Table, T
 import { ColumnsType } from "antd/es/table"
 import { isUndefined, omit, omitBy } from "lodash"
 import { Plus, Filter, RotateCcw, Edit, Trash2, Eye, AlertTriangle } from "lucide-react"
-import { Fragment, useState } from "react"
+import { Fragment, useEffect, useState } from "react"
 import { createSearchParams, useNavigate, useSearchParams } from "react-router-dom"
 import { toast } from "react-toastify"
 import { ingredientCategoriesAPI } from "src/Apis/Admin"
@@ -18,12 +18,15 @@ import {
   queryParamConfigIngredientCategory
 } from "src/Types/ingredientCategory.type"
 import { PaginatedResponse } from "src/Types/utils.type"
+import { AppAbility, PermissionGate, useAuthorization } from "src/Authorization"
 
 export default function IngredientCategoryListTab() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const [searchParams, setSearchParams] = useSearchParams()
   const queryParams: queryParamConfigIngredientCategory = useQueryParams()
+  const { can } = useAuthorization()
+  const canManageIngredients = can(AppAbility.INGREDIENTS_MANAGE)
 
   const queryConfig: queryParamConfigIngredientCategory = omitBy(
     {
@@ -47,6 +50,13 @@ export default function IngredientCategoryListTab() {
   const isLowStock = (current: string, minimum: string) => {
     return parseFloat(current) <= parseFloat(minimum)
   }
+
+  useEffect(() => {
+    if (!canManageIngredients) {
+      setIsModalOpen(false)
+      setEditingId(null)
+    }
+  }, [canManageIngredients])
 
   // ========== QUERIES ==========
   const { data, isFetching } = useQuery({
@@ -110,6 +120,10 @@ export default function IngredientCategoryListTab() {
 
   // ========== HANDLERS ==========
   const handleOpenModal = (record?: IngredientCategory) => {
+    if (!canManageIngredients) {
+      toast.warn("Bạn không có quyền quản lý nguyên liệu.")
+      return
+    }
     if (record) {
       setEditingId(record.id)
       form.setFieldsValue({
@@ -125,6 +139,10 @@ export default function IngredientCategoryListTab() {
   }
 
   const handleSubmit = async () => {
+    if (!canManageIngredients) {
+      toast.warn("Bạn không có quyền quản lý nguyên liệu.")
+      return
+    }
     try {
       const values = await form.validateFields()
       if (editingId) {
@@ -138,6 +156,10 @@ export default function IngredientCategoryListTab() {
   }
 
   const handleDelete = (id: string) => {
+    if (!canManageIngredients) {
+      toast.warn("Bạn không có quyền quản lý nguyên liệu.")
+      return
+    }
     Modal.confirm({
       title: "Xác nhận xóa",
       content: "Bạn có chắc chắn muốn xóa danh mục này? Chỉ có thể xóa danh mục không có nguyên liệu.",
@@ -236,25 +258,29 @@ export default function IngredientCategoryListTab() {
             }}
             title="Xem chi tiết"
           />
-          <Button
-            type="link"
-            icon={<Edit size={16} />}
-            onClick={(e) => {
-              e.stopPropagation()
-              handleOpenModal(record)
-            }}
-            title="Chỉnh sửa"
-          />
-          <Button
-            danger
-            type="link"
-            icon={<Trash2 size={16} />}
-            onClick={(e) => {
-              e.stopPropagation()
-              handleDelete(record.id)
-            }}
-            title="Xóa"
-          />
+          {canManageIngredients ? (
+            <>
+              <Button
+                type="link"
+                icon={<Edit size={16} />}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  handleOpenModal(record)
+                }}
+                title="Chỉnh sửa"
+              />
+              <Button
+                danger
+                type="link"
+                icon={<Trash2 size={16} />}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  handleDelete(record.id)
+                }}
+                title="Xóa"
+              />
+            </>
+          ) : null}
         </Space>
       )
     }
@@ -286,9 +312,11 @@ export default function IngredientCategoryListTab() {
           <div className="text-sm text-gray-600">
             Tổng số: <span className="font-semibold">{paginated?.total || 0}</span> danh mục
           </div>
-          <Button type="primary" icon={<Plus size={16} />} onClick={() => handleOpenModal()}>
-            Thêm danh mục
-          </Button>
+          <PermissionGate ability={AppAbility.INGREDIENTS_MANAGE}>
+            <Button type="primary" icon={<Plus size={16} />} onClick={() => handleOpenModal()}>
+              Thêm danh mục
+            </Button>
+          </PermissionGate>
         </div>
 
         {/* Table */}
@@ -315,7 +343,7 @@ export default function IngredientCategoryListTab() {
       {/* Create/Edit Modal */}
       <Modal
         title={<span className="text-base">{editingId ? "Cập nhật danh mục" : "Thêm danh mục mới"}</span>}
-        open={isModalOpen}
+        open={canManageIngredients && isModalOpen}
         onOk={handleSubmit}
         onCancel={() => {
           setIsModalOpen(false)
@@ -326,6 +354,7 @@ export default function IngredientCategoryListTab() {
         cancelText="Hủy"
         width={550}
         confirmLoading={createMutation.isPending || updateMutation.isPending}
+        okButtonProps={{ disabled: !canManageIngredients }}
         styles={{
           body: {
             maxHeight: "calc(100vh - 200px)",
@@ -367,16 +396,18 @@ export default function IngredientCategoryListTab() {
           >
             Đóng
           </Button>,
-          <Button
-            key="edit"
-            type="primary"
-            onClick={() => {
-              setIsDetailModalOpen(false)
-              handleOpenModal(selectedCategory!)
-            }}
-          >
-            Chỉnh sửa
-          </Button>
+          canManageIngredients ? (
+            <Button
+              key="edit"
+              type="primary"
+              onClick={() => {
+                setIsDetailModalOpen(false)
+                handleOpenModal(selectedCategory!)
+              }}
+            >
+              Chỉnh sửa
+            </Button>
+          ) : null
         ]}
         width={900}
         styles={{

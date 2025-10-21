@@ -6,6 +6,7 @@ import { toast } from "react-toastify"
 import { Fragment } from "react/jsx-runtime"
 import { tableSessionAPI } from "src/Apis"
 import { HistoryTableSession } from "src/Types/tableSession.type"
+import { AppAbility, useAuthorization } from "src/Authorization"
 
 type Props = {
   listPendingTableSession: HistoryTableSession[]
@@ -23,6 +24,9 @@ function PendingTableSessionSelector({
   idDiningTable
 }: Props) {
   const queryClient = useQueryClient()
+  const { can } = useAuthorization()
+  const canViewTables = can(AppAbility.TABLES_VIEW)
+  const canManageTables = can(AppAbility.TABLES_MANAGE)
   const updateStatusTableSessionMutation = useMutation({
     mutationFn: (idTS: string) => {
       return tableSessionAPI.updateStatusTableSession(idTS)
@@ -36,6 +40,10 @@ function PendingTableSessionSelector({
   })
 
   const handleUpdateTableSessionStatus = (idTableSession: string, type: "serve" | "cancel") => {
+    if (!canManageTables) {
+      toast.warn("Bạn không có quyền cập nhật phiên bàn.", { autoClose: 1500 })
+      return
+    }
     const isServe = type === "serve"
 
     Modal.confirm({
@@ -66,6 +74,10 @@ function PendingTableSessionSelector({
         console.log(isServe ? "Hủy phục vụ" : "Hủy thao tác hủy phiên")
       }
     })
+  }
+
+  if (!canViewTables) {
+    return null
   }
 
   return (
@@ -185,6 +197,7 @@ function PendingTableSessionSelector({
                               borderColor: "#ef233c"
                             }}
                             onClick={() => handleUpdateTableSessionStatus(session.session_id, "cancel")}
+                            disabled={!canManageTables}
                           >
                             Hủy phiên
                           </Button>
@@ -195,6 +208,7 @@ function PendingTableSessionSelector({
                               borderColor: "#38b000"
                             }}
                             onClick={() => handleUpdateTableSessionStatus(session.session_id, "serve")}
+                            disabled={!canManageTables}
                             onMouseEnter={(e) => {
                               e.currentTarget.style.backgroundColor = "#70d444"
                               e.currentTarget.style.borderColor = "#70d444"

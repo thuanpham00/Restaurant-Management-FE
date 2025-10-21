@@ -28,6 +28,7 @@ import { assets } from "src/Assets/assets"
 import { path } from "src/Constants/path"
 import { isError400 } from "src/Helpers/utils"
 import { AddDishToMenu, Menus } from "src/Types/menu.type"
+import { AppAbility, PermissionGate, useAuthorization } from "src/Authorization"
 
 type DishMenu = {
   id: string
@@ -44,6 +45,8 @@ export default function MenuDetail() {
   const { state } = useLocation()
   const queryClient = useQueryClient()
   const navigate = useNavigate()
+  const { can } = useAuthorization()
+  const canManageMenu = can(AppAbility.MENU_MANAGE)
 
   const detailMenu = state?.dataMenu as Menus
 
@@ -81,6 +84,10 @@ export default function MenuDetail() {
   })
 
   const handleUpdate = () => {
+    if (!canManageMenu) {
+      toast.warn("Bạn không có quyền quản lý thực đơn.")
+      return
+    }
     form.validateFields().then((values) => {
       setLoading(true)
 
@@ -140,6 +147,10 @@ export default function MenuDetail() {
   })
 
   const handleDelete = (id: string) => {
+    if (!canManageMenu) {
+      toast.warn("Bạn không có quyền quản lý thực đơn.")
+      return
+    }
     Modal.confirm({
       title: "Bạn có chắc muốn xóa?",
       content: "Thực đơn sẽ bị xóa vĩnh viễn.",
@@ -208,39 +219,51 @@ export default function MenuDetail() {
       title: "Hành động",
       key: "action",
       align: "center",
-      render: (record) => (
-        <div className="flex justify-center gap-2">
-          <Button type="link" onClick={() => handleUpdateDish(record)}>
-            <Edit size={16} />
-          </Button>
-          <Button
-            type="link"
-            danger
-            onClick={() => {
-              Modal.confirm({
-                title: "Xác nhận xóa",
-                content: `Bạn có chắc muốn xóa món "${record.dish_name}" khỏi thực đơn?`,
-                okText: "Xóa",
-                cancelText: "Hủy",
-                okType: "danger",
-                onOk: () => {
-                  deleteMenuItemMutation.mutate({
-                    idMenu: detailMenu.id,
-                    idMenuItem: record.id
-                  })
-                }
-              })
-            }}
-          >
-            <Trash2 size={16} />
-          </Button>
-        </div>
-      )
+      render: (record) => {
+        if (!canManageMenu) {
+          return <span className="text-gray-400 italic">Không có quyền</span>
+        }
+        return (
+          <div className="flex justify-center gap-2">
+            <Button type="link" onClick={() => handleUpdateDish(record)}>
+              <Edit size={16} />
+            </Button>
+            <Button
+              type="link"
+              danger
+              onClick={() => {
+                Modal.confirm({
+                  title: "Xác nhận xóa",
+                  content: `Bạn có chắc muốn xóa món "${record.dish_name}" khỏi thực đơn?`,
+                  okText: "Xóa",
+                  cancelText: "Hủy",
+                  okType: "danger",
+                  onOk: () => {
+                    deleteMenuItemMutation.mutate({
+                      idMenu: detailMenu.id,
+                      idMenuItem: record.id
+                    })
+                  }
+                })
+              }}
+            >
+              <Trash2 size={16} />
+            </Button>
+          </div>
+        )
+      }
     }
   ]
 
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [formAddMenuItem] = Form.useForm()
+
+  useEffect(() => {
+    if (!canManageMenu) {
+      setCheckUpdate(false)
+      setIsModalOpen(false)
+    }
+  }, [canManageMenu])
 
   const { data: availableDishesData, isLoading: isLoadingDishes } = useQuery({
     queryKey: ["available-dishes", detailMenu.id],
@@ -262,6 +285,10 @@ export default function MenuDetail() {
   const [editing, setEditing] = useState<boolean | string | null>(null)
 
   const handleUpdateDish = (record: DishMenu | boolean) => {
+    if (!canManageMenu) {
+      toast.warn("Bạn không có quyền quản lý thực đơn.")
+      return
+    }
     setIsModalOpen(true)
     if (record === true) {
       formAddMenuItem.setFieldsValue({
@@ -311,6 +338,10 @@ export default function MenuDetail() {
   })
 
   const handleUpdateForm = () => {
+    if (!canManageMenu) {
+      toast.warn("Bạn không có quyền quản lý thực đơn.")
+      return
+    }
     formAddMenuItem.validateFields().then(async (values) => {
       if (typeof editing === "string") {
         await updateDishToMenuMutation.mutateAsync({
@@ -392,36 +423,40 @@ export default function MenuDetail() {
             <Switch checkedChildren="Đang áp dụng" unCheckedChildren="Không hoạt động" disabled={!checkUpdate} />
           </Form.Item>
 
-          <div>
-            {checkUpdate ? (
-              <div className="flex items-center gap-2 justify-end">
-                <Button danger onClick={() => setCheckUpdate(false)}>
-                  Hủy
-                </Button>
-                <Button type="primary" disabled={loading} htmlType="submit" onClick={handleUpdate}>
-                  Lưu
-                </Button>
-              </div>
-            ) : (
-              <div className="flex justify-end gap-2">
-                <Button danger type="primary" onClick={() => handleDelete(detailMenu.id)}>
-                  Xóa
-                </Button>
-                <Button onClick={() => setCheckUpdate(true)} type="primary">
-                  Cập nhật
-                </Button>
-              </div>
-            )}
-          </div>
+          <PermissionGate ability={AppAbility.MENU_MANAGE} fallback={null}>
+            <div>
+              {checkUpdate ? (
+                <div className="flex items-center gap-2 justify-end">
+                  <Button danger onClick={() => setCheckUpdate(false)}>
+                    Hủy
+                  </Button>
+                  <Button type="primary" disabled={loading} htmlType="submit" onClick={handleUpdate}>
+                    Lưu
+                  </Button>
+                </div>
+              ) : (
+                <div className="flex justify-end gap-2">
+                  <Button danger type="primary" onClick={() => handleDelete(detailMenu.id)}>
+                    Xóa
+                  </Button>
+                  <Button onClick={() => setCheckUpdate(true)} type="primary">
+                    Cập nhật
+                  </Button>
+                </div>
+              )}
+            </div>
+          </PermissionGate>
         </Form>
       </div>
 
       <div className="mt-6 bg-white border border-gray-200 rounded-lg shadow-md p-4">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-lg font-semibold text-gray-800">Danh sách món ăn trong thực đơn</h2>
-          <Button type="primary" onClick={() => handleUpdateDish(true)}>
-            + Thêm món ăn
-          </Button>
+          <PermissionGate ability={AppAbility.MENU_MANAGE}>
+            <Button type="primary" onClick={() => handleUpdateDish(true)}>
+              + Thêm món ăn
+            </Button>
+          </PermissionGate>
         </div>
 
         {isFetching ? (
@@ -453,7 +488,12 @@ export default function MenuDetail() {
           <Empty description="Không có món ăn nào trong menu" />
         )}
 
-        <Modal title="Thêm món ăn vào menu" open={isModalOpen} onCancel={() => setIsModalOpen(false)} footer={false}>
+        <Modal
+          title="Thêm món ăn vào menu"
+          open={canManageMenu && isModalOpen}
+          onCancel={() => setIsModalOpen(false)}
+          footer={false}
+        >
           {isLoadingDishes ? (
             <div className="flex justify-center items-center py-8">
               <Spin />

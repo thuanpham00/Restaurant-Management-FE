@@ -3,13 +3,20 @@ import { Helmet } from "react-helmet-async"
 import { Segmented } from "antd"
 import { Table as TableIcon, Calendar as CalendarIcon } from "lucide-react"
 import NavigateBack from "src/Admin/Components/NavigateBack"
+import { AppAbility, useAuthorization } from "src/Authorization"
 import ShiftTableView from "./components/ShiftTableView"
 import ShiftCalendarView from "./components/ShiftCalendarView"
 
 type ViewMode = "table" | "calendar"
 
 export default function ManageShift() {
+  const { can } = useAuthorization()
+  const canViewShifts = can(AppAbility.SHIFTS_VIEW)
   const [viewMode, setViewMode] = useState<ViewMode>("table")
+
+  if (!canViewShifts) {
+    return null
+  }
 
   return (
     <div>

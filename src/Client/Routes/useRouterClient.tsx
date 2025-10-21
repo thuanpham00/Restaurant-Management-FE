@@ -4,9 +4,9 @@ import MainLayout from "../Layout/MainLayout"
 import MainLayoutAuth from "../Layout/MainLayoutAuth"
 import { path } from "../../Constants/path"
 import { lazy, Suspense } from "react"
-import { rolesForApi } from "src/Helpers/role_permission"
 import { useAppStore } from "src/StateGlobal/zustand"
 import ForgotPassword from "../Pages/Login/ForgotPassword"
+import { resolveRole } from "src/Authorization"
 
 // Lazy load các component
 const Home = lazy(() => import("../Pages/Home"))
@@ -37,7 +37,7 @@ const RejectRouter = () => {
 
 const BlockAdminForClient = () => {
   const { role } = useAppStore()
-  if (role === rolesForApi.ADMIN) {
+  if (role && resolveRole(role)) {
     return <Navigate to={path.AdminNotFound} replace />
   }
   return <Outlet />

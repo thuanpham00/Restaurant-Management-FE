@@ -9,6 +9,7 @@ import {
   InputNumber,
   Modal,
   Pagination,
+  Result,
   Select,
   Space,
   Spin,
@@ -18,9 +19,9 @@ import {
 } from "antd"
 import { isUndefined, omit, omitBy } from "lodash"
 import { Beef, Filter, RotateCcw } from "lucide-react"
-import { Fragment, useMemo, useState } from "react"
+import { Fragment, useCallback, useEffect, useMemo, useState } from "react"
 import { Helmet } from "react-helmet-async"
-import { createSearchParams, Link, useNavigate, useSearchParams } from "react-router-dom"
+import { createSearchParams, useNavigate, useSearchParams } from "react-router-dom"
 import { toast } from "react-toastify"
 import NavigateBack from "src/Admin/Components/NavigateBack"
 import { dishesAPI, dishCategoryAPI } from "src/Apis/Admin"
@@ -31,10 +32,29 @@ import { cleanObject } from "src/Helpers/common"
 import useQueryParams from "src/Hook/useQueryParams"
 import { Dish } from "src/Types/dish.type"
 import { queryParamConfigCategoryDish, queryParamConfigDish } from "src/Types/queryParams.type"
+import { AppAbility, PermissionGate, useAuthorization } from "src/Authorization"
+
+type DishFormPayload = {
+  name: string
+  desc: string
+  price: string
+  cooking_time: number
+  category_id: string
+  is_active: boolean
+  image?: File
+}
 
 export default function ManageDish() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
+  const { can } = useAuthorization()
+  const canViewDish = can(AppAbility.DISH_VIEW)
+  const canManageDish = can(AppAbility.DISH_MANAGE)
+  const ensureManagePermission = useCallback(() => {
+    if (canManageDish) return true
+    toast.warning("Bạn không có quyền quản lý món ăn.", { autoClose: 1500 })
+    return false
+  }, [canManageDish])
   const queryParams: queryParamConfigDish = useQueryParams()
   const queryConfig: queryParamConfigDish = omitBy(
     {
@@ -57,6 +77,7 @@ export default function ManageDish() {
       setTimeout(() => controller.abort(), 10000)
       return dishesAPI.getList(queryConfig, controller.signal)
     },
+    enabled: canViewDish,
     retry: 0,
     staleTime: 3 * 60 * 1000,
     placeholderData: keepPreviousData
@@ -69,114 +90,164 @@ export default function ManageDish() {
       setTimeout(() => controller.abort(), 10000)
       return dishCategoryAPI.getListNameCategory(controller.signal)
     },
+    enabled: canViewDish,
     retry: 0,
     staleTime: 3 * 60 * 1000,
     placeholderData: keepPreviousData
   })
 
   const paginated = data?.data.data
-  const listDish = paginated?.data
+  const listDish: Dish[] = paginated?.data || []
 
   const listNameDishCategory = getListDishCategory.data?.data?.data || ([] as { id: string; name: string }[])
 
   const [isModalOpen, setIsModalOpen] = useState(false)
-  const [form] = Form.useForm<Dish>()
+  const [editingDishId, setEditingDishId] = useState<string | null>(null)
+  const [form] = Form.useForm<Record<string, any>>()
 
   const [file, setFile] = useState<File | undefined>(undefined)
   const [previewOldImage, setPreviewOldImage] = useState<string>("")
+
+  const resetFormState = useCallback(() => {
+    setFile(undefined)
+    setPreviewOldImage("")
+    setEditingDishId(null)
+    form.resetFields()
+  }, [form])
+
+  const handleModalClose = useCallback(() => {
+    setIsModalOpen(false)
+    resetFormState()
+  }, [resetFormState])
 
   const previewImage = useMemo(() => {
     return file ? URL.createObjectURL(file) : ""
   }, [file])
 
-  const handleChangeImage = (file?: File) => {
-    setFile(file as File)
+  useEffect(() => {
+    if (!previewImage) return
+    return () => {
+      URL.revokeObjectURL(previewImage)
+    }
+  }, [previewImage])
+
+  const handleChangeImage = (nextFile?: File) => {
+    setFile(nextFile)
+    if (nextFile) {
+      setPreviewOldImage("")
+    }
   }
 
-  const createMutation = useMutation({
-    mutationFn: (values: {
-      name: string
-      desc: string
-      price: string
-      cooking_time: number
-      category_id: string
-      is_active: boolean
-      image?: File
-    }) => {
-      return dishesAPI.create(values)
-    },
+  useEffect(() => {
+    if (canManageDish) return
+    handleModalClose()
+  }, [canManageDish, handleModalClose])
+
+  const createDishMutation = useMutation({
+    mutationFn: (payload: DishFormPayload) => dishesAPI.create(payload),
     onSuccess: () => {
-      toast.success("Tạo món ăn thành công!", {
-        autoClose: 1500
-      })
+      toast.success("Tạo món ăn thành công!", { autoClose: 1500 })
       queryClient.invalidateQueries({ queryKey: ["listDish"] })
-      setIsModalOpen(false)
-      setFile(undefined) // reset file
+      handleModalClose()
     },
     onError: () => {
-      toast.error("Tạo món ăn thất bại", {
-        autoClose: 1500
-      })
+      toast.error("Tạo món ăn thất bại", { autoClose: 1500 })
     }
   })
 
-  const handleEdit = async (record: any | boolean) => {
+  const updateDishMutation = useMutation({
+    mutationFn: ({ id, payload }: { id: string; payload: DishFormPayload }) => dishesAPI.update(id, payload),
+    onSuccess: () => {
+      toast.success("Cập nhật món ăn thành công!", { autoClose: 1500 })
+      queryClient.invalidateQueries({ queryKey: ["listDish"] })
+      handleModalClose()
+    },
+    onError: () => {
+      toast.error("Cập nhật món ăn thất bại", { autoClose: 1500 })
+    }
+  })
+
+  const deleteDishMutation = useMutation({
+    mutationFn: (id: string) => dishesAPI.delete(id),
+    onSuccess: () => {
+      toast.success("Xóa món ăn thành công!", { autoClose: 1500 })
+      queryClient.invalidateQueries({ queryKey: ["listDish"] })
+    },
+    onError: (error: any) => {
+      toast.error(error?.response?.data?.message || "Không thể xóa món ăn", { autoClose: 1500 })
+    }
+  })
+
+  const isEditing = Boolean(editingDishId)
+
+  const handleEdit = (record: Dish | true) => {
+    if (!ensureManagePermission()) return
+    resetFormState()
+
     if (record === true) {
       form.setFieldsValue({
         name: "",
         desc: "",
-        price: 0,
-        cooking_time: 0,
-        category_id: "",
+        price: "",
+        cooking_time: undefined,
+        category_id: undefined,
         is_active: true
       })
-      setFile(undefined)
-      setPreviewOldImage("")
+      setIsModalOpen(true)
+      return
     }
+
+    const categoryId = record.category_id || record.category?.id || ""
+    setEditingDishId(record.id)
+    form.setFieldsValue({
+      name: record.name,
+      desc: record.desc ?? "",
+      price: record.price !== null && record.price !== undefined ? record.price.toString() : "",
+      cooking_time: record.cooking_time,
+      category_id: categoryId,
+      is_active: record.is_active
+    })
+    setPreviewOldImage(record.image || "")
     setIsModalOpen(true)
   }
 
-  const handleUpdate = () => {
-    form.validateFields().then(async (values) => {
-      const payload: any = {
-        ...values
-      }
+  const handleSubmit = (values: Record<string, any>) => {
+    if (!ensureManagePermission()) return
 
-      if (file) {
-        payload.image = file
-      }
+    const payload: DishFormPayload = {
+      name: values.name?.trim() || "",
+      desc: (values.desc ?? "").trim(),
+      price: values.price?.toString().trim() ?? "",
+      cooking_time: Number(values.cooking_time),
+      category_id: values.category_id,
+      is_active: Boolean(values.is_active)
+    }
 
-      await createMutation.mutateAsync(payload)
-    })
+    if (file) {
+      payload.image = file
+    }
+
+    if (isEditing && editingDishId) {
+      updateDishMutation.mutate({ id: editingDishId, payload })
+    } else {
+      createDishMutation.mutate(payload)
+    }
   }
 
-  // const deleteMutation = useMutation({
-  //   mutationFn: (id: string) => dishesAPI.delete(id),
-  //   onSuccess: () => {
-  //     toast.success("Xóa món ăn thành công!", {
-  //       autoClose: 1500
-  //     })
-  //     queryClient.invalidateQueries({ queryKey: ["listDish"] })
-  //   },
-  //   onError: (error) => {
-  //     if (isError400<any>(error)) {
-  //       toast.error(error.response?.data?.message, {
-  //         autoClose: 1500
-  //       })
-  //     }
-  //   }
-  // })
-
-  // const handleDelete = (id: string) => {
-  //   Modal.confirm({
-  //     title: "Bạn có chắc muốn xóa?",
-  //     content: "Món ăn sẽ bị xóa vĩnh viễn.",
-  //     okText: "Xóa",
-  //     okType: "danger",
-  //     cancelText: "Hủy",
-  //     onOk: () => deleteMutation.mutate(id)
-  //   })
-  // }
+  const handleDelete = (id: string) => {
+    if (!ensureManagePermission()) return
+    Modal.confirm({
+      title: "Bạn có chắc muốn xóa?",
+      content: "Món ăn sẽ bị xóa vĩnh viễn.",
+      okText: "Xóa",
+      okType: "danger",
+      cancelText: "Hủy",
+      onOk: async () => {
+        if (!ensureManagePermission()) return
+        await deleteDishMutation.mutateAsync(id)
+      }
+    })
+  }
 
   const columns = [
     {
@@ -247,19 +318,21 @@ export default function ManageDish() {
     {
       title: <div className="text-center">Hành động</div>,
       key: "actions",
-      render: (_: any, record: any) => (
-        <div className="flex items-center justify-center">
-          <Link
-            to={`${path.AdminDish}/${record.id}`}
-            state={{
-              dataDish: record
-            }}
-            className="text-blue-500"
-          >
-            Xem chi tiết
-          </Link>
-        </div>
-      )
+      render: (_: any, record: any) => {
+        if (!canManageDish) {
+          return <span className="text-gray-400 italic">Không có quyền</span>
+        }
+        return (
+          <div className="text-left">
+            <Button type="link" onClick={() => handleEdit(record)}>
+              Sửa
+            </Button>
+            <Button danger type="link" onClick={() => handleDelete(record.id)}>
+              Xóa
+            </Button>
+          </div>
+        )
+      }
     }
   ]
 
@@ -302,11 +375,32 @@ export default function ManageDish() {
     filterForm.resetFields()
   }
 
+  if (!canViewDish) {
+    return (
+      <div>
+        <Helmet>
+          <title>Danh sách món ăn</title>
+          <meta name="description" content="Đây là trang Restaurant Management - Quản lý món ăn" />
+        </Helmet>
+        <Result
+          status="403"
+          title="403"
+          subTitle="Bạn không có quyền xem danh sách món ăn."
+          extra={
+            <Button type="primary" onClick={() => navigate(-1)}>
+              Quay lại
+            </Button>
+          }
+        />
+      </div>
+    )
+  }
+
   return (
     <div>
       <Helmet>
         <title>Danh sách món ăn</title>
-        <meta name="description" content="Đây là trang Restaurant Management - Quản lý bàn" />
+        <meta name="description" content="Đây là trang Restaurant Management - Quản lý món ăn" />
       </Helmet>
       <NavigateBack />
       <h1 className="text-2xl font-bold text-gray-800 bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600 my-2">
@@ -396,11 +490,13 @@ export default function ManageDish() {
           </div>
         </Form>
 
-        <div className="flex justify-end mt-4">
-          <Button type="primary" icon={<Beef />} onClick={() => handleEdit(true)} className="whitespace-nowrap">
-            Thêm món ăn
-          </Button>
-        </div>
+        <PermissionGate ability={AppAbility.DISH_MANAGE}>
+          <div className="flex justify-end mt-4">
+            <Button type="primary" icon={<Beef />} onClick={() => handleEdit(true)} className="whitespace-nowrap">
+              Thêm món ăn
+            </Button>
+          </div>
+        </PermissionGate>
       </div>
 
       {isFetching ? (
@@ -417,7 +513,7 @@ export default function ManageDish() {
             <div style={{ minHeight: 100, width: 300, marginTop: 10 }} />
           </Spin>
         </div>
-      ) : (listDish as Dish[])?.length === 0 ? (
+      ) : listDish.length === 0 ? (
         <Empty description="Không có món ăn hợp lệ" className="mt-16" />
       ) : (
         <Fragment>
@@ -453,10 +549,10 @@ export default function ManageDish() {
         open={isModalOpen}
         width={700}
         style={{ top: 40 }}
-        onCancel={() => setIsModalOpen(false)}
+        onCancel={handleModalClose}
         footer={false}
       >
-        <Form form={form} layout="vertical" onFinish={handleUpdate}>
+        <Form form={form} layout="vertical" onFinish={handleSubmit}>
           <div className="flex items-center">
             <div>
               <Form.Item name="name" label="Tên món" rules={[{ required: true, message: "Vui lòng nhập tên món" }]}>
@@ -467,8 +563,13 @@ export default function ManageDish() {
                 <Input.TextArea rows={3} placeholder="Mô tả món ăn..." />
               </Form.Item>
               <div className="flex items-center justify-between">
-                <Form.Item label="Giá gốc" className="flex-1" name="price">
-                  <Input placeholder="Nhập tên món" />
+                <Form.Item
+                  label="Giá gốc"
+                  className="flex-1"
+                  name="price"
+                  rules={[{ required: true, message: "Nhập giá gốc" }]}
+                >
+                  <Input placeholder="Nhập giá gốc" />
                 </Form.Item>
 
                 <Form.Item
@@ -489,7 +590,7 @@ export default function ManageDish() {
                   ))}
                 </Select>
               </Form.Item>
-              <Form.Item name="is_active" label="Trạng thái" initialValue={true}>
+              <Form.Item name="is_active" label="Trạng thái" initialValue={true} valuePropName="checked">
                 <Switch checkedChildren="Hiện" unCheckedChildren="Ẩn" />
               </Form.Item>
             </div>
@@ -509,11 +610,15 @@ export default function ManageDish() {
           </div>
 
           <div className="flex justify-end mt-4">
-            <Button onClick={() => setIsModalOpen(false)} className="mr-2">
+            <Button onClick={handleModalClose} className="mr-2">
               Hủy
             </Button>
-            <Button type="primary" htmlType="submit" loading={createMutation.isPending}>
-              Thêm món ăn
+            <Button
+              type="primary"
+              htmlType="submit"
+              loading={createDishMutation.isPending || updateDishMutation.isPending}
+            >
+              {isEditing ? "Cập nhật món ăn" : "Thêm món ăn"}
             </Button>
           </div>
         </Form>

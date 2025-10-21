@@ -25,6 +25,7 @@ import { ColumnsType } from "antd/es/table"
 import { ArrowRight, Info } from "lucide-react"
 import type { TableSession } from "src/Types/tableSession.type"
 import { TableSessionStatus, TableSessionType } from "src/Types/product.type"
+import { AppAbility, useAuthorization } from "src/Authorization"
 
 const { Text } = Typography
 const { TextArea } = Input
@@ -61,9 +62,19 @@ export default function SplitTableModal({
 }: SplitTableModalProps) {
   const queryClient = useQueryClient()
   const [form] = Form.useForm()
+  const { can } = useAuthorization()
+  const canViewTables = can(AppAbility.TABLES_VIEW)
+  const canManageTables = can(AppAbility.TABLES_MANAGE)
 
   const [selectedItems, setSelectedItems] = useState<OrderItemToSplit[]>([])
   const [targetType, setTargetType] = useState<"new" | "existing">("new")
+
+  useEffect(() => {
+    if (visible && !canViewTables) {
+      toast.warn("Bạn không có quyền xem chi tiết bàn.", { autoClose: 1500 })
+      onClose()
+    }
+  }, [visible, canViewTables, onClose])
 
   // Lấy danh sách bàn trống (cho việc tạo session mới)
   const { data: dataEmptyTables } = useQuery({
@@ -80,7 +91,7 @@ export default function SplitTableModal({
         controller.signal
       )
     },
-    enabled: visible && targetType === "new",
+  enabled: visible && targetType === "new" && canViewTables,
     retry: 0
   })
 
@@ -105,7 +116,7 @@ export default function SplitTableModal({
         controller.signal
       )
     },
-    enabled: visible && targetType === "existing",
+  enabled: visible && targetType === "existing" && canViewTables,
     retry: 0
   })
 
@@ -269,6 +280,7 @@ export default function SplitTableModal({
 
   // Xử lý thay đổi số lượng món
   const handleQuantityChange = (orderItemId: string, quantity: number) => {
+    if (!canManageTables) return
     const originalItem = dataTableSessionOrder?.items?.find((item) => item.order_item_id === orderItemId)
     if (!originalItem) return
 
@@ -319,6 +331,7 @@ export default function SplitTableModal({
             value={selected?.quantity_to_transfer || 0}
             onChange={(value) => handleQuantityChange(record.order_item_id, value || 0)}
             style={{ width: "100%" }}
+            disabled={!canManageTables}
           />
         )
       }
@@ -395,6 +408,10 @@ export default function SplitTableModal({
   })
 
   const handleSubmit = async () => {
+    if (!canManageTables) {
+      toast.warn("Bạn không có quyền tách bàn.", { autoClose: 1500 })
+      return
+    }
     try {
       const values = await form.validateFields()
 

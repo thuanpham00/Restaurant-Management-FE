@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Col, Modal, Radio, Tag } from "antd"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { assets } from "src/Assets/assets"
 import { DiningTable } from "src/Types/diningTable.type"
 import FullCalendar from "@fullcalendar/react"
@@ -8,6 +8,7 @@ import timeGridPlugin from "@fullcalendar/timegrid"
 import interactionPlugin from "@fullcalendar/interaction"
 import { keepPreviousData, useQuery } from "@tanstack/react-query"
 import { diningTableAPI } from "src/Apis"
+import { AppAbility, useAuthorization } from "src/Authorization"
 
 export default function ArrangementTableItem({
   table,
@@ -21,6 +22,11 @@ export default function ArrangementTableItem({
   onSelect: (id: string | null) => void
 }) {
   const [viewCalendar, setViewCalendar] = useState(false)
+  const { can } = useAuthorization()
+  const canManageTables = can(AppAbility.TABLES_MANAGE)
+  const canManageReservations = can(AppAbility.RESERVATIONS_MANAGE)
+  const canViewReservations = can(AppAbility.RESERVATIONS_VIEW)
+  const canAssignTable = canManageTables && canManageReservations
 
   const { data } = useQuery({
     queryKey: ["listReservationTableByIdTable", table.id],
@@ -32,7 +38,7 @@ export default function ArrangementTableItem({
     retry: 0,
     staleTime: 3 * 60 * 1000,
     placeholderData: keepPreviousData,
-    enabled: Boolean(viewCalendar)
+    enabled: Boolean(viewCalendar) && canViewReservations
   })
 
   const listReservationFromTable = data?.data.data
@@ -51,6 +57,12 @@ export default function ArrangementTableItem({
             : "#ff9800" // Pending
   }))
 
+  useEffect(() => {
+    if (!canViewReservations && viewCalendar) {
+      setViewCalendar(false)
+    }
+  }, [canViewReservations, viewCalendar])
+
   return (
     <Col xs={24} sm={12} md={8} lg={12} xl={12}>
       <button
@@ -58,10 +70,10 @@ export default function ArrangementTableItem({
       block relative rounded-xl overflow-hidden cursor-pointer transition duration-300 hover:shadow-lg h-52
       border-4 
       ${selectedTableId === table.id ? " border-green-500 shadow-[0_0_14px_#22c55e]" : "border-transparent"}
-      ${!table.table_available ? "opacity-80 cursor-not-allowed" : ""}
+      ${!table.table_available || !canAssignTable ? "opacity-80 cursor-not-allowed" : ""}
     `}
         onClick={() => {
-          if (!table.table_available) return
+          if (!table.table_available || !canAssignTable) return
           onSelect(selectedTableId === table.id ? null : table.id)
         }}
       >
@@ -79,7 +91,7 @@ export default function ArrangementTableItem({
           <Radio
             className="absolute top-4 right-2"
             checked={selectedTableId === table.id}
-            disabled={!table.table_available}
+            disabled={!table.table_available || !canAssignTable}
           />
 
           <h2 className="mb-2 text-xl font-semibold text-shadow">
@@ -108,8 +120,10 @@ export default function ArrangementTableItem({
             className="mt-2 text-xs p-2 bg-blue-500 hover:bg-blue-400 duration-200 rounded-md"
             onClick={(e) => {
               e.stopPropagation()
+              if (!canViewReservations) return
               setViewCalendar(true)
             }}
+            disabled={!canViewReservations}
           >
             Xem lịch
           </button>
@@ -120,7 +134,7 @@ export default function ArrangementTableItem({
         width={1200}
         title={`Lịch đặt bàn ${table.table_number} - ${table.id} | Giờ hoạt động (10:00AM - 0:00PM)`}
         closable={{ "aria-label": "Custom Close Button" }}
-        open={viewCalendar === true}
+  open={viewCalendar === true && canViewReservations}
         onCancel={() => setViewCalendar(false)}
         footer={null}
         style={{ top: 30 }}

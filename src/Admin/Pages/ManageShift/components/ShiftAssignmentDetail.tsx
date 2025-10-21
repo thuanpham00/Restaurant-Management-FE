@@ -38,6 +38,7 @@ import {
 } from "src/Types/shift.type"
 import { PaginatedResponse, SuccessResponse } from "src/Types/utils.type"
 import { Calendar, Clock, Users, Plus, Trash2, CheckCircle, XCircle, Edit } from "lucide-react"
+import { AppAbility, useAuthorization } from "src/Authorization"
 
 interface AssignFormValues {
   employee_ids: string[]
@@ -77,6 +78,37 @@ export default function ShiftAssignmentDetail() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const shiftId = id || ""
+  const { can } = useAuthorization()
+  const canViewShifts = can(AppAbility.SHIFTS_VIEW)
+  const canManageShifts = can(AppAbility.SHIFTS_MANAGE)
+  const canViewEmployees = can(AppAbility.EMPLOYEES_VIEW)
+
+  const ensureManagePermission = useCallback(() => {
+    if (canManageShifts) return true
+    toast.warning("Bạn không có quyền quản lý phân công ca làm việc!", { autoClose: 2000 })
+    return false
+  }, [canManageShifts])
+
+  const ensureCanViewEmployees = useCallback(() => {
+    if (canViewEmployees) return true
+    toast.warning("Bạn không có quyền xem danh sách nhân viên", { autoClose: 2000 })
+    return false
+  }, [canViewEmployees])
+
+  if (!canViewShifts) {
+    return (
+      <Result
+        status="403"
+        title="403"
+        subTitle="Bạn không có quyền xem phân công ca làm việc."
+        extra={
+          <Button type="primary" onClick={() => navigate(-1)}>
+            Quay lại
+          </Button>
+        }
+      />
+    )
+  }
 
   const [isAssignModalOpen, setIsAssignModalOpen] = useState(false)
   const [isCheckInModalOpen, setIsCheckInModalOpen] = useState(false)
@@ -96,7 +128,7 @@ export default function ShiftAssignmentDetail() {
   // ===== QUERIES =====
   const { data: shiftDetailData, isFetching: isFetchingShift, isError: isShiftError } = useQuery({
     queryKey: shiftDetailQueryKey,
-    enabled: Boolean(shiftId),
+    enabled: Boolean(shiftId) && canViewShifts,
     queryFn: () => shiftsAPI.getDetail(shiftId),
     staleTime: 60_000,
     refetchOnWindowFocus: false,
@@ -105,7 +137,7 @@ export default function ShiftAssignmentDetail() {
 
   const { data: assignmentsData, isFetching: isFetchingAssignments, refetch: refetchAssignments } = useQuery({
     queryKey: assignmentsQueryKey,
-    enabled: Boolean(shiftId),
+    enabled: Boolean(shiftId) && canViewShifts,
     queryFn: () => {
       const controller = new AbortController()
       return employeeShiftsAPI.getList({ per_page: "999", shift_id: shiftId }, controller.signal)
@@ -119,6 +151,7 @@ export default function ShiftAssignmentDetail() {
 
   const { data: employeesData, isFetching: isFetchingEmployees } = useQuery({
     queryKey: ["employees-active"],
+    enabled: canViewEmployees,
     queryFn: () => {
       const controller = new AbortController()
       return employeesAPI.getList({ per_page: "999", is_active: "1" }, controller.signal)
@@ -130,23 +163,78 @@ export default function ShiftAssignmentDetail() {
   const [bulkMode, setBulkMode] = useState<BulkMode | null>(null)
   const [isBulkModalOpen, setIsBulkModalOpen] = useState(false)
 
-  const shift = shiftDetailData?.data?.data as Shift | undefined
-  const assignmentsPaginated = assignmentsData?.data?.data as PaginatedResponse<EmployeeShift> | undefined
-  const assignments = assignmentsPaginated?.data || []
-  const employees: EmployeeOption[] = (employeesData?.data?.data as any)?.data || []
-
-  const selectedAssignments = useMemo(
-    () => assignments.filter((assignment) => selectedAssignmentIds.includes(assignment.id)),
-    [assignments, selectedAssignmentIds]
-  )
+  useEffect(() => {
+    if (canManageShifts) return
+    if (isAssignModalOpen) {
+      setIsAssignModalOpen(false)
+      assignForm.resetFields()
+    }
+    if (isCheckInModalOpen) {
+      setIsCheckInModalOpen(false)
+      setSelectedAssignment(null)
+      checkInForm.resetFields()
+    }
+    if (isCheckOutModalOpen) {
+      setIsCheckOutModalOpen(false)
+      setSelectedAssignment(null)
+      checkOutForm.resetFields()
+    }
+    if (isStatusModalOpen) {
+      setIsStatusModalOpen(false)
+      setSelectedAssignment(null)
+      statusForm.resetFields()
+    }
+    if (isBulkModalOpen) {
+      setIsBulkModalOpen(false)
+      bulkForm.resetFields()
+    }
+    if (bulkMode !== null) {
+      setBulkMode(null)
+    }
+    if (selectedAssignmentIds.length > 0) {
+      setSelectedAssignmentIds([])
+    }
+  }, [
+    canManageShifts,
+    isAssignModalOpen,
+    isCheckInModalOpen,
+    isCheckOutModalOpen,
+    isStatusModalOpen,
+    isBulkModalOpen,
+    bulkMode,
+    selectedAssignmentIds.length,
+    assignForm,
+    bulkForm,
+    checkInForm,
+    checkOutForm,
+    statusForm
+  ])
 
   useEffect(() => {
-    if (selectedAssignmentIds.length === 0) return
+    if (canViewEmployees) return
+    if (isAssignModalOpen) {
+      setIsAssignModalOpen(false)
+      assignForm.resetFields()
+    }
+  }, [canViewEmployees, isAssignModalOpen, assignForm])
+
+  const shift = shiftDetailData?.data?.data as Shift | undefined
+  const assignmentsPaginated = assignmentsData?.data?.data as PaginatedResponse<EmployeeShift> | undefined
+  const assignments = canViewShifts ? assignmentsPaginated?.data || [] : []
+  const employees: EmployeeOption[] = canViewEmployees ? ((employeesData?.data?.data as any)?.data || []) : []
+
+  const selectedAssignments = useMemo(() => {
+    if (!canManageShifts) return []
+    return assignments.filter((assignment) => selectedAssignmentIds.includes(assignment.id))
+  }, [assignments, selectedAssignmentIds, canManageShifts])
+
+  useEffect(() => {
+    if (!canManageShifts || selectedAssignmentIds.length === 0) return
     setSelectedAssignmentIds((prev) => {
       const validIds = prev.filter((id) => assignments.some((assignment) => assignment.id === id))
       return validIds.length === prev.length ? prev : validIds
     })
-  }, [assignments, selectedAssignmentIds.length])
+  }, [assignments, selectedAssignmentIds.length, canManageShifts])
 
   const normalizeTimeToMinutes = useCallback((input: dayjs.Dayjs | string | null | undefined): number | null => {
     if (!input) return null
@@ -529,12 +617,18 @@ export default function ShiftAssignmentDetail() {
 
   // ===== HANDLERS =====
   const handleOpenAssignModal = () => {
+    if (!ensureManagePermission()) return
+    if (!ensureCanViewEmployees()) return
     assignForm.resetFields()
     setIsAssignModalOpen(true)
   }
 
   const handleSubmitAssign = () => {
-    assignForm.validateFields().then((values) => {
+    if (!ensureManagePermission()) return
+    if (!ensureCanViewEmployees()) return
+    assignForm.validateFields().then((values: AssignFormValues) => {
+      if (!ensureManagePermission()) return
+      if (!ensureCanViewEmployees()) return
       if (!values.employee_ids || values.employee_ids.length === 0) {
         toast.warning("Vui lòng chọn ít nhất 1 nhân viên", { autoClose: 2000 })
         return
@@ -544,6 +638,7 @@ export default function ShiftAssignmentDetail() {
   }
 
   const handleOpenCheckInModal = (record: EmployeeShift) => {
+    if (!ensureManagePermission()) return
     setSelectedAssignment(record)
     checkInForm.setFieldsValue({
       time: dayjs(),
@@ -553,8 +648,10 @@ export default function ShiftAssignmentDetail() {
   }
 
   const handleSubmitCheckIn = () => {
+    if (!ensureManagePermission()) return
     if (!selectedAssignment) return
-    checkInForm.validateFields().then((values) => {
+    checkInForm.validateFields().then((values: CheckFormValues) => {
+      if (!ensureManagePermission()) return
       checkInMutation.mutate({
         id: selectedAssignment.id,
         values,
@@ -564,6 +661,7 @@ export default function ShiftAssignmentDetail() {
   }
 
   const handleOpenCheckOutModal = (record: EmployeeShift) => {
+    if (!ensureManagePermission()) return
     setSelectedAssignment(record)
     checkOutForm.setFieldsValue({
       time: dayjs(),
@@ -574,8 +672,10 @@ export default function ShiftAssignmentDetail() {
   }
 
   const handleSubmitCheckOut = () => {
+    if (!ensureManagePermission()) return
     if (!selectedAssignment) return
-    checkOutForm.validateFields().then((values) => {
+    checkOutForm.validateFields().then((values: CheckFormValues) => {
+      if (!ensureManagePermission()) return
       checkOutMutation.mutate({
         id: selectedAssignment.id,
         values,
@@ -585,6 +685,7 @@ export default function ShiftAssignmentDetail() {
   }
 
   const handleOpenStatusModal = (record: EmployeeShift) => {
+    if (!ensureManagePermission()) return
     setSelectedAssignment(record)
     statusForm.setFieldsValue({
       status: record.status,
@@ -594,13 +695,16 @@ export default function ShiftAssignmentDetail() {
   }
 
   const handleSubmitStatus = () => {
+    if (!ensureManagePermission()) return
     if (!selectedAssignment) return
-    statusForm.validateFields().then((values) => {
+    statusForm.validateFields().then((values: { status: number; notes?: string }) => {
+      if (!ensureManagePermission()) return
       updateStatusMutation.mutate({ id: selectedAssignment.id, data: values })
     })
   }
 
   const handleOpenBulkModal = (mode: BulkMode) => {
+    if (!ensureManagePermission()) return
     if (selectedAssignments.length === 0) {
       toast.warning("Vui lòng chọn ít nhất 1 nhân viên", { autoClose: 2000 })
       return
@@ -628,6 +732,7 @@ export default function ShiftAssignmentDetail() {
   }
 
   const handleSubmitBulk = () => {
+    if (!ensureManagePermission()) return
     if (!bulkMode) return
     if (selectedAssignments.length === 0) {
       toast.warning("Vui lòng chọn ít nhất 1 nhân viên", { autoClose: 2000 })
@@ -652,24 +757,29 @@ export default function ShiftAssignmentDetail() {
 
     bulkForm
       .validateFields()
-      .then((values) => {
+      .then((values: CheckFormValues) => {
+        if (!ensureManagePermission()) return
         bulkCheckMutation.mutate({ assignments: selectedAssignments, mode: bulkMode, values })
       })
       .catch(() => null)
   }
 
   const handleDeleteAssignment = (record: EmployeeShift) => {
+    if (!ensureManagePermission()) return
     Modal.confirm({
       title: "Xác nhận xóa",
       content: `Xóa phân công của nhân viên "${record.employee?.full_name || "N/A"}" khỏi ca "${shift?.name || ""}"?`,
       okText: "Xóa",
       okType: "danger",
       cancelText: "Hủy",
-      onOk: () => deleteMutation.mutate(record.id)
+      onOk: () => {
+        if (!ensureManagePermission()) return
+        deleteMutation.mutate(record.id)
+      }
     })
   }
 
-  const columns: ColumnsType<EmployeeShift> = [
+  const baseColumns: ColumnsType<EmployeeShift> = [
     {
       title: "Nhân viên",
       key: "employee",
@@ -715,53 +825,63 @@ export default function ShiftAssignmentDetail() {
       dataIndex: "notes",
       key: "notes",
       render: (value: string | null) => (value ? value : <span className="text-gray-400">-</span>)
-    },
-    {
-      title: "Thao tác",
-      key: "actions",
-      render: (_: unknown, record) => (
-        <Space size="small" wrap>
-          {!record.check_in && (
-            <Button
-              size="small"
-              type="primary"
-              icon={<CheckCircle size={14} />}
-              onClick={() => handleOpenCheckInModal(record)}
-              loading={checkInMutation.isPending && selectedAssignment?.id === record.id}
-            >
-              Check-in
-            </Button>
-          )}
-          {record.check_in && !record.check_out && (
-            <Button
-              size="small"
-              danger
-              icon={<XCircle size={14} />}
-              onClick={() => handleOpenCheckOutModal(record)}
-              loading={checkOutMutation.isPending && selectedAssignment?.id === record.id}
-            >
-              Check-out
-            </Button>
-          )}
-          <Button
-            size="small"
-            icon={<Edit size={14} />}
-            onClick={() => handleOpenStatusModal(record)}
-            loading={updateStatusMutation.isPending && selectedAssignment?.id === record.id}
-          >
-            Trạng thái
-          </Button>
-          <Button
-            size="small"
-            danger
-            icon={<Trash2 size={14} />}
-            onClick={() => handleDeleteAssignment(record)}
-            loading={deleteMutation.isPending}
-          />
-        </Space>
-      )
     }
   ]
+
+  const columns: ColumnsType<EmployeeShift> = canManageShifts
+    ? [
+        ...baseColumns,
+        {
+          title: "Thao tác",
+          key: "actions",
+          render: (_: unknown, record) => (
+            <Space size="small" wrap>
+              {!record.check_in && (
+                <Button
+                  size="small"
+                  type="primary"
+                  icon={<CheckCircle size={14} />}
+                  onClick={() => handleOpenCheckInModal(record)}
+                  loading={checkInMutation.isPending && selectedAssignment?.id === record.id}
+                  disabled={!canManageShifts}
+                >
+                  Check-in
+                </Button>
+              )}
+              {record.check_in && !record.check_out && (
+                <Button
+                  size="small"
+                  danger
+                  icon={<XCircle size={14} />}
+                  onClick={() => handleOpenCheckOutModal(record)}
+                  loading={checkOutMutation.isPending && selectedAssignment?.id === record.id}
+                  disabled={!canManageShifts}
+                >
+                  Check-out
+                </Button>
+              )}
+              <Button
+                size="small"
+                icon={<Edit size={14} />}
+                onClick={() => handleOpenStatusModal(record)}
+                loading={updateStatusMutation.isPending && selectedAssignment?.id === record.id}
+                disabled={!canManageShifts}
+              >
+                Trạng thái
+              </Button>
+              <Button
+                size="small"
+                danger
+                icon={<Trash2 size={14} />}
+                onClick={() => handleDeleteAssignment(record)}
+                loading={deleteMutation.isPending}
+                disabled={!canManageShifts}
+              />
+            </Space>
+          )
+        }
+      ]
+    : baseColumns
 
   const pageTitle = shift ? `Chi tiết phân công - ${shift.name}` : "Chi tiết phân công"
 
@@ -824,14 +944,18 @@ export default function ShiftAssignmentDetail() {
                     type="primary"
                     icon={<Plus size={16} />}
                     onClick={handleOpenAssignModal}
-                    disabled={availableEmployees.length === 0 && !isFetchingEmployees}
+                    disabled={
+                      !canManageShifts ||
+                      !canViewEmployees ||
+                      (!isFetchingEmployees && availableEmployees.length === 0)
+                    }
                   >
                     Thêm phân công
                   </Button>
                   <Button
                     icon={<CheckCircle size={16} />}
                     onClick={() => handleOpenBulkModal("check-in")}
-                    disabled={!canBulkCheckIn || bulkCheckMutation.isPending}
+                    disabled={!canManageShifts || !canBulkCheckIn || bulkCheckMutation.isPending}
                     loading={bulkCheckMutation.isPending && bulkMode === "check-in"}
                   >
                     Check-in hàng loạt
@@ -840,7 +964,7 @@ export default function ShiftAssignmentDetail() {
                     icon={<XCircle size={16} />}
                     danger
                     onClick={() => handleOpenBulkModal("check-out")}
-                    disabled={!canBulkCheckOut || bulkCheckMutation.isPending}
+                    disabled={!canManageShifts || !canBulkCheckOut || bulkCheckMutation.isPending}
                     loading={bulkCheckMutation.isPending && bulkMode === "check-out"}
                   >
                     Check-out hàng loạt
@@ -895,7 +1019,7 @@ export default function ShiftAssignmentDetail() {
               </div>
             </div>
 
-            {selectedAssignments.length > 0 && (
+            {selectedAssignments.length > 0 && canManageShifts && (
               <div className="mb-3 text-sm text-blue-600">
                 Đã chọn {selectedAssignments.length} nhân viên để thao tác nhanh.
                 {!canBulkCheckIn && (
@@ -916,11 +1040,15 @@ export default function ShiftAssignmentDetail() {
               columns={columns}
               dataSource={assignments}
               loading={isFetchingAssignments}
-              rowSelection={{
-                selectedRowKeys: selectedAssignmentIds,
-                onChange: (keys) => setSelectedAssignmentIds(keys as string[]),
-                preserveSelectedRowKeys: true
-              }}
+              rowSelection={
+                canManageShifts
+                  ? {
+                      selectedRowKeys: selectedAssignmentIds,
+                      onChange: (keys) => setSelectedAssignmentIds(keys as string[]),
+                      preserveSelectedRowKeys: true
+                    }
+                  : undefined
+              }
               pagination={{ pageSize: 10, showSizeChanger: true, pageSizeOptions: [10, 20, 50] }}
               locale={{
                 emptyText: (
@@ -947,53 +1075,68 @@ export default function ShiftAssignmentDetail() {
             okText="Phân công"
             cancelText="Hủy"
             destroyOnClose
+            okButtonProps={{
+              disabled:
+                !canManageShifts ||
+                !canViewEmployees ||
+                (!isFetchingEmployees && availableEmployees.length === 0)
+            }}
           >
-            <Form form={assignForm} layout="vertical" preserve={false}>
-              <Form.Item
-                name="employee_ids"
-                label="Chọn nhân viên"
-                rules={[{ required: true, message: "Vui lòng chọn ít nhất 1 nhân viên" }]}
-              >
-                <Select
-                  mode="multiple"
-                  placeholder={isFetchingEmployees ? "Đang tải nhân viên..." : "Chọn nhân viên"}
-                  options={availableEmployees.map((employee) => ({
-                    label: `${employee.full_name}${employee.employee_code ? ` (${employee.employee_code})` : ""}`,
-                    value: employee.id
-                  }))}
-                  disabled={isFetchingEmployees || availableEmployees.length === 0}
-                  optionFilterProp="label"
-                  loading={isFetchingEmployees}
-                  showSearch
-                />
-              </Form.Item>
+            {!canViewEmployees ? (
+              <Alert
+                type="warning"
+                showIcon
+                message="Bạn không có quyền xem danh sách nhân viên"
+                description="Vui lòng liên hệ quản trị viên để được cấp quyền trước khi phân công."
+              />
+            ) : (
+              <Form form={assignForm} layout="vertical" preserve={false}>
+                <Form.Item
+                  name="employee_ids"
+                  label="Chọn nhân viên"
+                  rules={[{ required: true, message: "Vui lòng chọn ít nhất 1 nhân viên" }]}
+                >
+                  <Select
+                    mode="multiple"
+                    placeholder={isFetchingEmployees ? "Đang tải nhân viên..." : "Chọn nhân viên"}
+                    options={availableEmployees.map((employee) => ({
+                      label: `${employee.full_name}${employee.employee_code ? ` (${employee.employee_code})` : ""}`,
+                      value: employee.id
+                    }))}
+                    disabled={isFetchingEmployees || availableEmployees.length === 0}
+                    optionFilterProp="label"
+                    loading={isFetchingEmployees}
+                    showSearch
+                  />
+                </Form.Item>
 
-              {availableEmployees.length === 0 && !isFetchingEmployees && (
-                <Alert
-                  type="info"
-                  showIcon
-                  message="Tất cả nhân viên đã được phân vào ca này"
-                  description="Hãy xóa phân công hiện tại hoặc kích hoạt thêm nhân viên để phân công mới."
-                  className="mb-3"
-                />
-              )}
+                {availableEmployees.length === 0 && !isFetchingEmployees && (
+                  <Alert
+                    type="info"
+                    showIcon
+                    message="Tất cả nhân viên đã được phân vào ca này"
+                    description="Hãy xóa phân công hiện tại hoặc kích hoạt thêm nhân viên để phân công mới."
+                    className="mb-3"
+                  />
+                )}
 
-              <Form.Item name="status" label="Trạng thái ban đầu" initialValue={SHIFT_STATUS.SCHEDULED}>
-                <Select>
-                  {Object.entries(SHIFT_STATUS_LABELS).map(([key, label]) => (
-                    <Select.Option key={key} value={parseInt(key)}>
-                      <Tag color={SHIFT_STATUS_COLORS[parseInt(key) as keyof typeof SHIFT_STATUS_COLORS]}>
-                        {label}
-                      </Tag>
-                    </Select.Option>
-                  ))}
-                </Select>
-              </Form.Item>
+                <Form.Item name="status" label="Trạng thái ban đầu" initialValue={SHIFT_STATUS.SCHEDULED}>
+                  <Select>
+                    {Object.entries(SHIFT_STATUS_LABELS).map(([key, label]) => (
+                      <Select.Option key={key} value={parseInt(key)}>
+                        <Tag color={SHIFT_STATUS_COLORS[parseInt(key) as keyof typeof SHIFT_STATUS_COLORS]}>
+                          {label}
+                        </Tag>
+                      </Select.Option>
+                    ))}
+                  </Select>
+                </Form.Item>
 
-              <Form.Item name="notes" label="Ghi chú">
-                <Input.TextArea rows={3} placeholder="Ghi chú (nếu có)..." />
-              </Form.Item>
-            </Form>
+                <Form.Item name="notes" label="Ghi chú">
+                  <Input.TextArea rows={3} placeholder="Ghi chú (nếu có)..." />
+                </Form.Item>
+              </Form>
+            )}
           </Modal>
 
           {/* ========== CHECK-IN MODAL ========== */}
@@ -1008,6 +1151,7 @@ export default function ShiftAssignmentDetail() {
             confirmLoading={checkInMutation.isPending}
             okText="Xác nhận"
             cancelText="Hủy"
+            okButtonProps={{ disabled: !canManageShifts }}
           >
             {selectedAssignment && (
               <div className="bg-blue-50 border border-blue-100 rounded p-3 mb-4 text-sm">
@@ -1044,6 +1188,7 @@ export default function ShiftAssignmentDetail() {
             confirmLoading={checkOutMutation.isPending}
             okText="Xác nhận"
             cancelText="Hủy"
+            okButtonProps={{ disabled: !canManageShifts }}
           >
             {selectedAssignment && (
               <div className="bg-orange-50 border border-orange-100 rounded p-3 mb-4 text-sm">
@@ -1080,6 +1225,7 @@ export default function ShiftAssignmentDetail() {
             confirmLoading={updateStatusMutation.isPending}
             okText="Cập nhật"
             cancelText="Hủy"
+            okButtonProps={{ disabled: !canManageShifts }}
           >
             {selectedAssignment && (
               <div className="bg-gray-50 border border-gray-200 rounded p-3 mb-4 text-sm">
@@ -1122,6 +1268,7 @@ export default function ShiftAssignmentDetail() {
             cancelText="Hủy"
             confirmLoading={bulkCheckMutation.isPending}
             destroyOnClose
+            okButtonProps={{ disabled: !canManageShifts }}
           >
             <Alert
               type="info"

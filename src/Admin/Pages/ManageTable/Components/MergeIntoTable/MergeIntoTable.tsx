@@ -9,6 +9,7 @@ import { useAppStore } from "src/StateGlobal/zustand"
 import { queryParamConfigTableSessions } from "src/Types/queryParams.type"
 import { isError400 } from "src/Helpers/utils"
 import { ErrorResponse } from "src/Types/utils.type"
+import { AppAbility, useAuthorization } from "src/Authorization"
 
 export default function MergeIntoTable({
   listTableSessionActiveData,
@@ -25,6 +26,8 @@ export default function MergeIntoTable({
   const { employeeId } = useAppStore()
   const [selectedSessionIds, setSelectedSessionIds] = useState<string[]>([])
   const [mainSessionId, setMainSessionId] = useState<string | null>(null)
+  const { can } = useAuthorization()
+  const canManageTables = can(AppAbility.TABLES_MANAGE)
 
   const clearSelection = useCallback(() => {
     setSelectedSessionIds([])
@@ -91,8 +94,18 @@ export default function MergeIntoTable({
     }
   }, [mergedTable, selectedSessionIds.length, mainSessionId, clearSelection, resetMergeState])
 
+  useEffect(() => {
+    if (!canManageTables && mergedTable) {
+      setMergedTable(false)
+    }
+  }, [canManageTables, mergedTable, setMergedTable])
+
   const handleMergeTable = () => {
-  if (selectedCount < 2) {
+    if (!canManageTables) {
+      message.warning("Bạn không có quyền quản lý bàn.")
+      return
+    }
+    if (selectedCount < 2) {
       message.warning("Cần chọn ít nhất 2 bàn để gộp!")
       return
     }
@@ -122,12 +135,16 @@ export default function MergeIntoTable({
     setMergedTable(false)
   }
 
+  if (!canManageTables) {
+    return null
+  }
+
   return (
     <Modal
       width={1400}
       title="Gộp bàn"
       closable={{ "aria-label": "Custom Close Button" }}
-      open={mergedTable === true}
+      open={mergedTable === true && canManageTables}
       onCancel={handleCloseModal}
       footer={null}
       destroyOnClose

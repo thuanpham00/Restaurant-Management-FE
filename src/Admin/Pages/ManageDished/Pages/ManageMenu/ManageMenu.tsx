@@ -27,13 +27,16 @@ import { cleanObject } from "src/Helpers/common"
 import useQueryParams from "src/Hook/useQueryParams"
 import { queryParamConfigMenu } from "src/Types/queryParams.type"
 import { PaginatedResponse } from "src/Types/utils.type"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { toast } from "react-toastify"
 import { Menus } from "src/Types/menu.type"
+import { AppAbility, PermissionGate, useAuthorization } from "src/Authorization"
 
 export default function ManageMenu() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
+  const { can } = useAuthorization()
+  const canManageMenu = can(AppAbility.MENU_MANAGE)
   const queryParams: queryParamConfigMenu = useQueryParams()
   const queryConfig: queryParamConfigMenu = omitBy(
     {
@@ -162,7 +165,18 @@ export default function ManageMenu() {
   const [editingId, setEditingId] = useState<string | null | boolean>(null)
   const [form] = Form.useForm<Menus>()
 
+  useEffect(() => {
+    if (!canManageMenu) {
+      setIsModalOpen(false)
+      setEditingId(null)
+    }
+  }, [canManageMenu])
+
   const handleEdit = async (record: any | boolean) => {
+    if (!canManageMenu) {
+      toast.warn("Bạn không có quyền quản lý thực đơn.")
+      return
+    }
     if (record === true) {
       form.setFieldsValue({
         name: "",
@@ -194,6 +208,10 @@ export default function ManageMenu() {
   })
 
   const handleUpdate = () => {
+    if (!canManageMenu) {
+      toast.warn("Bạn không có quyền quản lý thực đơn.")
+      return
+    }
     if (editingId === true) {
       form.validateFields().then((values) => {
         createMutation.mutate(values)
@@ -253,11 +271,13 @@ export default function ManageMenu() {
           </div>
         </Form>
 
-        <div className="flex justify-end mt-4">
-          <Button type="primary" icon={<Beef />} onClick={() => handleEdit(true)} className="whitespace-nowrap">
-            Thêm thực đơn
-          </Button>
-        </div>
+        <PermissionGate ability={AppAbility.MENU_MANAGE}>
+          <div className="flex justify-end mt-4">
+            <Button type="primary" icon={<Beef />} onClick={() => handleEdit(true)} className="whitespace-nowrap">
+              Thêm thực đơn
+            </Button>
+          </div>
+        </PermissionGate>
       </div>
 
       {isFetching ? (

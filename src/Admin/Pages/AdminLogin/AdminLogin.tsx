@@ -13,6 +13,7 @@ import { authAPI } from "src/Apis/Admin"
 import { isError401, isError422 } from "src/Helpers/utils"
 import { ErrorResponse } from "src/Types/utils.type"
 import { useAppStore } from "src/StateGlobal/zustand"
+import { resolveRole } from "src/Authorization"
 import { toast } from "react-toastify"
 import { EmployeeProfile } from "src/Types/user.type"
 
@@ -43,11 +44,18 @@ export default function AdminLogin() {
           toast.success(response.data.message, {
             autoClose: 1000
           })
-          setIsAuthenticated(true)
-          setAvatar(response.data.data.user.avatar)
-          setNameUser(response.data.data.user.name)
-          setRole(response.data.data.user.role.name)
-          setEmployeeId((response.data.data.user.employee_profile as EmployeeProfile).id)
+          const user = response.data.data.user
+        const roleName = user.role?.name ?? null
+
+        setIsAuthenticated(true)
+          setAvatar(user.avatar)
+          setNameUser(user.name)
+          setRole(roleName)
+          setEmployeeId((user.employee_profile as EmployeeProfile)?.id ?? null)
+
+        if (!resolveRole(roleName)) {
+          toast.warn("Vai trò người dùng không hợp lệ, vui lòng liên hệ quản trị viên để được cấp lại quyền.")
+        }
         } else if (user.customer_profile) {
           toast.error("Tài khoản bạn không đủ quyền truy cập!", {
             autoClose: 1500

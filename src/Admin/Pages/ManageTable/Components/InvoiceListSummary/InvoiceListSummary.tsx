@@ -3,6 +3,7 @@ import { FileText, Eye } from "lucide-react"
 import { useQuery } from "@tanstack/react-query"
 import { invoicePaymentAPI } from "src/Apis/Admin/invoicePayment.api"
 import type { Invoice } from "../../../../../Types/invoicePayment.type"
+import { AppAbility, useAuthorization } from "src/Authorization"
 
 const { Text } = Typography
 
@@ -13,16 +14,23 @@ interface InvoiceListSummaryProps {
 }
 
 export const InvoiceListSummary = ({ invoices, tableSessionId, onViewDetail }: InvoiceListSummaryProps) => {
+  const { can } = useAuthorization()
+  const canViewInvoices = can(AppAbility.INVOICES_VIEW)
+
   // ✅ Fetch invoice summary from backend API - Much simpler!
   const { data: summaryData, isLoading: isLoadingSummary } = useQuery({
     queryKey: ["invoiceSummary", tableSessionId],
     queryFn: () => invoicePaymentAPI.getInvoiceSummary(tableSessionId),
-    enabled: Boolean(tableSessionId && invoices.length > 0),
+    enabled: Boolean(tableSessionId && invoices.length > 0 && canViewInvoices),
     staleTime: 10000, // 10s for realtime updates
     refetchOnMount: true
   })
 
   const summary = summaryData?.data?.data?.summary
+
+  if (!canViewInvoices) {
+    return null
+  }
 
   // Get status info
   const getStatusInfo = (status: number) => {

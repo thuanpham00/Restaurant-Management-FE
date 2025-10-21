@@ -1,13 +1,14 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Navigate, Outlet, useRoutes } from "react-router-dom"
-import { lazy, Suspense } from "react"
+import { lazy, Suspense, ComponentType, LazyExoticComponent } from "react"
 import MainLayoutAdmin from "../Layouts/MainLayoutAdmin"
 import { path } from "src/Constants/path"
 import LayoutAuthAdmin from "../Layouts/LayoutAuthAdmin"
-import { rolesForApi } from "src/Helpers/role_permission"
 import { useAppStore } from "src/StateGlobal/zustand"
 import ManagePromotion from "../Pages/ManageFinancial/Pages/ManagePromotion"
 import ManageInvoice from "../Pages/ManageFinancial/Pages/ManageInvoice"
 import InvoiceDetail from "../Pages/ManageFinancial/Pages/InvoiceDetail"
+import { FEATURE_VIEW_ABILITY, FeatureKey, PermissionBoundary, resolveRole } from "src/Authorization"
 import DishDetail from "../Pages/ManageDished/Pages/DishDetail"
 
 const AdminLogin = lazy(() => import("../Pages/AdminLogin"))
@@ -36,6 +37,45 @@ const ManageStockLoss = lazy(() => import("../Pages/ManageStockLoss"))
 const ManageRoles = lazy(() => import("../Pages/ManageRoles"))
 const ManagePermissionMatrix = lazy(() => import("../Pages/ManagePermissionMatrix"))
 
+type GuardedComponent = LazyExoticComponent<ComponentType<any>> | ComponentType<any>
+
+const withPermission = (feature: FeatureKey, Component: GuardedComponent) => (
+  <Suspense>
+    <PermissionBoundary ability={FEATURE_VIEW_ABILITY[feature]}>
+      <Component />
+    </PermissionBoundary>
+  </Suspense>
+)
+
+const FEATURE_ROUTES: Array<{ path: string; feature: FeatureKey; Component: GuardedComponent }> = [
+  { path: path.AdminDashboard, feature: "dashboard", Component: ManageDashboard },
+  { path: path.AdminTables, feature: "tables", Component: ManageTable },
+  { path: path.AdminTablesDetail, feature: "tables", Component: TableDetail },
+  { path: path.AdminTableSessionDetail, feature: "tables", Component: TableSessionHistoryDetail },
+  { path: path.AdminReservations, feature: "reservations", Component: ManageReservation },
+  { path: path.AdminCategoryDish, feature: "menuCategory", Component: ManageDishCategory },
+  { path: path.AdminDish, feature: "dishes", Component: ManageDish },
+  { path: path.AdminMenu, feature: "menu", Component: ManageMenu },
+  { path: path.AdminMenuDetail, feature: "menu", Component: MenuDetail },
+  { path: path.AdminCustomers, feature: "customers", Component: ManageCustomer },
+  { path: path.AdminStaff, feature: "staff", Component: ManageEmployee },
+  { path: path.AdminStaffDetail, feature: "staff", Component: EmployeeDetail },
+  { path: path.AdminShifts, feature: "shifts", Component: ManageShift },
+  { path: path.AdminShiftDetail, feature: "shifts", Component: ShiftAssignmentDetail },
+  { path: path.AdminPayroll, feature: "payroll", Component: ManagePayroll },
+  { path: path.AdminPayrollDetail, feature: "payroll", Component: PayrollDetail },
+  { path: path.AdminPromotions, feature: "promotions", Component: ManagePromotion },
+  { path: path.AdminInvoices, feature: "invoices", Component: ManageInvoice },
+  { path: path.AdminInvoicesDetail, feature: "invoices", Component: InvoiceDetail },
+  { path: path.AdminIngredients, feature: "ingredients", Component: ManageIngredient },
+  { path: path.AdminSuppliers, feature: "suppliers", Component: ManageSupplier },
+  { path: path.AdminWarehouseIn, feature: "warehouseIn", Component: ManageStockImport },
+  { path: path.AdminWarehouseOut, feature: "warehouseOut", Component: ManageStockExport },
+  { path: path.AdminInventoryLoss, feature: "inventoryLoss", Component: ManageStockLoss },
+  { path: path.AdminRoles, feature: "roles", Component: ManageRoles },
+  { path: path.AdminPermissionMatrix, feature: "permissionMatrix", Component: ManagePermissionMatrix }
+]
+
 const ProtectedRoute = () => {
   const { isAuthenticated } = useAppStore()
   return isAuthenticated ? <Outlet /> : <Navigate to={path.AdminLogin} />
@@ -51,7 +91,9 @@ const RejectRouter = () => {
 
 const BlockClientForAdmin = () => {
   const { role } = useAppStore()
-  if (role === rolesForApi.CUSTOMER) {
+  if (!role) return <Outlet />
+  const normalizedRole = resolveRole(role)
+  if (!normalizedRole) {
     return <Navigate to={path.NotFound} replace />
   }
   return <Outlet />
@@ -72,222 +114,10 @@ export default function useRouterAdmin() {
               path: "",
               element: <MainLayoutAdmin />,
               children: [
-                {
-                  path: path.AdminDashboard,
-                  element: (
-                    <Suspense>
-                      <ManageDashboard />
-                    </Suspense>
-                  )
-                },
-                {
-                  path: path.AdminTables,
-                  element: (
-                    <Suspense>
-                      <ManageTable />
-                    </Suspense>
-                  )
-                },
-                {
-                  path: path.AdminTablesDetail,
-                  element: (
-                    <Suspense>
-                      <TableDetail />
-                    </Suspense>
-                  )
-                },
-                {
-                  path: path.AdminTableSessionDetail,
-                  element: (
-                    <Suspense>
-                      <TableSessionHistoryDetail />
-                    </Suspense>
-                  )
-                },
-                {
-                  path: path.AdminReservations,
-                  element: (
-                    <Suspense>
-                      <ManageReservation />
-                    </Suspense>
-                  )
-                },
-                {
-                  path: path.AdminCategoryDish,
-                  element: (
-                    <Suspense>
-                      <ManageDishCategory />
-                    </Suspense>
-                  )
-                },
-                {
-                  path: path.AdminDish,
-                  element: (
-                    <Suspense>
-                      <ManageDish />
-                    </Suspense>
-                  )
-                },
-                {
-                  path: path.AdminDishDetail,
-                  element: (
-                    <Suspense>
-                      <DishDetail />
-                    </Suspense>
-                  )
-                },
-                {
-                  path: path.AdminMenu,
-                  element: (
-                    <Suspense>
-                      <ManageMenu />
-                    </Suspense>
-                  )
-                },
-                {
-                  path: path.AdminMenuDetail,
-                  element: (
-                    <Suspense>
-                      <MenuDetail />
-                    </Suspense>
-                  )
-                },
-                {
-                  path: path.AdminCustomers,
-                  element: (
-                    <Suspense>
-                      <ManageCustomer />
-                    </Suspense>
-                  )
-                },
-                {
-                  path: path.AdminStaff,
-                  element: (
-                    <Suspense>
-                      <ManageEmployee />
-                    </Suspense>
-                  )
-                },
-                {
-                  path: path.AdminStaffDetail,
-                  element: (
-                    <Suspense>
-                      <EmployeeDetail />
-                    </Suspense>
-                  )
-                },
-                {
-                  path: path.AdminShifts,
-                  element: (
-                    <Suspense>
-                      <ManageShift />
-                    </Suspense>
-                  )
-                },
-                {
-                  path: path.AdminShiftDetail,
-                  element: (
-                    <Suspense>
-                      <ShiftAssignmentDetail />
-                    </Suspense>
-                  )
-                },
-                {
-                  path: path.AdminPayroll,
-                  element: (
-                    <Suspense>
-                      <ManagePayroll />
-                    </Suspense>
-                  )
-                },
-                {
-                  path: path.AdminPayrollDetail,
-                  element: (
-                    <Suspense>
-                      <PayrollDetail />
-                    </Suspense>
-                  )
-                },
-                {
-                  path: path.AdminPromotions,
-                  element: (
-                    <Suspense>
-                      <ManagePromotion />
-                    </Suspense>
-                  )
-                },
-                {
-                  path: path.AdminInvoices,
-                  element: (
-                    <Suspense>
-                      <ManageInvoice />
-                    </Suspense>
-                  )
-                },
-                {
-                  path: path.AdminInvoicesDetail,
-                  element: (
-                    <Suspense>
-                      <InvoiceDetail />
-                    </Suspense>
-                  )
-                },
-                {
-                  path: path.AdminIngredients,
-                  element: (
-                    <Suspense>
-                      <ManageIngredient />
-                    </Suspense>
-                  )
-                },
-                {
-                  path: path.AdminSuppliers,
-                  element: (
-                    <Suspense>
-                      <ManageSupplier />
-                    </Suspense>
-                  )
-                },
-                {
-                  path: path.AdminWarehouseIn,
-                  element: (
-                    <Suspense>
-                      <ManageStockImport />
-                    </Suspense>
-                  )
-                },
-                {
-                  path: path.AdminWarehouseOut,
-                  element: (
-                    <Suspense>
-                      <ManageStockExport />
-                    </Suspense>
-                  )
-                },
-                {
-                  path: path.AdminInventoryLoss,
-                  element: (
-                    <Suspense>
-                      <ManageStockLoss />
-                    </Suspense>
-                  )
-                },
-                {
-                  path: path.AdminRoles,
-                  element: (
-                    <Suspense>
-                      <ManageRoles />
-                    </Suspense>
-                  )
-                },
-                {
-                  path: path.AdminPermissionMatrix,
-                  element: (
-                    <Suspense>
-                      <ManagePermissionMatrix />
-                    </Suspense>
-                  )
-                }
+                ...FEATURE_ROUTES.map(({ path: routePath, feature, Component }) => ({
+                  path: routePath,
+                  element: withPermission(feature, Component)
+                }))
               ]
             }
           ]

@@ -33,6 +33,7 @@ import {
 } from "src/Types/stockImport.type"
 import { PaginatedResponse } from "src/Types/utils.type"
 import dayjs from "dayjs"
+import { AppAbility, useAuthorization } from "src/Authorization"
 
 const { Option } = Select
 const { RangePicker } = DatePicker
@@ -54,6 +55,10 @@ export default function ManageStockImport() {
     isUndefined
   )
 
+  const { can } = useAuthorization()
+  const canViewWarehouseImport = can(AppAbility.WAREHOUSE_IMPORT_VIEW)
+  const canManageWarehouseImport = can(AppAbility.WAREHOUSE_IMPORT_MANAGE)
+
   // ========== STATE ==========
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false)
@@ -71,7 +76,8 @@ export default function ManageStockImport() {
       return stockImportsAPI.getList(queryConfig, controller.signal)
     },
     staleTime: 3 * 60 * 1000,
-    placeholderData: keepPreviousData
+    placeholderData: keepPreviousData,
+    enabled: canViewWarehouseImport
   })
 
   const paginated = data?.data?.data as PaginatedResponse<StockImport>
@@ -85,7 +91,8 @@ export default function ManageStockImport() {
       setTimeout(() => controller.abort(), 10000)
       return suppliersAPI.getList({ per_page: "1000" }, controller.signal)
     },
-    staleTime: 5 * 60 * 1000
+    staleTime: 5 * 60 * 1000,
+    enabled: canViewWarehouseImport
   })
 
   const suppliersList = (suppliersData?.data?.data as any)?.data || []
@@ -98,7 +105,8 @@ export default function ManageStockImport() {
       setTimeout(() => controller.abort(), 10000)
       return ingredientsAPI.getList({ per_page: "1000" }, controller.signal)
     },
-    staleTime: 5 * 60 * 1000
+    staleTime: 5 * 60 * 1000,
+    enabled: canManageWarehouseImport
   })
 
   const ingredientsList = (ingredientsData?.data?.data as any)?.data || []
@@ -107,7 +115,7 @@ export default function ManageStockImport() {
   const { data: detailData, isFetching: isFetchingDetail } = useQuery({
     queryKey: ["stockImportDetail", selectedStockImport?.id],
     queryFn: () => stockImportsAPI.getDetail(selectedStockImport?.id as string),
-    enabled: !!selectedStockImport?.id && isDetailModalOpen,
+    enabled: !!selectedStockImport?.id && isDetailModalOpen && canViewWarehouseImport,
     staleTime: 2 * 60 * 1000
   })
 
@@ -174,8 +182,24 @@ export default function ManageStockImport() {
     })
   }, [queryParams, filterForm])
 
+  useEffect(() => {
+    if (!canManageWarehouseImport) {
+      setIsModalOpen(false)
+      setEditingId(null)
+      form.resetFields()
+    }
+  }, [canManageWarehouseImport, form])
+
+  if (!canViewWarehouseImport) {
+    return null
+  }
+
   // ========== HANDLERS ==========
   const handleOpenModal = (record?: StockImport) => {
+    if (!canManageWarehouseImport) {
+      toast.warn("Bạn không có quyền quản lý phiếu nhập kho.")
+      return
+    }
     if (record) {
       setEditingId(record.id)
       form.setFieldsValue({
@@ -201,6 +225,10 @@ export default function ManageStockImport() {
   }
 
   const handleSubmit = async () => {
+    if (!canManageWarehouseImport) {
+      toast.warn("Bạn không có quyền quản lý phiếu nhập kho.")
+      return
+    }
     try {
       const values = await form.validateFields()
       const formattedValues = {
@@ -225,6 +253,10 @@ export default function ManageStockImport() {
   }
 
   const handleDelete = (id: string) => {
+    if (!canManageWarehouseImport) {
+      toast.warn("Bạn không có quyền quản lý phiếu nhập kho.")
+      return
+    }
     Modal.confirm({
       title: "Xác nhận xóa",
       content: "Bạn có chắc chắn muốn xóa phiếu nhập kho này? Hành động này sẽ ảnh hưởng đến số lượng tồn kho.",
@@ -366,25 +398,29 @@ export default function ManageStockImport() {
             }}
             title="Xem chi tiết"
           />
-          <Button
-            type="link"
-            icon={<Edit size={16} />}
-            onClick={(e) => {
-              e.stopPropagation()
-              handleOpenModal(record)
-            }}
-            title="Chỉnh sửa"
-          />
-          <Button
-            danger
-            type="link"
-            icon={<Trash2 size={16} />}
-            onClick={(e) => {
-              e.stopPropagation()
-              handleDelete(record.id)
-            }}
-            title="Xóa"
-          />
+          {canManageWarehouseImport && (
+            <>
+              <Button
+                type="link"
+                icon={<Edit size={16} />}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  handleOpenModal(record)
+                }}
+                title="Chỉnh sửa"
+              />
+              <Button
+                danger
+                type="link"
+                icon={<Trash2 size={16} />}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  handleDelete(record.id)
+                }}
+                title="Xóa"
+              />
+            </>
+          )}
         </Space>
       )
     }
@@ -497,9 +533,11 @@ export default function ManageStockImport() {
           <div className="text-sm text-gray-600">
             Tổng số: <span className="font-semibold">{paginated?.total || 0}</span> phiếu nhập
           </div>
-          <Button type="primary" icon={<Plus size={16} />} onClick={() => handleOpenModal()}>
-            Thêm phiếu nhập
-          </Button>
+          {canManageWarehouseImport && (
+            <Button type="primary" icon={<Plus size={16} />} onClick={() => handleOpenModal()}>
+              Thêm phiếu nhập
+            </Button>
+          )}
         </div>
 
         {/* Table */}
@@ -530,7 +568,7 @@ export default function ManageStockImport() {
             {editingId ? "Chỉnh sửa phiếu nhập kho" : "Thêm phiếu nhập kho mới"}
           </span>
         }
-        open={isModalOpen}
+        open={isModalOpen && canManageWarehouseImport}
         onCancel={() => {
           setIsModalOpen(false)
           setEditingId(null)
@@ -552,6 +590,7 @@ export default function ManageStockImport() {
             type="primary"
             onClick={handleSubmit}
             loading={createMutation.isPending || updateMutation.isPending}
+            disabled={!canManageWarehouseImport}
           >
             {editingId ? "Cập nhật" : "Thêm mới"}
           </Button>
@@ -754,7 +793,7 @@ export default function ManageStockImport() {
                               danger
                               icon={<Minus size={16} />}
                               onClick={() => remove(name)}
-                              disabled={fields.length === 1}
+                              disabled={fields.length === 1 || !canManageWarehouseImport}
                               title="Xóa"
                             />
                           </div>
@@ -770,6 +809,7 @@ export default function ManageStockImport() {
                     onClick={() => add()}
                     icon={<Plus size={16} />}
                     className="mt-3 w-full"
+                    disabled={!canManageWarehouseImport}
                   >
                     Thêm nguyên liệu
                   </Button>
@@ -788,29 +828,43 @@ export default function ManageStockImport() {
           setIsDetailModalOpen(false)
           setSelectedStockImport(null)
         }}
-        footer={[
-          <Button
-            key="close"
-            onClick={() => {
-              setIsDetailModalOpen(false)
-              setSelectedStockImport(null)
-            }}
-          >
-            Đóng
-          </Button>,
-          <Button
-            key="edit"
-            type="primary"
-            onClick={() => {
-              setIsDetailModalOpen(false)
-              if (stockImportDetail) {
-                handleOpenModal(stockImportDetail)
-              }
-            }}
-          >
-            Chỉnh sửa
-          </Button>
-        ]}
+        footer={
+          canManageWarehouseImport
+            ? [
+                <Button
+                  key="close"
+                  onClick={() => {
+                    setIsDetailModalOpen(false)
+                    setSelectedStockImport(null)
+                  }}
+                >
+                  Đóng
+                </Button>,
+                <Button
+                  key="edit"
+                  type="primary"
+                  onClick={() => {
+                    setIsDetailModalOpen(false)
+                    if (stockImportDetail) {
+                      handleOpenModal(stockImportDetail)
+                    }
+                  }}
+                >
+                  Chỉnh sửa
+                </Button>
+              ]
+            : [
+                <Button
+                  key="close"
+                  onClick={() => {
+                    setIsDetailModalOpen(false)
+                    setSelectedStockImport(null)
+                  }}
+                >
+                  Đóng
+                </Button>
+              ]
+        }
         width={1100}
         styles={{
           body: {

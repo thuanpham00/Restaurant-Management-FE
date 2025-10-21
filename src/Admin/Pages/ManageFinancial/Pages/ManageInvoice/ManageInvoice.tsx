@@ -1,5 +1,5 @@
 import { keepPreviousData, useQuery } from "@tanstack/react-query"
-import { Button, Empty, Pagination, Space, Spin, Table, Tag, Tooltip, Typography } from "antd"
+import { Button, Empty, Pagination, Spin, Table, Tag, Tooltip, Typography } from "antd"
 import { ColumnsType } from "antd/es/table"
 import dayjs from "dayjs"
 import { isUndefined, omitBy } from "lodash"
@@ -12,6 +12,7 @@ import useQueryParams from "src/Hook/useQueryParams"
 import { queryParamConfigInvoice } from "src/Types/queryParams.type"
 import { ChevronRight, ChevronDown, Maximize2, Minimize2, GitBranch, Eye } from "lucide-react"
 import { buildInvoiceTree, InvoiceTreeNode, getAllInvoiceIds, formatCurrency } from "src/Helpers/invoiceTree"
+import { AppAbility, PermissionGate, useAuthorization } from "src/Authorization"
 
 const { Text } = Typography
 
@@ -24,6 +25,8 @@ export default function ManageInvoice() {
     },
     isUndefined
   )
+  const { can } = useAuthorization()
+  const canViewInvoices = can(AppAbility.INVOICES_VIEW)
 
   const { data, isFetching } = useQuery({
     queryKey: ["listInvoice", queryConfig],
@@ -236,14 +239,20 @@ export default function ManageInvoice() {
       fixed: "right",
       width: 120,
       render: (_, record) => (
-        <Tooltip title="Xem chi tiết">
-          <Link to={`/admin/invoices/${record.invoice.id}`} className="text-blue-500 flex items-center justify-center">
-            <Eye size={18} className="hover:text-blue-600 transition-colors" />
-          </Link>
-        </Tooltip>
+        <PermissionGate ability={AppAbility.INVOICES_VIEW}>
+          <Tooltip title="Xem chi tiết">
+            <Link to={`/admin/invoices/${record.invoice.id}`} className="text-blue-500 flex items-center justify-center">
+              <Eye size={18} className="hover:text-blue-600 transition-colors" />
+            </Link>
+          </Tooltip>
+        </PermissionGate>
       )
     }
   ]
+
+  if (!canViewInvoices) {
+    return null
+  }
 
   return (
     <div>

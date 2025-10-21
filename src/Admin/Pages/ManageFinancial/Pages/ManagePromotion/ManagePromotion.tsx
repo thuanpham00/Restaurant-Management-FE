@@ -21,7 +21,7 @@ import {
 import { ColumnsType } from "antd/es/table"
 import { isUndefined, omit, omitBy } from "lodash"
 import { Beef, Filter, RotateCcw } from "lucide-react"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Helmet } from "react-helmet-async"
 import { createSearchParams, useNavigate, useSearchParams } from "react-router-dom"
 import { toast } from "react-toastify"
@@ -41,6 +41,7 @@ import localeData from "dayjs/plugin/localeData"
 import weekOfYear from "dayjs/plugin/weekOfYear"
 import weekYear from "dayjs/plugin/weekYear"
 import { isError400 } from "src/Helpers/utils"
+import { AppAbility, PermissionGate, useAuthorization } from "src/Authorization"
 
 dayjs.extend(customParseFormat)
 dayjs.extend(utc)
@@ -52,6 +53,8 @@ dayjs.extend(weekYear)
 export default function ManagePromotion() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
+  const { can } = useAuthorization()
+  const canManagePromotions = can(AppAbility.PROMOTIONS_MANAGE)
   const queryParams: queryParamConfigPromotion = useQueryParams()
   const queryConfig: queryParamConfigPromotion = omitBy(
     {
@@ -87,6 +90,13 @@ export default function ManagePromotion() {
     setSearchParams(searchParams) // trigger re-render → useQuery tự refetch
   }
 
+  useEffect(() => {
+    if (!canManagePromotions) {
+      setIsModalOpen(false)
+      setEditingId(null)
+    }
+  }, [canManagePromotions])
+
   const deleteMutation = useMutation({
     mutationFn: (id: string) => promotionAPI.delete(id),
     onSuccess: () => {
@@ -105,6 +115,10 @@ export default function ManagePromotion() {
   })
 
   const handleDelete = (id: string) => {
+    if (!canManagePromotions) {
+      toast.warn("Bạn không có quyền quản lý khuyến mãi.")
+      return
+    }
     Modal.confirm({
       title: "Bạn có chắc muốn xóa?",
       content: "Khuyến mãi sẽ bị xóa vĩnh viễn.",
@@ -175,16 +189,17 @@ export default function ManagePromotion() {
     {
       title: "Hành động",
       key: "action",
-      render: (_: any, record: Promotion) => (
-        <Space size="middle">
-          <Button type="link" onClick={() => handleEdit(record)}>
-            Sửa
-          </Button>
-          <Button danger type="link" onClick={() => handleDelete(record.id)}>
-            Xóa
-          </Button>
-        </Space>
-      )
+      render: (_: any, record: Promotion) =>
+        canManagePromotions ? (
+          <Space size="middle">
+            <Button type="link" onClick={() => handleEdit(record)}>
+              Sửa
+            </Button>
+            <Button danger type="link" onClick={() => handleDelete(record.id)}>
+              Xóa
+            </Button>
+          </Space>
+        ) : null
     }
   ]
 
@@ -216,6 +231,10 @@ export default function ManagePromotion() {
   const [form] = Form.useForm<Promotion>()
 
   const handleEdit = async (record: Promotion | boolean) => {
+    if (!canManagePromotions) {
+      toast.warn("Bạn không có quyền quản lý khuyến mãi.")
+      return
+    }
     if (record === true) {
       form.setFieldsValue({
         code: "",
@@ -296,6 +315,10 @@ export default function ManagePromotion() {
   })
 
   const handleUpdate = () => {
+    if (!canManagePromotions) {
+      toast.warn("Bạn không có quyền quản lý khuyến mãi.")
+      return
+    }
     form.validateFields().then((values) => {
       // convert Moment -> string
       const payload = {
@@ -367,9 +390,11 @@ export default function ManagePromotion() {
           </Form.Item>
         </Form>
 
-        <Button type="primary" icon={<Beef />} onClick={() => handleEdit(true)} className="whitespace-nowrap">
-          Thêm khuyến mãi
-        </Button>
+        <PermissionGate ability={AppAbility.PROMOTIONS_MANAGE}>
+          <Button type="primary" icon={<Beef />} onClick={() => handleEdit(true)} className="whitespace-nowrap">
+            Thêm khuyến mãi
+          </Button>
+        </PermissionGate>
       </div>
 
       {isFetching ? (
@@ -421,7 +446,7 @@ export default function ManagePromotion() {
       <Modal
         width={800}
         title="Thông tin khuyến mãi"
-        open={isModalOpen}
+        open={canManagePromotions && isModalOpen}
         onCancel={() => setIsModalOpen(false)}
         footer={false}
         onOk={handleUpdate}
@@ -529,7 +554,12 @@ export default function ManagePromotion() {
             <Button onClick={() => setIsModalOpen(false)} className="mr-2">
               Hủy
             </Button>
-            <Button type="primary" htmlType="submit" loading={updateMutation.isPending || createMutation.isPending}>
+            <Button
+              type="primary"
+              htmlType="submit"
+              loading={updateMutation.isPending || createMutation.isPending}
+              disabled={!canManagePromotions}
+            >
               {typeof editingId === "string" ? "Cập nhật khuyến mãi" : "Thêm khuyến mãi"}
             </Button>
           </div>
