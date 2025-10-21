@@ -1,18 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import {
-  Button,
-  DatePicker,
-  Descriptions,
-  Form,
-  InputNumber,
-  Modal,
-  Select,
-  Space,
-  Spin,
-  Table,
-  Tag
-} from "antd"
+import { Button, DatePicker, Descriptions, Form, InputNumber, Modal, Select, Space, Spin, Table, Tag } from "antd"
 import { ColumnsType } from "antd/es/table"
 import { isUndefined, omitBy } from "lodash"
 import { Plus, Filter, RotateCcw, Edit, Trash2, Eye, AlertTriangle, Minus } from "lucide-react"
@@ -66,6 +54,7 @@ export default function ManageStockImport() {
   const [selectedStockImport, setSelectedStockImport] = useState<StockImport | null>(null)
   const [form] = Form.useForm()
   const [filterForm] = Form.useForm()
+  const watchedDetails = Form.useWatch("details", form)
 
   // ========== QUERIES ==========
   const { data, isFetching } = useQuery({
@@ -631,17 +620,9 @@ export default function ManageStockImport() {
           <div className="mt-6">
             <div className="flex items-center justify-between mb-3">
               <span className="text-sm font-medium">Chi tiết nguyên liệu</span>
-              <Form.Item shouldUpdate={(prevValues, currentValues) => prevValues.details !== currentValues.details}>
-                {({ getFieldValue }) => {
-                  const details = getFieldValue("details") || []
-                  const total = calculateTotalAmount(details)
-                  return (
-                    <span className="text-base font-semibold text-green-600">
-                      Tổng: {total.toLocaleString("vi-VN")} đ
-                    </span>
-                  )
-                }}
-              </Form.Item>
+              <span className="text-base font-semibold text-green-600">
+                Tổng: {calculateTotalAmount(watchedDetails || []).toLocaleString("vi-VN")} đ
+              </span>
             </div>
 
             <Form.List
@@ -660,146 +641,149 @@ export default function ManageStockImport() {
                 <>
                   {/* Column Headers */}
                   <div className="grid grid-cols-12 gap-3 mb-2 px-4">
-                    <div className="col-span-4 text-sm font-medium text-gray-700">
-                      Nguyên liệu
-                    </div>
-                    <div className="col-span-2 text-sm font-medium text-gray-700">
-                      SL đặt hàng
-                    </div>
-                    <div className="col-span-2 text-sm font-medium text-gray-700">
-                      SL nhận được
-                    </div>
-                    <div className="col-span-3 text-sm font-medium text-gray-700">
-                      Đơn giá (VNĐ)
-                    </div>
-                    <div className="col-span-1 text-sm font-medium text-gray-700 text-center">
-                      Hành động
-                    </div>
+                    <div className="col-span-4 text-sm font-medium text-gray-700">Nguyên liệu</div>
+                    <div className="col-span-2 text-sm font-medium text-gray-700">SL đặt hàng</div>
+                    <div className="col-span-2 text-sm font-medium text-gray-700">SL nhận được</div>
+                    <div className="col-span-3 text-sm font-medium text-gray-700">Đơn giá (VNĐ)</div>
+                    <div className="col-span-1 text-sm font-medium text-gray-700 text-center">Hành động</div>
                   </div>
 
                   <div className="space-y-3">
-                    {fields.map(({ key, name, ...restField }) => (
-                      <div key={key} className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                        <div className="grid grid-cols-12 gap-3">
-                          <Form.Item
-                            {...restField}
-                            name={[name, "ingredient_id"]}
-                            rules={[{ required: true, message: "Chọn nguyên liệu" }]}
-                            className="col-span-4 mb-0"
-                          >
-                            <Select
-                              placeholder="Chọn nguyên liệu"
-                              showSearch
-                              filterOption={(input, option) =>
-                                String(option?.children ?? "")
-                                  .toLowerCase()
-                                  .includes(input.toLowerCase())
-                              }
+                    {fields.map(({ key, name, ...restField }) => {
+                      console.log(name)
+                      return (
+                        <div key={key} className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                          <div className="grid grid-cols-12 gap-3">
+                            <Form.Item
+                              {...restField}
+                              name={[name, "ingredient_id"]}
+                              rules={[{ required: true, message: "Chọn nguyên liệu" }]}
+                              className="col-span-4 mb-0"
                             >
-                              {ingredientsList.map((ing: any) => (
-                                <Option key={ing.id} value={ing.id}>
-                                  {ing.name} ({ing.unit})
-                                </Option>
-                              ))}
-                            </Select>
-                          </Form.Item>
-
-                          <Form.Item
-                            {...restField}
-                            name={[name, "ordered_quantity"]}
-                            rules={[
-                              { required: true, message: "Nhập SL đặt" },
-                              { type: "number", min: 0, message: "Phải >= 0" }
-                            ]}
-                            className="col-span-2 mb-0"
-                          >
-                            <Form.Item noStyle shouldUpdate={(prev, curr) => {
-                              const prevIngredient = prev.details?.[name]?.ingredient_id
-                              const currIngredient = curr.details?.[name]?.ingredient_id
-                              return prevIngredient !== currIngredient
-                            }}>
-                              {({ getFieldValue }) => {
-                                const selectedIngredientId = getFieldValue(["details", name, "ingredient_id"])
-                                const selectedIngredient = ingredientsList.find((ing: any) => ing.id === selectedIngredientId)
-                                const unit = selectedIngredient?.unit || "đơn vị"
-
-                                return (
-                                  <InputNumber
-                                    placeholder="SL đặt"
-                                    style={{ width: "100%" }}
-                                    min={0}
-                                    precision={2}
-                                    addonAfter={unit}
-                                    className="text-sm"
-                                  />
-                                )
-                              }}
+                              <Select
+                                placeholder="Chọn nguyên liệu"
+                                showSearch
+                                filterOption={(input, option) =>
+                                  String(option?.children ?? "")
+                                    .toLowerCase()
+                                    .includes(input.toLowerCase())
+                                }
+                              >
+                                {ingredientsList.map((ing: any) => (
+                                  <Option key={ing.id} value={ing.id}>
+                                    {ing.name} ({ing.unit})
+                                  </Option>
+                                ))}
+                              </Select>
                             </Form.Item>
-                          </Form.Item>
 
-                          <Form.Item
-                            {...restField}
-                            name={[name, "received_quantity"]}
-                            rules={[
-                              { required: true, message: "Nhập SL nhận" },
-                              { type: "number", min: 0, message: "Phải >= 0" }
-                            ]}
-                            className="col-span-2 mb-0"
-                          >
-                            <Form.Item noStyle shouldUpdate={(prev, curr) => {
-                              const prevIngredient = prev.details?.[name]?.ingredient_id
-                              const currIngredient = curr.details?.[name]?.ingredient_id
-                              return prevIngredient !== currIngredient
-                            }}>
-                              {({ getFieldValue }) => {
-                                const selectedIngredientId = getFieldValue(["details", name, "ingredient_id"])
-                                const selectedIngredient = ingredientsList.find((ing: any) => ing.id === selectedIngredientId)
-                                const unit = selectedIngredient?.unit || "đơn vị"
+                            <Form.Item
+                              {...restField}
+                              name={[name, "ordered_quantity"]}
+                              rules={[
+                                { required: true, message: "Nhập SL đặt" },
+                                { type: "number", min: 0, message: "Phải >= 0" }
+                              ]}
+                              className="col-span-2 mb-0"
+                            >
+                              <Form.Item
+                                noStyle
+                                shouldUpdate={(prev, curr) => {
+                                  const prevIngredient = prev.details?.[name]?.ingredient_id
+                                  const currIngredient = curr.details?.[name]?.ingredient_id
+                                  return prevIngredient !== currIngredient
+                                }}
+                              >
+                                {({ getFieldValue }) => {
+                                  const selectedIngredientId = getFieldValue(["details", name, "ingredient_id"])
+                                  const selectedIngredient = ingredientsList.find(
+                                    (ing: any) => ing.id === selectedIngredientId
+                                  )
+                                  const unit = selectedIngredient?.unit || "đơn vị"
 
-                                return (
-                                  <InputNumber
-                                    placeholder="SL nhận"
-                                    style={{ width: "100%" }}
-                                    min={0}
-                                    precision={2}
-                                    addonAfter={unit}
-                                    className="text-sm"
-                                  />
-                                )
-                              }}
+                                  return (
+                                    <InputNumber
+                                      placeholder="SL đặt"
+                                      style={{ width: "100%" }}
+                                      min={0}
+                                      precision={2}
+                                      addonAfter={unit}
+                                      className="text-sm"
+                                    />
+                                  )
+                                }}
+                              </Form.Item>
                             </Form.Item>
-                          </Form.Item>
 
-                          <Form.Item
-                            {...restField}
-                            name={[name, "unit_price"]}
-                            rules={[
-                              { required: true, message: "Nhập đơn giá" },
-                              { type: "number", min: 0, message: "Phải >= 0" }
-                            ]}
-                            className="col-span-3 mb-0"
-                          >
-                            <InputNumber
-                              placeholder="Đơn giá"
-                              style={{ width: "100%" }}
-                              min={0}
-                              formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
-                              className="text-sm"
-                            />
-                          </Form.Item>
+                            <Form.Item
+                              {...restField}
+                              name={[name, "received_quantity"]}
+                              rules={[
+                                { required: true, message: "Nhập SL nhận" },
+                                { type: "number", min: 0, message: "Phải >= 0" }
+                              ]}
+                              className="col-span-2 mb-0"
+                            >
+                              <Form.Item
+                                noStyle
+                                shouldUpdate={(prev, curr) => {
+                                  const prevIngredient = prev.details?.[name]?.ingredient_id
+                                  const currIngredient = curr.details?.[name]?.ingredient_id
+                                  return prevIngredient !== currIngredient
+                                }}
+                              >
+                                {({ getFieldValue }) => {
+                                  const selectedIngredientId = getFieldValue(["details", name, "ingredient_id"])
+                                  const selectedIngredient = ingredientsList.find(
+                                    (ing: any) => ing.id === selectedIngredientId
+                                  )
+                                  const unit = selectedIngredient?.unit || "đơn vị"
 
-                          <div className="col-span-1 flex items-start justify-center">
-                            <Button
-                              danger
-                              icon={<Minus size={16} />}
-                              onClick={() => remove(name)}
-                              disabled={fields.length === 1 || !canManageWarehouseImport}
-                              title="Xóa"
-                            />
+                                  return (
+                                    <InputNumber
+                                      placeholder="SL nhận"
+                                      style={{ width: "100%" }}
+                                      min={0}
+                                      precision={2}
+                                      addonAfter={unit}
+                                      className="text-sm"
+                                    />
+                                  )
+                                }}
+                              </Form.Item>
+                            </Form.Item>
+
+                            <Form.Item
+                              {...restField}
+                              name={[name, "unit_price"]}
+                              rules={[
+                                { required: true, message: "Nhập đơn giá" },
+                                { type: "number", min: 0, message: "Phải >= 0" }
+                              ]}
+                              className="col-span-3 mb-0"
+                            >
+                              <InputNumber
+                                placeholder="Đơn giá"
+                                style={{ width: "100%" }}
+                                min={0}
+                                formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
+                                className="text-sm"
+                              />
+                            </Form.Item>
+
+                            <div className="col-span-1 flex items-start justify-center">
+                              <Button
+                                danger
+                                icon={<Minus size={16} />}
+                                onClick={() => remove(name)}
+                                disabled={fields.length === 1 || !canManageWarehouseImport}
+                                title="Xóa"
+                              />
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    ))}
+                      )
+                    })}
                   </div>
 
                   <Form.ErrorList errors={errors} />
@@ -900,14 +884,10 @@ export default function ManageStockImport() {
                   </span>
                 </Descriptions.Item>
                 <Descriptions.Item label={<span className="text-sm">Ngày tạo</span>}>
-                  <span className="text-sm">
-                    {dayjs(stockImportDetail.created_at).format("DD/MM/YYYY HH:mm")}
-                  </span>
+                  <span className="text-sm">{dayjs(stockImportDetail.created_at).format("DD/MM/YYYY HH:mm")}</span>
                 </Descriptions.Item>
                 <Descriptions.Item label={<span className="text-sm">Ngày cập nhật</span>}>
-                  <span className="text-sm">
-                    {dayjs(stockImportDetail.updated_at).format("DD/MM/YYYY HH:mm")}
-                  </span>
+                  <span className="text-sm">{dayjs(stockImportDetail.updated_at).format("DD/MM/YYYY HH:mm")}</span>
                 </Descriptions.Item>
               </Descriptions>
 
@@ -932,9 +912,7 @@ export default function ManageStockImport() {
                             <span className="font-semibold text-sm">Tổng cộng:</span>
                           </Table.Summary.Cell>
                           <Table.Summary.Cell index={1} align="right">
-                            <span className="font-bold text-sm text-green-600">
-                              {total.toLocaleString("vi-VN")} đ
-                            </span>
+                            <span className="font-bold text-sm text-green-600">{total.toLocaleString("vi-VN")} đ</span>
                           </Table.Summary.Cell>
                         </Table.Summary.Row>
                       </Table.Summary>

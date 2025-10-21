@@ -225,7 +225,11 @@ export default function IngredientCategoryListTab() {
       key: "ingredients_count",
       width: 150,
       align: "center",
-      render: (val) => <Tag color="blue" className="text-sm">{val}</Tag>
+      render: (val) => (
+        <Tag color="blue" className="text-sm">
+          {val}
+        </Tag>
+      )
     },
     {
       title: <div className="text-left">Trạng thái</div>,
@@ -489,7 +493,9 @@ export default function IngredientCategoryListTab() {
                               className="flex items-center justify-center gap-1 w-fit mx-auto text-sm"
                             >
                               {low && <AlertTriangle size={12} />}
-                              <span className="text-sm">{parseFloat(val).toLocaleString()} {record.unit}</span>
+                              <span className="text-sm">
+                                {parseFloat(val).toLocaleString()} {record.unit}
+                              </span>
                             </Tag>
                           )
                         }
@@ -500,7 +506,11 @@ export default function IngredientCategoryListTab() {
                         key: "min_stock",
                         width: 110,
                         align: "center",
-                        render: (val, record) => <span className="text-sm">{parseFloat(val).toLocaleString()} {record.unit}</span>
+                        render: (val, record) => (
+                          <span className="text-sm">
+                            {parseFloat(val).toLocaleString()} {record.unit}
+                          </span>
+                        )
                       },
                       {
                         title: <span className="text-sm">Trạng thái</span>,
@@ -508,7 +518,11 @@ export default function IngredientCategoryListTab() {
                         key: "is_active",
                         width: 110,
                         align: "center",
-                        render: (val) => <Tag color={val ? "green" : "red"} className="text-sm">{val ? "Hoạt động" : "Ngừng"}</Tag>
+                        render: (val) => (
+                          <Tag color={val ? "green" : "red"} className="text-sm">
+                            {val ? "Hoạt động" : "Ngừng"}
+                          </Tag>
+                        )
                       }
                     ]}
                   />

@@ -1,6 +1,11 @@
 import Http from "src/Helpers/http"
 import { SuccessResponse, PaginatedResponse } from "src/Types/utils.type"
-import { Ingredient, IngredientFormInput, IngredientCreateInput, queryParamConfigIngredient } from "src/Types/ingredient.type"
+import {
+  Ingredient,
+  IngredientFormInput,
+  IngredientCreateInput,
+  queryParamConfigIngredient
+} from "src/Types/ingredient.type"
 
 const buildIngredientFormData = (payload: Record<string, unknown>) => {
   const formData = new FormData()
@@ -33,10 +38,7 @@ const buildIngredientFormData = (payload: Record<string, unknown>) => {
 
 export const ingredientsAPI = {
   getList: (params: queryParamConfigIngredient, signal: AbortSignal) => {
-    return Http.get<SuccessResponse<PaginatedResponse<Ingredient>>>(
-      `/api/ingredients`,
-      { params, signal }
-    )
+    return Http.get<SuccessResponse<PaginatedResponse<Ingredient>>>(`/api/ingredients`, { params, signal })
   },
 
   getDetail: (id: string) => {
@@ -52,7 +54,6 @@ export const ingredientsAPI = {
 
   update: (id: string, data: IngredientFormInput) => {
     const formData = buildIngredientFormData({ ...data } as Record<string, unknown>)
-    formData.append("_method", "PUT")
     return Http.post<SuccessResponse<Ingredient>>(`/api/ingredients/${id}`, formData, {
       headers: { "Content-Type": "multipart/form-data" }
     })

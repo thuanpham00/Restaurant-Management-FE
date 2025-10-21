@@ -83,19 +83,17 @@ export default function IngredientListTab() {
   const [previewTitle, setPreviewTitle] = useState<string>("")
 
   const handleUploadChange = ({ fileList: newFileList }: { fileList: UploadFile[] }) => {
-    const latestFileList = newFileList
-      .slice(-1)
-      .map((file) => {
-        if (file.originFileObj instanceof File) {
-          const previewUrl = URL.createObjectURL(file.originFileObj as File)
-          return {
-            ...file,
-            status: "done" as UploadFile["status"],
-            thumbUrl: previewUrl
-          }
+    const latestFileList = newFileList.slice(-1).map((file) => {
+      if (file.originFileObj instanceof File) {
+        const previewUrl = URL.createObjectURL(file.originFileObj as File)
+        return {
+          ...file,
+          status: "done" as UploadFile["status"],
+          thumbUrl: previewUrl
         }
-        return { ...file, status: "done" as UploadFile["status"] }
-      })
+      }
+      return { ...file, status: "done" as UploadFile["status"] }
+    })
     setFileList(latestFileList)
     const latestFile = latestFileList[0]
 
@@ -113,7 +111,7 @@ export default function IngredientListTab() {
       file.preview = await getBase64(file.originFileObj as File)
     }
 
-  const previewSrc = (file.url ?? file.thumbUrl ?? (file.preview as string) ?? "") as string
+    const previewSrc = (file.url ?? file.thumbUrl ?? (file.preview as string) ?? "") as string
     setPreviewImage(previewSrc)
     setPreviewOpen(true)
     setPreviewTitle(file.name || "Ảnh nguyên liệu")
@@ -570,11 +568,7 @@ export default function IngredientListTab() {
             Tổng số: <span className="font-semibold">{paginated?.total || 0}</span> nguyên liệu
           </div>
           <PermissionGate ability={AppAbility.INGREDIENTS_MANAGE}>
-            <Button
-              type="primary"
-              icon={<Plus size={16} />}
-              onClick={() => handleOpenModal()}
-            >
+            <Button type="primary" icon={<Plus size={16} />} onClick={() => handleOpenModal()}>
               Thêm nguyên liệu
             </Button>
           </PermissionGate>
@@ -618,6 +612,7 @@ export default function IngredientListTab() {
         width={650}
         confirmLoading={createMutation.isPending || updateMutation.isPending}
         okButtonProps={{ disabled: !canManageIngredients }}
+        style={{ top: 30 }}
         styles={{
           body: {
             maxHeight: "calc(100vh - 200px)",

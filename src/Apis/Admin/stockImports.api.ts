@@ -1,13 +1,15 @@
 import Http from "src/Helpers/http"
 import { SuccessResponse, PaginatedResponse } from "src/Types/utils.type"
-import { StockImport, StockImportFormInput, StockImportCreateInput, queryParamConfigStockImport } from "src/Types/stockImport.type"
+import {
+  StockImport,
+  StockImportFormInput,
+  StockImportCreateInput,
+  queryParamConfigStockImport
+} from "src/Types/stockImport.type"
 
 export const stockImportsAPI = {
   getList: (params: queryParamConfigStockImport, signal: AbortSignal) => {
-    return Http.get<SuccessResponse<PaginatedResponse<StockImport>>>(
-      `/api/stocks/imports`,
-      { params, signal }
-    )
+    return Http.get<SuccessResponse<PaginatedResponse<StockImport>>>(`/api/stocks/imports`, { params, signal })
   },
 
   getDetail: (id: string) => {

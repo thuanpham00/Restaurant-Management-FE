@@ -1,19 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import {
-  Button,
-  Descriptions,
-  Form,
-  Input,
-  Modal,
-  Select,
-  Space,
-  Spin,
-  Switch,
-  Table,
-  Tag,
-  Collapse
-} from "antd"
+import { Button, Descriptions, Form, Input, Modal, Select, Space, Spin, Switch, Table, Tag, Collapse } from "antd"
 import { ColumnsType } from "antd/es/table"
 import { isUndefined, omitBy } from "lodash"
 import { Plus, Filter, RotateCcw, Edit, Trash2, Eye, AlertTriangle, Package } from "lucide-react"
@@ -131,8 +118,7 @@ export default function ManageSupplier() {
       queryClient.invalidateQueries({ queryKey: ["listSuppliers"] })
     },
     onError: (error: any) => {
-      const errorMessage =
-        error?.response?.data?.message || "Không thể xóa nhà cung cấp có phiếu nhập kho liên quan"
+      const errorMessage = error?.response?.data?.message || "Không thể xóa nhà cung cấp có phiếu nhập kho liên quan"
       toast.error(errorMessage, { autoClose: 2500 })
     }
   })
@@ -237,19 +223,19 @@ export default function ManageSupplier() {
       phone: values.phone,
       is_active: values.is_active
     }
-    
+
     delete baseParams.ingredient_ids
-    
+
     const params = cleanObject(baseParams)
     const searchParamsObj = new URLSearchParams(params)
-    
+
     // Add ingredient_ids as array parameters with [] suffix
     if (values.ingredient_ids && Array.isArray(values.ingredient_ids)) {
       values.ingredient_ids.forEach((id: string) => {
         searchParamsObj.append("ingredient_ids[]", id)
       })
     }
-    
+
     navigate({
       pathname: path.AdminSuppliers,
       search: searchParamsObj.toString()
@@ -482,7 +468,9 @@ export default function ManageSupplier() {
                 style={{ minWidth: 250, maxWidth: 400 }}
                 showSearch
                 filterOption={(input, option) =>
-                  String(option?.label ?? "").toLowerCase().includes(input.toLowerCase())
+                  String(option?.label ?? "")
+                    .toLowerCase()
+                    .includes(input.toLowerCase())
                 }
                 options={ingredientsList.map((ing: any) => ({
                   value: ing.id,
@@ -555,6 +543,7 @@ export default function ManageSupplier() {
             paddingTop: "16px"
           }
         }}
+        style={{ top: 50 }}
       >
         <Form form={form} layout="vertical">
           <Form.Item
