@@ -6,7 +6,7 @@ import { path } from "../../Constants/path"
 import { lazy, Suspense } from "react"
 import { useAppStore } from "src/StateGlobal/zustand"
 import ForgotPassword from "../Pages/Login/ForgotPassword"
-import { resolveRole } from "src/Authorization"
+import { AppRole, resolveRole } from "src/Authorization"
 
 // Lazy load các component
 const Home = lazy(() => import("../Pages/Home"))
@@ -37,7 +37,8 @@ const RejectRouter = () => {
 
 const BlockAdminForClient = () => {
   const { role } = useAppStore()
-  if (role && resolveRole(role)) {
+  const resolvedRole = resolveRole(role)
+  if (resolvedRole === AppRole.ADMINISTRATOR || resolvedRole === AppRole.SUPER_ADMIN) {
     return <Navigate to={path.AdminNotFound} replace />
   }
   return <Outlet />
