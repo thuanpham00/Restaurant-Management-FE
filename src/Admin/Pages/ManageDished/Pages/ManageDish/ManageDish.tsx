@@ -21,7 +21,7 @@ import { isUndefined, omit, omitBy } from "lodash"
 import { Beef, Filter, RotateCcw } from "lucide-react"
 import { Fragment, useCallback, useEffect, useMemo, useState } from "react"
 import { Helmet } from "react-helmet-async"
-import { createSearchParams, useNavigate, useSearchParams } from "react-router-dom"
+import { createSearchParams, Link, useNavigate, useSearchParams } from "react-router-dom"
 import { toast } from "react-toastify"
 import NavigateBack from "src/Admin/Components/NavigateBack"
 import { dishesAPI, dishCategoryAPI } from "src/Apis/Admin"
@@ -155,33 +155,9 @@ export default function ManageDish() {
     }
   })
 
-  const updateDishMutation = useMutation({
-    mutationFn: ({ id, payload }: { id: string; payload: DishFormPayload }) => dishesAPI.update(id, payload),
-    onSuccess: () => {
-      toast.success("Cập nhật món ăn thành công!", { autoClose: 1500 })
-      queryClient.invalidateQueries({ queryKey: ["listDish"] })
-      handleModalClose()
-    },
-    onError: () => {
-      toast.error("Cập nhật món ăn thất bại", { autoClose: 1500 })
-    }
-  })
-
-  const deleteDishMutation = useMutation({
-    mutationFn: (id: string) => dishesAPI.delete(id),
-    onSuccess: () => {
-      toast.success("Xóa món ăn thành công!", { autoClose: 1500 })
-      queryClient.invalidateQueries({ queryKey: ["listDish"] })
-    },
-    onError: (error: any) => {
-      toast.error(error?.response?.data?.message || "Không thể xóa món ăn", { autoClose: 1500 })
-    }
-  })
-
   const isEditing = Boolean(editingDishId)
 
   const handleEdit = (record: Dish | true) => {
-    if (!ensureManagePermission()) return
     resetFormState()
 
     if (record === true) {
@@ -226,27 +202,7 @@ export default function ManageDish() {
     if (file) {
       payload.image = file
     }
-
-    if (isEditing && editingDishId) {
-      updateDishMutation.mutate({ id: editingDishId, payload })
-    } else {
-      createDishMutation.mutate(payload)
-    }
-  }
-
-  const handleDelete = (id: string) => {
-    if (!ensureManagePermission()) return
-    Modal.confirm({
-      title: "Bạn có chắc muốn xóa?",
-      content: "Món ăn sẽ bị xóa vĩnh viễn.",
-      okText: "Xóa",
-      okType: "danger",
-      cancelText: "Hủy",
-      onOk: async () => {
-        if (!ensureManagePermission()) return
-        await deleteDishMutation.mutateAsync(id)
-      }
-    })
+    createDishMutation.mutate(payload)
   }
 
   const columns = [
@@ -319,17 +275,17 @@ export default function ManageDish() {
       title: <div className="text-center">Hành động</div>,
       key: "actions",
       render: (_: any, record: any) => {
-        if (!canManageDish) {
-          return <span className="text-gray-400 italic">Không có quyền</span>
-        }
         return (
-          <div className="text-left">
-            <Button type="link" onClick={() => handleEdit(record)}>
-              Sửa
-            </Button>
-            <Button danger type="link" onClick={() => handleDelete(record.id)}>
-              Xóa
-            </Button>
+          <div className="flex items-center justify-center">
+            <Link
+              to={`${path.AdminDish}/${record.id}`}
+              state={{
+                dataDish: record
+              }}
+              className="text-blue-500"
+            >
+              Xem chi tiết
+            </Link>
           </div>
         )
       }
@@ -553,14 +509,14 @@ export default function ManageDish() {
         footer={false}
       >
         <Form form={form} layout="vertical" onFinish={handleSubmit}>
-          <div className="flex items-center">
+          <div className="flex items-center justify-between">
             <div>
               <Form.Item name="name" label="Tên món" rules={[{ required: true, message: "Vui lòng nhập tên món" }]}>
-                <Input placeholder="Nhập tên món" />
+                <Input placeholder="Nhập tên món" disabled={!canManageDish} />
               </Form.Item>
               {/* Mô tả */}
               <Form.Item name="desc" label="Mô tả">
-                <Input.TextArea rows={3} placeholder="Mô tả món ăn..." />
+                <Input.TextArea rows={3} placeholder="Mô tả món ăn..." disabled={!canManageDish} />
               </Form.Item>
               <div className="flex items-center justify-between">
                 <Form.Item
@@ -569,7 +525,7 @@ export default function ManageDish() {
                   name="price"
                   rules={[{ required: true, message: "Nhập giá gốc" }]}
                 >
-                  <Input placeholder="Nhập giá gốc" />
+                  <Input placeholder="Nhập giá gốc" disabled={!canManageDish} />
                 </Form.Item>
 
                 <Form.Item
@@ -578,11 +534,11 @@ export default function ManageDish() {
                   label="Thời gian nấu"
                   rules={[{ required: true, message: "Nhập thời gian nấu" }]}
                 >
-                  <InputNumber min={1} addonAfter="phút" />
+                  <InputNumber min={1} addonAfter="phút" disabled={!canManageDish} />
                 </Form.Item>
               </div>
               <Form.Item name="category_id" label="Loại món" rules={[{ required: true, message: "Chọn loại món" }]}>
-                <Select placeholder="Chọn loại món">
+                <Select placeholder="Chọn loại món" disabled={!canManageDish}>
                   {listNameDishCategory?.map((c: any) => (
                     <Select.Option key={c.id} value={c.id}>
                       {c.name}
@@ -591,7 +547,7 @@ export default function ManageDish() {
                 </Select>
               </Form.Item>
               <Form.Item name="is_active" label="Trạng thái" initialValue={true} valuePropName="checked">
-                <Switch checkedChildren="Hiện" unCheckedChildren="Ẩn" />
+                <Switch checkedChildren="Hiện" unCheckedChildren="Ẩn" disabled={!canManageDish} />
               </Form.Item>
             </div>
             <div>
@@ -600,27 +556,25 @@ export default function ManageDish() {
                   <div className="mb-2 text-black dark:text-white">Ảnh món ăn</div>
                   <img
                     src={previewImage || previewOldImage || assets.rectangles.Burger}
-                    className="h-28 w-28 rounded-full mx-auto"
+                    className="h-28 w-28 rounded-lg mx-auto"
                     alt="avatar default"
                   />
-                  <InputFileImage onChange={handleChangeImage} />
+                  {canManageDish && <InputFileImage onChange={handleChangeImage} />}
                 </div>
               </Form.Item>
             </div>
           </div>
 
-          <div className="flex justify-end mt-4">
-            <Button onClick={handleModalClose} className="mr-2">
-              Hủy
-            </Button>
-            <Button
-              type="primary"
-              htmlType="submit"
-              loading={createDishMutation.isPending || updateDishMutation.isPending}
-            >
-              {isEditing ? "Cập nhật món ăn" : "Thêm món ăn"}
-            </Button>
-          </div>
+          {canManageDish && (
+            <div className="flex justify-end mt-4">
+              <Button onClick={handleModalClose} className="mr-2">
+                Hủy
+              </Button>
+              <Button type="primary" htmlType="submit" loading={createDishMutation.isPending}>
+                {isEditing ? "Cập nhật món ăn" : "Thêm món ăn"}
+              </Button>
+            </div>
+          )}
         </Form>
       </Modal>
     </div>

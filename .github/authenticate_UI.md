@@ -36,7 +36,7 @@ Mục tiêu:
 | Trang | SUPER_ADMIN | ADMIN | MANAGER | STAFF | CASHIER | KITCHEN | WAITER |
 |--------|:------------:|:------:|:--------:|:------:|:--------:|:--------:|:-------:|
 | Danh sách bàn (`/tables`) | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ | ✅ |
-| Đặt bàn (`/reservations`) | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ | ✅ |
+| Đặt bàn (`/reservations`) | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ | ✅ |
 
   Các trạng thái order: 
     Đã gọi món
@@ -78,7 +78,7 @@ Mục tiêu:
 ### 🍔 3.5. Quản lý Menu & Món ăn
 | Trang | SUPER_ADMIN | ADMIN | MANAGER | STAFF | CASHIER | KITCHEN | WAITER |
 |--------|:------------:|:------:|:--------:|:------:|:--------:|:--------:|:-------:|
-| Thể loại món (`/category-dish`) | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ |
+| Thể loại món (`/category-dish`) | ✅ | ✅ | ✅ (xem) | ✅ | ✅ (xem) | ✅ (xem) | ✅ (xem) |
 | Danh sách món (`/dish`) | ✅ | ✅ | ✅ | ✅ (xem) | ✅ (xem) | ✅ (chế biến) | ✅ (gọi món) |
 | Menu (`/menu`) | ✅ | ✅ | ✅ | ✅ (xem) | ✅ (xem) | ✅ (xem món chế biến) | ✅ (xem món phục vụ) |
 
@@ -90,10 +90,10 @@ Mục tiêu:
 | Trang | SUPER_ADMIN | ADMIN | MANAGER | STAFF | CASHIER | KITCHEN | WAITER |
 |--------|:------------:|:------:|:--------:|:------:|:--------:|:--------:|:-------:|
 | Nguyên liệu (`/ingredients`) | ✅ | ✅ | ✅ | ✅ (chỉ xem) | ❌ | ✅ (xem tồn kho) | ❌ |
-| Nhà cung cấp (`/suppliers`) | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ |
-| Nhập kho (`/warehouse-in`) | ✅ | ✅ | ✅ | ❌ | ❌ | ✅ (xem tồn) | ❌ |
-| Xuất kho (`/warehouse-out`) | ✅ | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ |
-| Hao hụt kiểm kê (`/inventory-loss`) | ✅ | ✅ | ✅ | ❌ | ❌ | ✅ (ghi nhận) | ❌ |
+| Nhà cung cấp (`/suppliers`) | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ |
+| Nhập kho (`/warehouse-in`) | ✅ | ✅ | ✅ | ✅ | ❌ | ✅ (xem tồn) | ❌ |
+| Xuất kho (`/warehouse-out`) | ✅ | ✅ | ✅ | ✅ | ❌ | ✅ | ❌ |
+| Hao hụt kiểm kê (`/inventory-loss`) | ✅ | ✅ | ✅ | ✅ | ❌ | ✅ (ghi nhận) | ❌ |
 
 ---
 

@@ -199,7 +199,7 @@ export default function ManageStockExport() {
       return
     }
     setIsModalOpen(true)
-    
+
     if (record) {
       setEditingId(record.id)
       // Use setTimeout to ensure modal is rendered before setting values
@@ -315,11 +315,7 @@ export default function ManageStockExport() {
   // Get status tag
   const getStatusTag = (status: number, label: string) => {
     const statusOption = STATUS_OPTIONS.find((opt) => opt.value === status)
-    return (
-      <Tag color={statusOption?.color || "default"}>
-        {label || statusOption?.label}
-      </Tag>
-    )
+    return <Tag color={statusOption?.color || "default"}>{label || statusOption?.label}</Tag>
   }
 
   // ========== COLUMNS ==========
@@ -570,9 +566,9 @@ export default function ManageStockExport() {
           }
         }}
       >
-        <Form 
-          form={form} 
-          layout="vertical" 
+        <Form
+          form={form}
+          layout="vertical"
           className="mt-4"
           initialValues={{
             export_date: dayjs(),
@@ -605,13 +601,10 @@ export default function ManageStockExport() {
           </div>
 
           <Form.Item label={<span className="text-sm font-medium">Lý do xuất</span>} name="purpose">
-            <TextArea
-              placeholder="Nhập lý do xuất kho (VD: Phục vụ nhà hàng, hư hỏng, mất mát...)"
-              rows={3}
-            />
+            <TextArea placeholder="Nhập lý do xuất kho (VD: Phục vụ nhà hàng, hư hỏng, mất mát...)" rows={3} />
           </Form.Item>
 
-          <div className="mt-6">
+          <div className="mt-6 h-[200px] overflow-y-auto">
             <div className="flex items-center justify-between mb-3">
               <span className="text-sm font-medium">Chi tiết nguyên liệu</span>
             </div>
@@ -632,15 +625,9 @@ export default function ManageStockExport() {
                 <>
                   {/* Column Headers */}
                   <div className="grid grid-cols-12 gap-3 mb-2 px-4">
-                    <div className="col-span-6 text-sm font-medium text-gray-700">
-                      Nguyên liệu
-                    </div>
-                    <div className="col-span-4 text-sm font-medium text-gray-700">
-                      Số lượng xuất
-                    </div>
-                    <div className="col-span-2 text-sm font-medium text-gray-700 text-center">
-                      Hành động
-                    </div>
+                    <div className="col-span-6 text-sm font-medium text-gray-700">Nguyên liệu</div>
+                    <div className="col-span-4 text-sm font-medium text-gray-700">Số lượng xuất</div>
+                    <div className="col-span-2 text-sm font-medium text-gray-700 text-center">Hành động</div>
                   </div>
 
                   <div className="space-y-3">
@@ -732,6 +719,7 @@ export default function ManageStockExport() {
       <Modal
         title={<span className="text-lg font-semibold">Chi tiết phiếu xuất kho</span>}
         open={isDetailModalOpen}
+        style={{ top: 40 }}
         onCancel={() => {
           setIsDetailModalOpen(false)
           setSelectedStockExport(null)
@@ -797,17 +785,15 @@ export default function ManageStockExport() {
                   {getStatusTag(stockExportDetail.status, stockExportDetail.status_label)}
                 </Descriptions.Item>
                 <Descriptions.Item label={<span className="text-sm">Lý do xuất</span>} span={2}>
-                  <span className="text-sm">{stockExportDetail.purpose || <span className="text-gray-400">-</span>}</span>
+                  <span className="text-sm">
+                    {stockExportDetail.purpose || <span className="text-gray-400">-</span>}
+                  </span>
                 </Descriptions.Item>
                 <Descriptions.Item label={<span className="text-sm">Ngày tạo</span>}>
-                  <span className="text-sm">
-                    {dayjs(stockExportDetail.created_at).format("DD/MM/YYYY HH:mm")}
-                  </span>
+                  <span className="text-sm">{dayjs(stockExportDetail.created_at).format("DD/MM/YYYY HH:mm")}</span>
                 </Descriptions.Item>
                 <Descriptions.Item label={<span className="text-sm">Ngày cập nhật</span>}>
-                  <span className="text-sm">
-                    {dayjs(stockExportDetail.updated_at).format("DD/MM/YYYY HH:mm")}
-                  </span>
+                  <span className="text-sm">{dayjs(stockExportDetail.updated_at).format("DD/MM/YYYY HH:mm")}</span>
                 </Descriptions.Item>
               </Descriptions>
 
@@ -832,4 +818,3 @@ export default function ManageStockExport() {
     </Fragment>
   )
 }
-

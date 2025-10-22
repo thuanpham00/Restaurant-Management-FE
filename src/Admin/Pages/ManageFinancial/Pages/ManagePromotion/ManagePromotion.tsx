@@ -20,7 +20,7 @@ import {
 } from "antd"
 import { ColumnsType } from "antd/es/table"
 import { isUndefined, omit, omitBy } from "lodash"
-import { Beef, Filter, RotateCcw } from "lucide-react"
+import { Beef, Edit, Filter, RotateCcw, Trash2 } from "lucide-react"
 import { useEffect, useState } from "react"
 import { Helmet } from "react-helmet-async"
 import { createSearchParams, useNavigate, useSearchParams } from "react-router-dom"
@@ -193,10 +193,10 @@ export default function ManagePromotion() {
         canManagePromotions ? (
           <Space size="middle">
             <Button type="link" onClick={() => handleEdit(record)}>
-              Sửa
+              <Edit size={16} />
             </Button>
             <Button danger type="link" onClick={() => handleDelete(record.id)}>
-              Xóa
+              <Trash2 size={16} />
             </Button>
           </Space>
         ) : null

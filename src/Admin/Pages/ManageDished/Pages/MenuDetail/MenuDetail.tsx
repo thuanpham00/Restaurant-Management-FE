@@ -220,17 +220,15 @@ export default function MenuDetail() {
       key: "action",
       align: "center",
       render: (record) => {
-        if (!canManageMenu) {
-          return <span className="text-gray-400 italic">Không có quyền</span>
-        }
         return (
           <div className="flex justify-center gap-2">
-            <Button type="link" onClick={() => handleUpdateDish(record)}>
+            <Button type="link" onClick={() => handleUpdateDish(record)} disabled={!canManageMenu}>
               <Edit size={16} />
             </Button>
             <Button
               type="link"
               danger
+              disabled={!canManageMenu}
               onClick={() => {
                 Modal.confirm({
                   title: "Xác nhận xóa",

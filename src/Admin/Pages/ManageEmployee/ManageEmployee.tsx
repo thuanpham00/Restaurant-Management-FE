@@ -54,6 +54,7 @@ export default function ManageEmployee() {
   const queryConfig: queryParamConfigEmployee = useQueryParams()
   const queryClient = useQueryClient()
   const { can } = useAuthorization()
+  const canViewEmployees = can(AppAbility.EMPLOYEES_VIEW)
   const canManageEmployees = can(AppAbility.EMPLOYEES_MANAGE)
 
   // ========== STATE ==========
@@ -123,7 +124,8 @@ export default function ManageEmployee() {
       return employeesAPI.getList(params, controller.signal)
     },
     staleTime: 3 * 60 * 1000,
-    placeholderData: keepPreviousData
+    placeholderData: keepPreviousData,
+    enabled: canViewEmployees
   })
 
   const paginated = data?.data?.data as PaginatedResponse<Employee>
@@ -136,7 +138,8 @@ export default function ManageEmployee() {
       const controller = new AbortController()
       return rolesAPI.getList({ per_page: "99" }, controller.signal)
     },
-    staleTime: 5 * 60 * 1000
+    staleTime: 5 * 60 * 1000,
+    enabled: canViewEmployees
   })
 
   const roleOptions =
@@ -463,19 +466,17 @@ export default function ManageEmployee() {
               e.stopPropagation()
               navigate(path.AdminStaffDetail.replace(":id", record.id))
             }}
-          >
-          </Button>
+          ></Button>
           {canManageEmployees && (
             <>
               <Button
-                    type="link"
+                type="link"
                 icon={<Edit size={16} />}
                 onClick={(e) => {
                   e.stopPropagation()
                   handleEdit(record)
                 }}
-              >
-                  </Button>
+              ></Button>
               <Button
                 type="link"
                 danger
@@ -492,7 +493,10 @@ export default function ManageEmployee() {
     }
   ]
 
-  // ========== RENDER ==========
+  if (!canViewEmployees) {
+    return null
+  }
+
   return (
     <div>
       <Helmet>
@@ -627,7 +631,12 @@ export default function ManageEmployee() {
         footer={
           <div className="flex justify-end gap-2">
             <Button onClick={handleCloseCreateModal}>Hủy</Button>
-            <Button type="primary" onClick={handleCreate} loading={createMutation.isPending} disabled={!canManageEmployees}>
+            <Button
+              type="primary"
+              onClick={handleCreate}
+              loading={createMutation.isPending}
+              disabled={!canManageEmployees}
+            >
               Tạo mới
             </Button>
           </div>
@@ -805,8 +814,7 @@ export default function ManageEmployee() {
                 <>
                   <Button onClick={handleCloseModal}>Đóng</Button>
                   {canManageEmployees && (
-                    <Button type="primary" icon={<Edit size={16} />} onClick={() => handleEdit()}>
-                      </Button>
+                    <Button type="primary" icon={<Edit size={16} />} onClick={() => handleEdit()}></Button>
                   )}
                 </>
               ) : (

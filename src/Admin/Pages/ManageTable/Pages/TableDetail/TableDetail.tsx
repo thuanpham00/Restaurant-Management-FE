@@ -49,7 +49,7 @@ import { useAppStore } from "src/StateGlobal/zustand"
 import { useRealtimeQuery } from "src/Hook/useRealtimeQuery"
 import type { Invoice } from "src/Types/invoicePayment.type"
 import PendingTableSessionSelector from "../../Components/PendingTableSessionSelector"
-import { AppAbility, useAuthorization } from "src/Authorization"
+import { AppAbility, AppRole, resolveRole, useAuthorization } from "src/Authorization"
 
 const { Search } = Input
 const { Title } = Typography
@@ -218,6 +218,9 @@ type TableSessionOrderMerged = TableSessionOrder & { items: TableSessionOrder["i
 
 export default function TableDetail() {
   const { employeeId, role } = useAppStore()
+  const resolvedAppRole = resolveRole(String(role || ""))
+  const isKitchenStaff = resolvedAppRole === AppRole.KITCHEN_STAFF
+
   const queryClient = useQueryClient()
   const { can } = useAuthorization()
   const canViewTables = can(AppAbility.TABLES_VIEW)
@@ -231,44 +234,47 @@ export default function TableDetail() {
   const nameTable = state?.tableName
   const idDiningTable = dataTable.dining_table_id
 
-  // chuẩn hóa role
-  const normalizedRole = String(role || "").toUpperCase()
+  const nonKitchenUpdateRoles = [
+    AppRole.SUPER_ADMIN,
+    AppRole.ADMINISTRATOR,
+    AppRole.MANAGER,
+    AppRole.STAFF,
+    AppRole.CASHIER,
+    AppRole.WAITER
+  ]
+  const canNonKitchenUpdate = resolvedAppRole !== null && nonKitchenUpdateRoles.includes(resolvedAppRole)
 
-  // Trả về danh sách options với thuộc tính `disabled` tùy theo role và trạng thái hiện tại của item
   const getStatusOptionsForRecord = (currentStatus: number) => {
-    const cancelRoles = ["SUPER_ADMIN", "ADMIN", "MANAGER", "CASHIER"]
-    const serveRoles = ["SUPER_ADMIN", "ADMIN", "MANAGER", "STAFF", "CASHIER", "WAITER"]
-
     return orderItemStatusOptions.map((opt) => {
       const target = opt.value
 
-      // luôn cho phép hiển thị (và chọn) option bằng trạng thái hiện tại
-      if (target === currentStatus) {
-        return { ...opt, disabled: false }
+      // luôn cho phép trạng thái hiện tại
+      if (target === currentStatus) return { ...opt, disabled: false }
+
+      // 1) KITCHEN: chỉ được CHUYỂN TỪ "Đã gọi món"(0) -> "Đang chế biến"(1) hoặc "Đã chế biến"(2)
+      if (isKitchenStaff) {
+        const allowedForKitchen = currentStatus === 0 && (target === 1 || target === 2)
+        return { ...opt, disabled: !allowedForKitchen }
       }
 
-      // KITCHEN chỉ có thể chuyển sang "Đang chế biến"(1) và "Đã chế biến"(2)
-      if (normalizedRole === "KITCHEN") {
-        return { ...opt, disabled: !(target === 1 || target === 2) }
-      }
-
-      // Quyền huỷ: chỉ khi đang ở "Đã gọi món"(0) hoặc "Đã chế biến"(2)
-      if (target === 4) {
-        return {
-          ...opt,
-          disabled: !(cancelRoles.includes(normalizedRole) && (currentStatus === 0 || currentStatus === 2))
-        }
-      }
-
-      // Quyền phục vụ: chỉ khi đang ở "Đã chế biến"(2)
+      // 2) NON-KITCHEN: cho phép chuyển "Đã chế biến"(2) -> "Đã phục vụ"(3) nếu role nằm trong serveRoles
       if (target === 3) {
-        return { ...opt, disabled: !(serveRoles.includes(normalizedRole) && currentStatus === 2) }
+        const allowedToServe = canNonKitchenUpdate && currentStatus === 2
+        return { ...opt, disabled: !allowedToServe }
       }
 
-      // các trường hợp khác mặc định disabled
+      // 3) NON-KITCHEN: cho phép HỦY (4) từ "Đã gọi món"(0) hoặc "Đã chế biến"(2)
+      if (target === 4) {
+        const allowedToCancel = canNonKitchenUpdate && (currentStatus === 0 || currentStatus === 2)
+        return { ...opt, disabled: !allowedToCancel }
+      }
+
+      // Các chuyển đổi khác mặc định disabled
       return { ...opt, disabled: true }
     })
   }
+
+  const canUpdateOrderItems = canManageTables || isKitchenStaff || canNonKitchenUpdate
 
   // ✅ Query 1: Detail Table Session - Always fresh, no cache
   const {
@@ -467,7 +473,7 @@ export default function TableDetail() {
     type: keyof { status: number; quantity: number; notes: string },
     newValueChange: number | string
   ) => {
-    if (!canManageTables) return
+    if (!canUpdateOrderItems) return
     setUpdateOrderItemList((prev) => ({
       ...prev,
       [orderItemId]: {
@@ -522,7 +528,7 @@ export default function TableDetail() {
   })
 
   const handleUpdateOrderItemList = () => {
-    if (!canManageTables) {
+    if (!(canManageTables || isKitchenStaff)) {
       toast.warn("Bạn không có quyền cập nhật order.", {
         autoClose: 1500
       })
@@ -976,12 +982,9 @@ export default function TableDetail() {
                       }
                     }
                   }}
-                  disabled={
-                    !canManageInvoices || (paymentStatus.allPaid && invoiceList.length > 0)
-                  }
+                  disabled={!canManageInvoices || (paymentStatus.allPaid && invoiceList.length > 0)}
                   style={{
-                    backgroundColor:
-                      paymentStatus.allPaid && invoiceList.length > 0 ? "#95de64" : "#f56a00",
+                    backgroundColor: paymentStatus.allPaid && invoiceList.length > 0 ? "#95de64" : "#f56a00",
                     borderColor: paymentStatus.allPaid && invoiceList.length > 0 ? "#95de64" : "#f56a00",
                     width: "100%",
                     transition: "background-color 0.2s ease, border-color 0.2s ease"
@@ -1162,266 +1165,266 @@ export default function TableDetail() {
                       </Descriptions>
                     </Panel>
 
-                      <Panel
-                        key="orderInfo"
-                        header={
-                          <h2 className="text-lg font-semibold text-gray-700">
-                            Thông tin món ăn hiện tại{" "}
-                            <span className="text-red-500">#{dataTableSessionOrder?.order_id}</span>
-                          </h2>
-                        }
-                      >
-                        {isInitialOrderLoading ? (
-                          <div className="flex justify-center items-center flex-col h-[200px]">
-                            <Spin tip="Đang tải dữ liệu món..." size="large" spinning>
-                              <div style={{ minHeight: 100, width: 300, marginTop: 10 }} />
-                            </Spin>
-                          </div>
-                        ) : (
-                          <Spin
-                            spinning={isFetchingDataTableSessionOrder && !isInitialOrderLoading}
-                            tip="Đang đồng bộ món ăn..."
-                          >
-                            <div>
-                              <Descriptions
-                                  bordered
-                                  column={2}
-                                  size="middle"
-                                  styles={{
-                                    label: { fontWeight: 500, background: "#fafafa" },
-                                    content: { background: "#fff" }
-                                  }}
-                                >
-                                  <Descriptions.Item label="Trạng thái đơn" span={2}>
-                                    {/* {renderOrderStatus((dataTableSessionOrder as TableSessionOrderMerged)?.order_status)} */}
-                                {renderOrderStatus(mergedStatus)}
-                                  </Descriptions.Item>
-                                  <Descriptions.Item label="Tổng tiền" span={2}>
-                                    <span className="text-red-500 font-semibold">
-                                      {Number(dataTableSessionOrder?.total_amount || 0).toLocaleString("vi-VN")} đ
-                                    </span>
-                                  </Descriptions.Item>
-                                </Descriptions>
-
-                                <h3 className="text-md font-semibold my-4 text-gray-700">Danh sách món ăn</h3>
-                                <Table
-                                  scroll={{ x: "max-content" }} // 👈 quan trọng
-                                  bordered
-                                  rowKey="order_item_id"
-                                  pagination={false}
-                                  rowHoverable={false} // ⬅️ Tắt hover mặc định
-                                  dataSource={dataTableSessionOrder?.items.sort(
-                                    (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
-                                  )}
-                                  columns={[
-                                    {
-                                      title: "Món ăn",
-                                      dataIndex: ["dish", "dish_name"],
-                                      key: "dish_name",
-                                      fixed: "left",
-                                      render: (_: any, record: any) => (
-                                        <div className="flex items-center gap-2">
-                                          {record.dish.image ? (
-                                            <Image
-                                              src={record.dish.image}
-                                              alt={record.dish.dish_name}
-                                              className=" rounded-md object-cover"
-                                              width={64}
-                                              height={64}
-                                            />
-                                          ) : (
-                                            <Image
-                                              src={assets.rectangles.Burger}
-                                              alt={record.dish.dish_name}
-                                              className="w-12 h-12 rounded-md object-cover"
-                                              width={64}
-                                              height={64}
-                                            />
-                                          )}
-                                          <div>
-                                            <p className="font-medium">{record.dish.dish_name}</p>
-                                            <p className="text-xs text-gray-500">{record.dish.category_name}</p>
-                                          </div>
-                                        </div>
-                                      )
-                                    },
-                                    {
-                                      title: "Số lượng",
-                                      dataIndex: "quantity",
-                                      key: "quantity",
-                                      align: "center",
-                                      render: (val: number, record: any) => {
-                                        return (
-                                          <InputNumber
-                                            min={1}
-                                            className="text-right"
-                                            value={updateOrderItemList[record.order_item_id]?.quantity ?? val}
-                                            onChange={(newValueChange) =>
-                                              handleChangeItem(record.order_item_id, "quantity", newValueChange || 0)
-                                            }
-                                            disabled={!canManageTables || record.item_status !== 0}
-                                          />
-                                        )
-                                      }
-                                    },
-                                    {
-                                      title: "Đơn giá",
-                                      dataIndex: "item_price",
-                                      key: "item_price",
-                                      render: (val: string) => `${Number(val).toLocaleString("vi-VN")} đ`,
-                                      align: "right"
-                                    },
-                                    {
-                                      title: "Thành tiền",
-                                      dataIndex: "total_price",
-                                      key: "total_price",
-                                      render: (val: string) => `${Number(val).toLocaleString("vi-VN")} đ`,
-                                      align: "right"
-                                    },
-                                    {
-                                      title: "Trạng thái",
-                                      dataIndex: "item_status",
-                                      key: "item_status",
-                                      render: (val: number, record: any) => (
-                                        <Select
-                                          value={updateOrderItemList[record.order_item_id]?.status ?? val}
-                                          style={{ width: 140 }}
-                                          onChange={(newValueChange) =>
-                                            handleChangeItem(record.order_item_id, "status", newValueChange)
-                                          }
-                                          options={getStatusOptionsForRecord(record.item_status)}
-                                    disabled={!canManageTables}
-                                        />
-                                      ),
-                                      align: "center"
-                                    },
-                                    {
-                                      title: "Ghi chú",
-                                      dataIndex: "notes",
-                                      key: "notes",
-                                      align: "center",
-                                      width: 150,
-                                      render: (val: string, record: any) => (
-                                        <Input
-                                          className="text-left"
-                                          value={updateOrderItemList[record.order_item_id]?.notes ?? val}
-                                          onChange={(e) => {
-                                            const newValueChange = e.target.value || ""
-                                            handleChangeItem(record.order_item_id, "notes", newValueChange)
-                                          }}
-                                    disabled={!canManageTables}
-                                        />
-                                      )
-                                    },
-                                    {
-                                      title: "Thời gian tạo",
-                                      dataIndex: "created_at",
-                                      key: "created_at",
-                                      align: "center",
-                                      render: (val: string) => <div>{val}</div>
-                                    }
-                                  ]}
-                                  rowClassName={(record, index) => {
-                                    if (record.item_status === 4) {
-                                      return "bg-red-200 text-red-700 font-medium"
-                                    }
-                                    if (record.item_status === 3) {
-                                      return "bg-green-200 text-green-700 font-medium"
-                                    }
-                                    return index % 2 === 0 ? "bg-[#f2f2f2]" : "bg-white"
-                                  }}
-                                />
-
-                                <div className="mt-2 flex justify-end gap-2">
-                                  <Button
-                                    className="mt-2 py-4 bg-lime-600 hover:!bg-lime-700"
-                                    type="primary"
-                                    icon={<ChefHat />}
-                                    onClick={() => {
-                              if (!canManageTables) {
-                                toast.warn("Bạn không có quyền thêm order.", { autoClose: 1500 })
-                                return
-                              }
-                              setIsModalOpen(true)
-                            }}
-                            disabled={!canManageTables}
-                                  >
-                                    Thêm Order
-                                  </Button>
-                                  <Button
-                                    className="mt-2 py-4"
-                                    type="primary"
-                                    icon={<CookingPot />}
-                                    onClick={handleUpdateOrderItemList}
-                            disabled={!canManageTables}
-                                  >
-                                    Cập nhật order
-                                  </Button>
-                                </div>
-                            </div>
-                          </Spin>
-                        )}
-                      </Panel>
-
-                  {canViewInvoices && (
                     <Panel
-                      key="invoiceInfo"
-                      header={<h2 className="text-lg font-semibold text-gray-700">Hóa đơn ({invoiceList.length})</h2>}
+                      key="orderInfo"
+                      header={
+                        <h2 className="text-lg font-semibold text-gray-700">
+                          Thông tin món ăn hiện tại{" "}
+                          <span className="text-red-500">#{dataTableSessionOrder?.order_id}</span>
+                        </h2>
+                      }
                     >
-                      <div style={{ padding: 16 }}>
-                        {isInitialInvoiceLoading ? (
-                          <div className="flex justify-center items-center py-6">
-                            <Spin tip="Đang tải hóa đơn..." />
-                          </div>
-                        ) : (
-                          <Spin
-                            spinning={isFetchingInvoices && !isInitialInvoiceLoading}
-                            tip="Đang đồng bộ hóa đơn..."
-                          >
-                            <InvoiceListSummary
-                              invoices={invoiceList}
-                              tableSessionId={dataTableSessionDetail?.session_id}
-                              onViewDetail={(invoice) => {
-                                setSelectedInvoiceForDetail(invoice)
-                                setShowInvoiceDetailModal(true)
+                      {isInitialOrderLoading ? (
+                        <div className="flex justify-center items-center flex-col h-[200px]">
+                          <Spin tip="Đang tải dữ liệu món..." size="large" spinning>
+                            <div style={{ minHeight: 100, width: 300, marginTop: 10 }} />
+                          </Spin>
+                        </div>
+                      ) : (
+                        <Spin
+                          spinning={isFetchingDataTableSessionOrder && !isInitialOrderLoading}
+                          tip="Đang đồng bộ món ăn..."
+                        >
+                          <div>
+                            <Descriptions
+                              bordered
+                              column={2}
+                              size="middle"
+                              styles={{
+                                label: { fontWeight: 500, background: "#fafafa" },
+                                content: { background: "#fff" }
+                              }}
+                            >
+                              <Descriptions.Item label="Trạng thái đơn" span={2}>
+                                {/* {renderOrderStatus((dataTableSessionOrder as TableSessionOrderMerged)?.order_status)} */}
+                                {renderOrderStatus(mergedStatus)}
+                              </Descriptions.Item>
+                              <Descriptions.Item label="Tổng tiền" span={2}>
+                                <span className="text-red-500 font-semibold">
+                                  {Number(dataTableSessionOrder?.total_amount || 0).toLocaleString("vi-VN")} đ
+                                </span>
+                              </Descriptions.Item>
+                            </Descriptions>
+
+                            <h3 className="text-md font-semibold my-4 text-gray-700">Danh sách món ăn</h3>
+                            <Table
+                              scroll={{ x: "max-content" }} // 👈 quan trọng
+                              bordered
+                              rowKey="order_item_id"
+                              pagination={false}
+                              rowHoverable={false} // ⬅️ Tắt hover mặc định
+                              dataSource={dataTableSessionOrder?.items.sort(
+                                (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+                              )}
+                              columns={[
+                                {
+                                  title: "Món ăn",
+                                  dataIndex: ["dish", "dish_name"],
+                                  key: "dish_name",
+                                  fixed: "left",
+                                  render: (_: any, record: any) => (
+                                    <div className="flex items-center gap-2">
+                                      {record.dish.image ? (
+                                        <Image
+                                          src={record.dish.image}
+                                          alt={record.dish.dish_name}
+                                          className=" rounded-md object-cover"
+                                          width={64}
+                                          height={64}
+                                        />
+                                      ) : (
+                                        <Image
+                                          src={assets.rectangles.Burger}
+                                          alt={record.dish.dish_name}
+                                          className="w-12 h-12 rounded-md object-cover"
+                                          width={64}
+                                          height={64}
+                                        />
+                                      )}
+                                      <div>
+                                        <p className="font-medium">{record.dish.dish_name}</p>
+                                        <p className="text-xs text-gray-500">{record.dish.category_name}</p>
+                                      </div>
+                                    </div>
+                                  )
+                                },
+                                {
+                                  title: "Số lượng",
+                                  dataIndex: "quantity",
+                                  key: "quantity",
+                                  align: "center",
+                                  render: (val: number, record: any) => {
+                                    return (
+                                      <InputNumber
+                                        min={1}
+                                        className="text-right"
+                                        value={updateOrderItemList[record.order_item_id]?.quantity ?? val}
+                                        onChange={(newValueChange) =>
+                                          handleChangeItem(record.order_item_id, "quantity", newValueChange || 0)
+                                        }
+                                        disabled={!canManageTables || record.item_status !== 0}
+                                      />
+                                    )
+                                  }
+                                },
+                                {
+                                  title: "Đơn giá",
+                                  dataIndex: "item_price",
+                                  key: "item_price",
+                                  render: (val: string) => `${Number(val).toLocaleString("vi-VN")} đ`,
+                                  align: "right"
+                                },
+                                {
+                                  title: "Thành tiền",
+                                  dataIndex: "total_price",
+                                  key: "total_price",
+                                  render: (val: string) => `${Number(val).toLocaleString("vi-VN")} đ`,
+                                  align: "right"
+                                },
+                                {
+                                  title: "Trạng thái",
+                                  dataIndex: "item_status",
+                                  key: "item_status",
+                                  render: (val: number, record: any) => (
+                                    <Select
+                                      value={updateOrderItemList[record.order_item_id]?.status ?? val}
+                                      style={{ width: 140 }}
+                                      onChange={(newValueChange) =>
+                                        handleChangeItem(record.order_item_id, "status", newValueChange)
+                                      }
+                                      options={getStatusOptionsForRecord(record.item_status)}
+                                      disabled={!(canManageTables || isKitchenStaff)}
+                                    />
+                                  ),
+                                  align: "center"
+                                },
+                                {
+                                  title: "Ghi chú",
+                                  dataIndex: "notes",
+                                  key: "notes",
+                                  align: "center",
+                                  width: 150,
+                                  render: (val: string, record: any) => (
+                                    <Input
+                                      className="text-left"
+                                      value={updateOrderItemList[record.order_item_id]?.notes ?? val}
+                                      onChange={(e) => {
+                                        const newValueChange = e.target.value || ""
+                                        handleChangeItem(record.order_item_id, "notes", newValueChange)
+                                      }}
+                                      disabled={!(canManageTables || isKitchenStaff)}
+                                    />
+                                  )
+                                },
+                                {
+                                  title: "Thời gian tạo",
+                                  dataIndex: "created_at",
+                                  key: "created_at",
+                                  align: "center",
+                                  render: (val: string) => <div>{val}</div>
+                                }
+                              ]}
+                              rowClassName={(record, index) => {
+                                if (record.item_status === 4) {
+                                  return "bg-red-200 text-red-700 font-medium"
+                                }
+                                if (record.item_status === 3) {
+                                  return "bg-green-200 text-green-700 font-medium"
+                                }
+                                return index % 2 === 0 ? "bg-[#f2f2f2]" : "bg-white"
                               }}
                             />
-                          </Spin>
-                        )}
-                      </div>
+
+                            <div className="mt-2 flex justify-end gap-2">
+                              <Button
+                                className="mt-2 py-4 bg-lime-600 hover:!bg-lime-700"
+                                type="primary"
+                                icon={<ChefHat />}
+                                onClick={() => {
+                                  if (!canManageTables) {
+                                    toast.warn("Bạn không có quyền thêm order.", { autoClose: 1500 })
+                                    return
+                                  }
+                                  setIsModalOpen(true)
+                                }}
+                                disabled={!canManageTables}
+                              >
+                                Thêm Order
+                              </Button>
+                              <Button
+                                className="mt-2 py-4"
+                                type="primary"
+                                icon={<CookingPot />}
+                                onClick={handleUpdateOrderItemList}
+                                disabled={!(canManageTables || isKitchenStaff)}
+                              >
+                                Cập nhật order
+                              </Button>
+                            </div>
+                          </div>
+                        </Spin>
+                      )}
                     </Panel>
-                  )}
+
+                    {canViewInvoices && (
+                      <Panel
+                        key="invoiceInfo"
+                        header={<h2 className="text-lg font-semibold text-gray-700">Hóa đơn ({invoiceList.length})</h2>}
+                      >
+                        <div style={{ padding: 16 }}>
+                          {isInitialInvoiceLoading ? (
+                            <div className="flex justify-center items-center py-6">
+                              <Spin tip="Đang tải hóa đơn..." />
+                            </div>
+                          ) : (
+                            <Spin
+                              spinning={isFetchingInvoices && !isInitialInvoiceLoading}
+                              tip="Đang đồng bộ hóa đơn..."
+                            >
+                              <InvoiceListSummary
+                                invoices={invoiceList}
+                                tableSessionId={dataTableSessionDetail?.session_id}
+                                onViewDetail={(invoice) => {
+                                  setSelectedInvoiceForDetail(invoice)
+                                  setShowInvoiceDetailModal(true)
+                                }}
+                              />
+                            </Spin>
+                          )}
+                        </div>
+                      </Panel>
+                    )}
                   </Collapse>
 
                   {/* Invoice Detail Modal */}
                   {canViewInvoices && (
                     <InvoiceDetailModal
-                          open={showInvoiceDetailModal}
-                          onClose={() => {
-                            setShowInvoiceDetailModal(false)
-                            setSelectedInvoiceForDetail(null)
-                          }}
-                          invoiceId={selectedInvoiceForDetail?.id || null}
-                          tableSessionId={dataTableSessionDetail?.session_id || ""}
-                          idDiningTable={idDiningTable}
-                          onSplitInvoice={(invoice) => {
-                            setSelectedInvoiceForDetail(invoice as any)
-                            setShowSplitInvoiceModal(true)
-                          }}
-                          onPaymentSuccess={() => {
-                            queryClient.invalidateQueries({ queryKey: ["detailTableSession", idDiningTable] })
-                            queryClient.invalidateQueries({
-                              queryKey: ["listInvoicesForTableSession", dataTableSessionDetail?.session_id]
-                            })
-                          }}
+                      open={showInvoiceDetailModal}
+                      onClose={() => {
+                        setShowInvoiceDetailModal(false)
+                        setSelectedInvoiceForDetail(null)
+                      }}
+                      invoiceId={selectedInvoiceForDetail?.id || null}
+                      tableSessionId={dataTableSessionDetail?.session_id || ""}
+                      idDiningTable={idDiningTable}
+                      onSplitInvoice={(invoice) => {
+                        setSelectedInvoiceForDetail(invoice as any)
+                        setShowSplitInvoiceModal(true)
+                      }}
+                      onPaymentSuccess={() => {
+                        queryClient.invalidateQueries({ queryKey: ["detailTableSession", idDiningTable] })
+                        queryClient.invalidateQueries({
+                          queryKey: ["listInvoicesForTableSession", dataTableSessionDetail?.session_id]
+                        })
+                      }}
                       tableSessionDetail={dataTableSessionDetail}
-                    tableInfo={{
-                      tableName: nameTable,
-                      tableNumber: dataTable?.table_number ?? null
-                    }}
-                    orderItems={dataTableSessionOrder?.items}
-                    orderSubtotal={dataTableSessionOrder ? Number(dataTableSessionOrder.total_amount) : undefined}
-                  />
+                      tableInfo={{
+                        tableName: nameTable,
+                        tableNumber: dataTable?.table_number ?? null
+                      }}
+                      orderItems={dataTableSessionOrder?.items}
+                      orderSubtotal={dataTableSessionOrder ? Number(dataTableSessionOrder.total_amount) : undefined}
+                    />
                   )}
                 </div>
               </Spin>
@@ -1570,9 +1573,9 @@ export default function TableDetail() {
             tableSessionId={dataTableSessionDetail?.session_id || ""}
             idDiningTable={idDiningTable}
             tableSessionDetail={dataTableSessionDetail}
-          orderItems={dataTableSessionOrder?.items}
-          tableInfo={{ tableName: nameTable, tableNumber: dataTable?.table_number }}
-        />
+            orderItems={dataTableSessionOrder?.items}
+            tableInfo={{ tableName: nameTable, tableNumber: dataTable?.table_number }}
+          />
         )}
       </Row>
     </div>

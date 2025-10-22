@@ -137,30 +137,31 @@ export default function ManageReservation() {
       key: "created_at",
       render: (date: string) => new Date(date).toLocaleString()
     },
-  activeTab === "pending" && canManageReservations && {
-      title: <div className="text-center">Hành động</div>,
-      key: "action",
-      render: (_: any, record: any) => (
-        <div className="flex justify-center gap-2">
-          <Button
-            type="primary"
-            onClick={() => {
-              if (!canAssignTable) {
-                toast.warn("Bạn không có quyền xếp bàn cho đặt bàn này.")
-                return
-              }
-              setArrangement(record)
-            }}
-            disabled={!canAssignTable}
-          >
-            Xác nhận
-          </Button>
-          <Button danger onClick={() => handleAction(record)} disabled={!canManageReservations}>
-            Từ chối
-          </Button>
-        </div>
-      )
-    },
+    activeTab === "pending" &&
+      canManageReservations && {
+        title: <div className="text-center">Hành động</div>,
+        key: "action",
+        render: (_: any, record: any) => (
+          <div className="flex justify-center gap-2">
+            <Button
+              type="primary"
+              onClick={() => {
+                if (!canAssignTable) {
+                  toast.warn("Bạn không có quyền xếp bàn cho đặt bàn này.")
+                  return
+                }
+                setArrangement(record)
+              }}
+              disabled={!canAssignTable}
+            >
+              Xác nhận
+            </Button>
+            <Button danger onClick={() => handleAction(record)} disabled={!canManageReservations}>
+              Từ chối
+            </Button>
+          </div>
+        )
+      },
     (activeTab === "confirmed" || activeTab === "completed") && {
       title: <div className="text-center">Trạng thái bàn</div>,
       key: "action",

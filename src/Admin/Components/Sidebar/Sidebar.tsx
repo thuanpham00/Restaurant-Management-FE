@@ -70,7 +70,12 @@ export default function Sidebar() {
     invoices: { name: "Quản lý hóa đơn", icon: Receipt, path: path.AdminInvoices, feature: "invoices" },
     promotions: { name: "Quản lý khuyến mãi", icon: Tag, path: path.AdminPromotions, feature: "promotions" },
     roles: { name: "Quản lý vai trò", icon: Shield, path: path.AdminRoles, feature: "roles" },
-    permissionMatrix: { name: "Ma trận phân quyền", icon: Grid, path: path.AdminPermissionMatrix, feature: "permissionMatrix" }
+    permissionMatrix: {
+      name: "Ma trận phân quyền",
+      icon: Grid,
+      path: path.AdminPermissionMatrix,
+      feature: "permissionMatrix"
+    }
   }
 
   type MenuKey = keyof typeof menuConfig
@@ -240,7 +245,7 @@ export default function Sidebar() {
         setNameUser(null)
         setRole(null)
         setAvatar(null)
-  setEmployeeId(null)
+        setEmployeeId(null)
 
         navigate(path.AdminLogin)
       }
