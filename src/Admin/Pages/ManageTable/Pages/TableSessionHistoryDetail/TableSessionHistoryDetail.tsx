@@ -87,7 +87,7 @@ export default function TableSessionHistoryDetail() {
   })
 
   const detailInvoice = dataDetailInvoice?.data.data
-
+  console.log(detailInvoice)
   const deleteMenuMutation = useMutation({
     mutationFn: (body: { idOrder: string; idOrderItem: string }) =>
       orderItemsAPI.delete(body.idOrderItem, body.idOrder),
@@ -630,112 +630,109 @@ export default function TableSessionHistoryDetail() {
         </Card>
       ))}
 
-      {canViewInvoices && (
-        <div className="py-4 px-0 bg-white shadow rounded-lg space-y-6">
-        {/* 1. Thông tin tổng quan hóa đơn */}
-        <div className="flex justify-between items-center bg-blue-50 p-2 border-b border-gray-200">
-          <div className="text-lg font-semibold text-blue-700">Hóa đơn: {detailInvoice?.id}</div>
-          {isErrorInvoice ? (
-            <Tag className="font-semibold text-lg" color={"orange"}>
-              {"Chưa thanh toán"}
-            </Tag>
-          ) : (
-            <Tag
-              className="font-semibold text-lg"
-              color={
-                detailInvoice?.status === 0
-                  ? "orange"
-                  : detailInvoice?.status === 1
-                    ? "green"
-                    : detailInvoice?.status === 2
-                      ? "blue"
-                      : "red"
-              }
-            >
-              {detailInvoice?.status === 0
-                ? "Chưa thanh toán"
-                : detailInvoice?.status === 1
-                  ? "Thanh toán trước 1 phần"
-                  : detailInvoice?.status === 2
-                    ? "Thanh toán đủ"
-                    : "Đã hủy"}
-            </Tag>
-          )}
-        </div>
-
-        <Descriptions column={1} bordered size="small">
-          <Descriptions.Item label="Tổng tiền">
-            {Number(detailInvoice?.total_amount ?? 0).toLocaleString("vi-VN")} đ
-          </Descriptions.Item>
-          <Descriptions.Item label="Giảm giá">
-            {Number(detailInvoice?.discount ?? 0).toLocaleString("vi-VN")} %
-          </Descriptions.Item>
-          <Descriptions.Item label="Thuế VAT">
-            {Number(detailInvoice?.tax ?? 0).toLocaleString("vi-VN")} %
-          </Descriptions.Item>
-          <Descriptions.Item label="Thành tiền">
-            <b className="text-red-500">{Number(detailInvoice?.final_amount ?? 0).toLocaleString("vi-VN")} đ</b>
-          </Descriptions.Item>
-        </Descriptions>
-
-        <div>
-          <h3 className="text-lg font-semibold text-gray-700 mb-2 p-2 pt-0">Lịch sử thanh toán</h3>
-          <Table
-            rowKey="id"
-            size="small"
-            bordered
-            pagination={false}
-            dataSource={detailInvoice?.payments || []}
-            columns={[
-              {
-                title: "Thời gian",
-                dataIndex: "paid_at",
-                key: "paid_at",
-                render: (text: string) => new Date(text).toLocaleString()
-              },
-              {
-                title: "Số tiền",
-                dataIndex: "amount",
-                key: "amount",
-                render: (text: number) => Number(text).toLocaleString("vi-VN") + " đ"
-              },
-              {
-                title: "Phương thức",
-                dataIndex: "method",
-                key: "method",
-                render: (method: number) => (method === 0 ? "Tiền mặt" : method === 1 ? "Chuyển khoản" : "Khác")
-              },
-              {
-                title: "Trạng thái",
-                dataIndex: "status",
-                key: "status",
-                render: (status: number) => (
-                  <Tag color={status === 0 ? "orange" : status === 1 ? "green" : status === 2 ? "red" : "gray"}>
-                    {status === 0
-                      ? "Chưa thanh toán"
-                      : status === 1
-                        ? "Hoàn thành"
-                        : status === 2
-                          ? "Thất bại"
-                          : "Đã hoàn tiền"}
+      {canViewInvoices &&
+        detailInvoice?.map((item) => {
+          return (
+            <div key={item.id} className="py-4 px-0 bg-white shadow rounded-lg space-y-6">
+              {/* 1. Thông tin tổng quan hóa đơn */}
+              <div className="flex justify-between items-center bg-blue-50 p-2 border-b border-gray-200">
+                <div className="text-lg font-semibold text-blue-700">Hóa đơn: {item?.id}</div>
+                {isErrorInvoice ? (
+                  <Tag className="font-semibold text-lg" color={"orange"}>
+                    {"Chưa thanh toán"}
                   </Tag>
-                )
-              },
-              {
-                title: "Nhân viên",
-                dataIndex: ["employee", "full_name"],
-                key: "employee"
-              }
-            ]}
-            rowClassName={(_, index) =>
-              index % 2 === 0
-                ? "bg-[#f9f9f9] hover:bg-blue-50 transition-colors"
-                : "bg-white hover:bg-blue-50 transition-colors"
-            }
-          />
-        </div>
-        </div>
-      )}
+                ) : (
+                  <Tag
+                    className="font-semibold text-lg"
+                    color={
+                      item?.status === 0 ? "orange" : item?.status === 1 ? "green" : item?.status === 2 ? "blue" : "red"
+                    }
+                  >
+                    {item?.status === 0
+                      ? "Chưa thanh toán"
+                      : item?.status === 1
+                        ? "Thanh toán trước 1 phần"
+                        : item?.status === 2
+                          ? "Thanh toán đủ"
+                          : "Đã hủy"}
+                  </Tag>
+                )}
+              </div>
+
+              <Descriptions column={1} bordered size="small">
+                <Descriptions.Item label="Tổng tiền">
+                  {Number(item?.total_amount ?? 0).toLocaleString("vi-VN")} đ
+                </Descriptions.Item>
+                <Descriptions.Item label="Giảm giá">
+                  {Number(item?.discount ?? 0).toLocaleString("vi-VN")} %
+                </Descriptions.Item>
+                <Descriptions.Item label="Thuế VAT">
+                  {Number(item?.tax ?? 0).toLocaleString("vi-VN")} %
+                </Descriptions.Item>
+                <Descriptions.Item label="Thành tiền">
+                  <b className="text-red-500">{Number(item?.final_amount ?? 0).toLocaleString("vi-VN")} đ</b>
+                </Descriptions.Item>
+              </Descriptions>
+
+              <div>
+                <h3 className="text-lg font-semibold text-gray-700 mb-2 p-2 pt-0">Lịch sử thanh toán</h3>
+                <Table
+                  rowKey="id"
+                  size="small"
+                  bordered
+                  pagination={false}
+                  dataSource={item?.payments || []}
+                  columns={[
+                    {
+                      title: "Thời gian",
+                      dataIndex: "paid_at",
+                      key: "paid_at",
+                      render: (text: string) => new Date(text).toLocaleString()
+                    },
+                    {
+                      title: "Số tiền",
+                      dataIndex: "amount",
+                      key: "amount",
+                      render: (text: number) => Number(text).toLocaleString("vi-VN") + " đ"
+                    },
+                    {
+                      title: "Phương thức",
+                      dataIndex: "method",
+                      key: "method",
+                      render: (method: number) => (method === 0 ? "Tiền mặt" : method === 1 ? "Chuyển khoản" : "Khác")
+                    },
+                    {
+                      title: "Trạng thái",
+                      dataIndex: "status",
+                      key: "status",
+                      render: (status: number) => (
+                        <Tag color={status === 0 ? "orange" : status === 1 ? "green" : status === 2 ? "red" : "gray"}>
+                          {status === 0
+                            ? "Chưa thanh toán"
+                            : status === 1
+                              ? "Hoàn thành"
+                              : status === 2
+                                ? "Thất bại"
+                                : "Đã hoàn tiền"}
+                        </Tag>
+                      )
+                    },
+                    {
+                      title: "Nhân viên",
+                      dataIndex: ["employee", "full_name"],
+                      key: "employee"
+                    }
+                  ]}
+                  rowClassName={(_, index) =>
+                    index % 2 === 0
+                      ? "bg-[#f9f9f9] hover:bg-blue-50 transition-colors"
+                      : "bg-white hover:bg-blue-50 transition-colors"
+                  }
+                />
+              </div>
+            </div>
+          )
+        })}
 
       <Modal
         title="Thêm order"
@@ -832,140 +829,140 @@ export default function TableSessionHistoryDetail() {
             }
           }}
         >
-        <Card
-          title={`Bàn ${dataHistoryTableSessionDetail.table_number}`}
-          extra={<Badge status={statusColor[0]} text={statusText[0]} />}
-          bordered={true}
-        >
-          <Table
-            bordered
-            dataSource={dataTableSessionOrder?.items}
-            columns={[
-              {
-                title: "Món ăn",
-                dataIndex: ["dish", "dish_name"],
-                key: "dish_name",
-                render: (_: any, record: any) => (
-                  <div className="flex items-center gap-2">
-                    {record.dish.image ? (
-                      <Image
-                        src={record.dish.image}
-                        alt={record.dish.name}
-                        className="rounded-md object-cover"
-                        width={64}
-                        height={64}
-                      />
-                    ) : (
-                      <Image
-                        src={assets.rectangles.Burger}
-                        alt={record.dish.name}
-                        className="w-12 h-12 rounded-md object-cover"
-                        width={64}
-                        height={64}
-                      />
-                    )}
-                    <div>
-                      <p className="font-medium">{record.dish.name}</p>
-                      <p className="text-xs text-gray-500">{record.dish.category_name}</p>
-                    </div>
-                  </div>
-                )
-              },
-              {
-                title: "Số lượng",
-                dataIndex: "quantity",
-                key: "quantity",
-                align: "center",
-                render: (val: number) => <div className="text-center">{val}</div>
-              },
-              {
-                title: "Đơn giá",
-                dataIndex: "item_price",
-                key: "item_price",
-                render: (val: string) => `${Number(val).toLocaleString("vi-VN")} đ`,
-                align: "right"
-              },
-              {
-                title: "Thành tiền",
-                dataIndex: "total_price",
-                key: "total_price",
-                render: (val: string) => `${Number(val).toLocaleString("vi-VN")} đ`,
-                align: "right"
-              },
-              {
-                title: <div className="text-right">Ghi chú</div>,
-                dataIndex: "notes",
-                key: "notes",
-                render: (val: string) => <div className="text-right">{val}</div>
-              }
-            ]}
-            pagination={false}
-          />
-
-          <PromotionForm setTotalPercentage={setTotalPercentage} setListPromotionApply={setListPromotionApply} />
-
-          <Divider />
-
-          <Form
-            form={formPayment}
-            layout="vertical"
-            onValuesChange={(changedValue) => {
-              if (changedValue.vat !== undefined) setVat(changedValue.vat)
-              if (changedValue.prepay !== undefined) setPrepay(changedValue.prepay)
-            }}
-            initialValues={{
-              vat: 10,
-              prepay: 50
-            }}
+          <Card
+            title={`Bàn ${dataHistoryTableSessionDetail.table_number}`}
+            extra={<Badge status={statusColor[0]} text={statusText[0]} />}
+            bordered={true}
           >
-            <Descriptions column={1} bordered size="small" layout="horizontal">
-              <Descriptions.Item label="Tạm tính" contentStyle={{ color: "red", fontWeight: 500 }}>
-                {Number(dataTableSessionOrder?.total_amount).toLocaleString("vi-VN")} đ
-              </Descriptions.Item>
-              <Descriptions.Item label="Giảm giá">{totalPercentage} %</Descriptions.Item>
-              <Descriptions.Item label="Thuế VAT">
-                <Form.Item name="vat" noStyle>
-                  <InputNumber min={0} max={100} formatter={(value) => `${value} %`} />
-                </Form.Item>
-              </Descriptions.Item>
-              <Descriptions.Item label="Tổng tiền">
-                <b>{finalAmount.toLocaleString("vi-VN")} đ</b>
-              </Descriptions.Item>
+            <Table
+              bordered
+              dataSource={dataTableSessionOrder?.items}
+              columns={[
+                {
+                  title: "Món ăn",
+                  dataIndex: ["dish", "dish_name"],
+                  key: "dish_name",
+                  render: (_: any, record: any) => (
+                    <div className="flex items-center gap-2">
+                      {record.dish.image ? (
+                        <Image
+                          src={record.dish.image}
+                          alt={record.dish.name}
+                          className="rounded-md object-cover"
+                          width={64}
+                          height={64}
+                        />
+                      ) : (
+                        <Image
+                          src={assets.rectangles.Burger}
+                          alt={record.dish.name}
+                          className="w-12 h-12 rounded-md object-cover"
+                          width={64}
+                          height={64}
+                        />
+                      )}
+                      <div>
+                        <p className="font-medium">{record.dish.name}</p>
+                        <p className="text-xs text-gray-500">{record.dish.category_name}</p>
+                      </div>
+                    </div>
+                  )
+                },
+                {
+                  title: "Số lượng",
+                  dataIndex: "quantity",
+                  key: "quantity",
+                  align: "center",
+                  render: (val: number) => <div className="text-center">{val}</div>
+                },
+                {
+                  title: "Đơn giá",
+                  dataIndex: "item_price",
+                  key: "item_price",
+                  render: (val: string) => `${Number(val).toLocaleString("vi-VN")} đ`,
+                  align: "right"
+                },
+                {
+                  title: "Thành tiền",
+                  dataIndex: "total_price",
+                  key: "total_price",
+                  render: (val: string) => `${Number(val).toLocaleString("vi-VN")} đ`,
+                  align: "right"
+                },
+                {
+                  title: <div className="text-right">Ghi chú</div>,
+                  dataIndex: "notes",
+                  key: "notes",
+                  render: (val: string) => <div className="text-right">{val}</div>
+                }
+              ]}
+              pagination={false}
+            />
 
-              <Divider />
+            <PromotionForm setTotalPercentage={setTotalPercentage} setListPromotionApply={setListPromotionApply} />
 
-              <Descriptions.Item label="Trả trước">
-                <Form.Item name="prepay" noStyle>
-                  <InputNumber min={0} max={100} formatter={(value) => `${value} %`} />
-                </Form.Item>
-              </Descriptions.Item>
+            <Divider />
 
-              <Descriptions.Item label="Thanh toán trước">
-                <b className="text-red-500">{paymentBefore.toLocaleString("vi-VN")} đ</b>
-              </Descriptions.Item>
+            <Form
+              form={formPayment}
+              layout="vertical"
+              onValuesChange={(changedValue) => {
+                if (changedValue.vat !== undefined) setVat(changedValue.vat)
+                if (changedValue.prepay !== undefined) setPrepay(changedValue.prepay)
+              }}
+              initialValues={{
+                vat: 10,
+                prepay: 50
+              }}
+            >
+              <Descriptions column={1} bordered size="small" layout="horizontal">
+                <Descriptions.Item label="Tạm tính" contentStyle={{ color: "red", fontWeight: 500 }}>
+                  {Number(dataTableSessionOrder?.total_amount).toLocaleString("vi-VN")} đ
+                </Descriptions.Item>
+                <Descriptions.Item label="Giảm giá">{totalPercentage} %</Descriptions.Item>
+                <Descriptions.Item label="Thuế VAT">
+                  <Form.Item name="vat" noStyle>
+                    <InputNumber min={0} max={100} formatter={(value) => `${value} %`} />
+                  </Form.Item>
+                </Descriptions.Item>
+                <Descriptions.Item label="Tổng tiền">
+                  <b>{finalAmount.toLocaleString("vi-VN")} đ</b>
+                </Descriptions.Item>
 
-              <Descriptions.Item label="Còn lại">
-                <b className="text-green-500">{remainingAmount.toLocaleString("vi-VN")} đ</b>
-              </Descriptions.Item>
-            </Descriptions>
+                <Divider />
 
-            <Space className="mt-4">
-              <Button
-                type="primary"
-                onClick={() => {
-                  if (!canManageInvoices) {
-                    toast.warn("Bạn không có quyền quản lý hóa đơn.", { autoClose: 1500 })
-                    return
-                  }
-                  setShowPaymentModal(true)
-                }}
-                disabled={!canManageInvoices}
-              >
-                Tiến hành đặt cọc
-              </Button>
-            </Space>
-          </Form>
-        </Card>
+                <Descriptions.Item label="Trả trước">
+                  <Form.Item name="prepay" noStyle>
+                    <InputNumber min={0} max={100} formatter={(value) => `${value} %`} />
+                  </Form.Item>
+                </Descriptions.Item>
+
+                <Descriptions.Item label="Thanh toán trước">
+                  <b className="text-red-500">{paymentBefore.toLocaleString("vi-VN")} đ</b>
+                </Descriptions.Item>
+
+                <Descriptions.Item label="Còn lại">
+                  <b className="text-green-500">{remainingAmount.toLocaleString("vi-VN")} đ</b>
+                </Descriptions.Item>
+              </Descriptions>
+
+              <Space className="mt-4">
+                <Button
+                  type="primary"
+                  onClick={() => {
+                    if (!canManageInvoices) {
+                      toast.warn("Bạn không có quyền quản lý hóa đơn.", { autoClose: 1500 })
+                      return
+                    }
+                    setShowPaymentModal(true)
+                  }}
+                  disabled={!canManageInvoices}
+                >
+                  Tiến hành đặt cọc
+                </Button>
+              </Space>
+            </Form>
+          </Card>
         </Modal>
       )}
 

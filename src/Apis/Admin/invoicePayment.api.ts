@@ -25,7 +25,7 @@ export const invoicePaymentAPI = {
   },
 
   getDetailInvoiceFromIdTableSession: (idTableSession: string) => {
-    return Http.get<SuccessResponse<InvoiceDetail>>(`/api/invoices/table-session/${idTableSession}`)
+    return Http.get<SuccessResponse<InvoiceDetail[]>>(`/api/invoices/table-session/${idTableSession}`)
   },
 
   // ✅ NEW: Get invoice summary for table session

@@ -4,6 +4,7 @@ import { useQuery, keepPreviousData } from "@tanstack/react-query"
 import { useParams } from "react-router-dom"
 import NavigateBack from "src/Admin/Components/NavigateBack"
 import { invoicePaymentAPI } from "src/Apis/Admin/invoicePayment.api"
+import { tableSessionAPI } from "src/Apis"
 
 const getStatusTag = (status: number) => {
   switch (status) {
@@ -66,6 +67,21 @@ export default function InvoiceDetail() {
 
   const detailInvoice = dataDetailInvoice?.data?.data
 
+  const { data: dataDetailTableSession } = useQuery({
+    queryKey: ["dataDetailTableSession", detailInvoice],
+    queryFn: () => {
+      const controller = new AbortController()
+      setTimeout(() => controller.abort(), 10000)
+      return tableSessionAPI.getTableSessionDetailById(detailInvoice?.table_session_id as string)
+    },
+    retry: 0,
+    staleTime: 3 * 60 * 1000,
+    enabled: Boolean(detailInvoice),
+    placeholderData: keepPreviousData
+  })
+
+  console.log(dataDetailTableSession)
+
   const columns = [
     {
       title: "Mã thanh toán",
@@ -115,7 +131,7 @@ export default function InvoiceDetail() {
   if (!detailInvoice) {
     return <div className="text-center text-gray-500 mt-10">Không có dữ liệu</div>
   }
-
+  console.log(dataDetailTableSession?.data.data.dining_tables[0].table_number)
   return (
     <div>
       <Helmet>
@@ -134,6 +150,9 @@ export default function InvoiceDetail() {
           <Descriptions.Item label="Mã phiên bàn">{detailInvoice.table_session_id}</Descriptions.Item>
           <Descriptions.Item label="Tổng tiền">
             {Number(detailInvoice.total_amount).toLocaleString()} ₫
+          </Descriptions.Item>
+          <Descriptions.Item label="Số bàn">
+            {dataDetailTableSession?.data.data.dining_tables[0].table_number}
           </Descriptions.Item>
           <Descriptions.Item label="Giảm giá">{Number(detailInvoice.discount).toLocaleString()} %</Descriptions.Item>
           <Descriptions.Item label="Thuế">{Number(detailInvoice.tax).toLocaleString()} %</Descriptions.Item>

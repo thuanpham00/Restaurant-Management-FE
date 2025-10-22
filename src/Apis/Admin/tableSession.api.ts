@@ -51,6 +51,10 @@ export const tableSessionAPI = {
     return Http.get<SuccessResponse<TableSessionOrder[]>>(`/api/table-sessions/${idTableSession}/orders`)
   },
 
+  getTableSessionDetailById: (idTableSession: string) => {
+    return Http.get<SuccessResponse<any>>(`/api/table-sessions/${idTableSession}/invoice`)
+  },
+
   getListPendingTableSessionByIdTable: (idDiningTable: string) => {
     return Http.get<SuccessResponse<HistoryTableSession[]>>(`/api/table-sessions/${idDiningTable}/session-pending`)
   },

@@ -54,7 +54,7 @@ const CreateInvoiceModal = ({
     }
   }, [open, canManageInvoices, onClose])
   const [shouldExportInvoice, setShouldExportInvoice] = useState(false)
-  
+
   useEffect(() => {
     if (!open) {
       setPaymentMethod(0)
@@ -161,7 +161,7 @@ const CreateInvoiceModal = ({
       onSuccess: async (response) => {
         toast.success("Thanh toán thành công!", { autoClose: 1500 })
         if (shouldExportInvoice) {
-          let invoiceDetail: InvoiceDetail | undefined
+          let invoiceDetail: InvoiceDetail[] | InvoiceDetail | undefined
 
           try {
             const createdInvoiceId =
@@ -172,10 +172,10 @@ const CreateInvoiceModal = ({
               invoiceDetail = detailRes?.data?.data as InvoiceDetail | undefined
             } else {
               const detailRes = await invoicePaymentAPI.getDetailInvoiceFromIdTableSession(tableSessionId)
-              invoiceDetail = detailRes?.data?.data as InvoiceDetail | undefined
+              invoiceDetail = detailRes?.data?.data as InvoiceDetail[] | undefined
             }
 
-            if (invoiceDetail) {
+            if (invoiceDetail !== undefined) {
               await exportInvoicePdf({
                 invoiceDetail,
                 paidAmount: financialCalculation.finalAmount,
