@@ -1,4 +1,4 @@
-import { useEffect } from "react"
+import { useEffect, useRef } from "react"
 import { useLocation, useNavigate } from "react-router-dom"
 import { toast } from "react-toastify"
 import Header from "../../Components/HeaderClient/HeaderClient"
@@ -10,8 +10,12 @@ const AuthCallback: React.FC = () => {
   const { setIsAuthenticated, setAvatar, setNameUser, setRole, setUserId } = useAppStore()
   const navigate = useNavigate()
   const { search } = useLocation()
+  const hasRun = useRef(false)
 
   useEffect(() => {
+    if (hasRun.current) return
+    hasRun.current = true
+
     const qs = new URLSearchParams(search)
     const error = qs.get("error")
     if (error) {
@@ -37,24 +41,29 @@ const AuthCallback: React.FC = () => {
       try {
         const res = await clientAPI.me()
         const user = res.data?.data || res.data
+
+        // Cập nhật Zustand store
         setIsAuthenticated(true)
         setAvatar(user?.avatar || "")
         setNameUser(user?.name || user?.full_name || "")
         setRole(user?.role?.name || user?.role || "")
         setUserId(user?.id || user?._id || "")
+
+        // Lưu vào localStorage
         try {
           localStorage.setItem("user", JSON.stringify(user))
           if (user?.id || user?._id) {
             localStorage.setItem("userId", String(user.id ?? user._id))
           }
         } catch {
-          // ignore
+          // ignore lỗi localStorage
         }
+
         toast.success(`Đăng nhập ${provider} thành công`, { autoClose: 2000 })
         navigate(isNew ? "/profile/complete" : "/", { replace: true })
       } catch {
+        // fallback nếu API lỗi
         setIsAuthenticated(true)
-        toast.success(`Đăng nhập ${provider} thành công`, { autoClose: 2000 })
         navigate("/", { replace: true })
       }
     })()

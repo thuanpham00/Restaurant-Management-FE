@@ -1,5 +1,5 @@
 import { NavLink, useNavigate, useSearchParams } from "react-router-dom"
-import { LucideUtensils, Eye, EyeOff } from "lucide-react"
+import { Eye, EyeOff } from "lucide-react"
 import { useForm } from "react-hook-form"
 import { yupResolver } from "@hookform/resolvers/yup"
 import { useMutation } from "@tanstack/react-query"
@@ -95,7 +95,7 @@ const Login = () => {
       }, 300)
     },
     onError: (error: unknown) => {
-      console.error("🔥 [loginMutation] Lỗi khi đăng nhập:", error)
+      console.error("[loginMutation] Lỗi khi đăng nhập:", error)
       if (isAxiosError<ErrorResponse<FormData>>(error)) {
         const status = error.response?.status
         const responseData = error.response?.data
@@ -152,14 +152,14 @@ const Login = () => {
       </div>
 
       {/* Logo */}
-      <div className="absolute top-8 left-8 z-10 flex items-center">
-        <div className="bg-gradient-to-br from-orange-500 to-orange-400 rounded-full p-3 shadow-lg">
-          <LucideUtensils size={28} className="text-white" />
-        </div>
-        <span className="text-white font-extrabold text-2xl ml-3 tracking-tight drop-shadow-lg">
-          WowWraps<span className="text-orange-400">.</span>
-        </span>
-      </div>
+      <div className="absolute top-8 left-8 z-10">
+  <div className="mx-4 flex items-center justify-center gap-1 py-2 px-2 rounded-lg">
+    <div className="w-14 h-12">
+      <img src={assets.icons.vector} alt="Logo" className="w-full h-full" />
+    </div>
+    <span className="text-white text-lg font-bold text-center -tracking-tighter">Restaurant</span>
+  </div>
+</div>
 
       {/* Login Card */}
       <div className="z-10 w-full max-w-md px-4">

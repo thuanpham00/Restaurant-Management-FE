@@ -11,7 +11,6 @@ import { clearLS, LocalStorageEventTarget } from "src/Helpers/auth"
 import { toMediaUrl } from "src/Helpers/media"
 import { isAxiosError } from "axios"
 import type { User as UserType } from "src/Types/user.type"
-import { LucideUtensils } from "lucide-react"
 
 const defaultAvatar = assets.images.default_avatar
 
@@ -135,13 +134,11 @@ const Header = () => {
         } flex items-center justify-between`}
       >
         {/* Logo */}
-        <div className="flex items-center gap-3">
-          <div className="bg-gradient-to-br from-orange-500 to-orange-400 rounded-full p-3 shadow-lg">
-            <LucideUtensils size={26} className="text-white" />
+        <div className="mx-4 flex items-center justify-center gap-1 py-2 px-2 rounded-lg">
+          <div className="w-14 h-12">
+            <img src={assets.icons.vector} alt="Logo" className="w-full h-full" />
           </div>
-          <span className="text-white font-extrabold text-2xl tracking-tight drop-shadow-lg">
-            WowWraps<span className="text-orange-400">.</span>
-          </span>
+          <span className="text-white text-lg font-bold text-center -tracking-tighter">Restaurant</span>
         </div>
 
         {/* Navigation */}
@@ -194,7 +191,7 @@ const Header = () => {
             <div className="relative" ref={menuRef}>
               <button
                 onClick={() => setMenuOpen((o) => !o)}
-                className="flex items-center gap-2 bg-gray-800/80 border-2 border-orange-400 rounded-full px-3 py-2 shadow-lg hover:scale-105 transition-all"
+                className="flex items-center gap-2 bg-gray-800/80  rounded-3xl px-3 py-3 shadow-lg hover:scale-105 transition-all"
                 aria-haspopup="menu"
                 aria-expanded={menuOpen}
                 title={user?.name || "Tài khoản"}
@@ -208,12 +205,12 @@ const Header = () => {
                   }}
                   className="w-10 h-10 rounded-full object-cover "
                 />
-                <span className="text-white font-semibold">{user?.name || "Tài khoản"}</span>
+                <span className="text-white font-semibold text-[12px]">{user?.name || "Tài khoản"}</span>
               </button>
               {menuOpen && (
                 <div
                   role="menu"
-                  className="absolute right-0 mt-3 w-56 bg-gray-900/95 border border-orange-400 rounded-xl shadow-2xl z-[100] p-4
+                  className="absolute right-0 mt-3 w-56 bg-gray-900/95 border border-orange-400 rounded-xl shadow-2xl z-[100] p-2
       before:content-[''] before:absolute before:-top-2 before:right-6
       before:w-0 before:h-0
       before:border-l-8 before:border-r-8 before:border-b-8
@@ -311,7 +308,7 @@ const Header = () => {
                   className="w-full max-w-[260px] sm:max-w-[320px] md:max-w-[380px] lg:max-w-[420px] h-auto object-cover rounded-3xl shadow-2xl border-2 border-orange-400 mr-2"
                 />
                 <div className="absolute bottom-4 -left-6 bg-gradient-to-r from-orange-500 to-orange-400 px-6 py-3 rounded-xl shadow-lg">
-                  <span className="text-white font-bold text-lg">Giá: $11</span>
+                  <span className="text-white font-bold text-lg">Giá: 300.000VND</span>
                 </div>
               </div>
               <div className="absolute right-0 top-0 flex flex-col gap-4">

@@ -406,7 +406,7 @@ const Home = () => {
                       <div className="px-4 py-2 bg-gray-900/80 backdrop-blur-md rounded-full border border-gray-700/50">
                         <div className="flex items-baseline gap-1">
                           <span className="text-2xl font-bold text-orange-400">
-                            {dish.price.toLocaleString("vi-VN")}
+                            {Number(dish.price).toLocaleString("vi-VN")}
                           </span>
                           <span className="text-sm text-gray-400">VND</span>
                         </div>

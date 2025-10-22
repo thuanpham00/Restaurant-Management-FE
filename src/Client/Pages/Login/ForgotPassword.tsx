@@ -1,6 +1,6 @@
 import { useState } from "react"
 import { NavLink, useNavigate } from "react-router-dom"
-import { LucideUtensils, ArrowLeft, Eye, EyeOff } from "lucide-react"
+import { ArrowLeft, Eye, EyeOff } from "lucide-react"
 import { useForm } from "react-hook-form"
 import { yupResolver } from "@hookform/resolvers/yup"
 import { useMutation } from "@tanstack/react-query"
@@ -224,13 +224,13 @@ const ForgotPassword = () => {
       </div>
 
       {/* Logo */}
-      <div className="absolute top-8 left-8 z-10 flex items-center">
-        <div className="bg-gradient-to-br from-orange-500 to-orange-400 rounded-full p-3 shadow-lg">
-          <LucideUtensils size={28} className="text-white" />
+      <div className="absolute top-8 left-8 z-10">
+        <div className="mx-4 flex items-center justify-center gap-1 py-2 px-2 rounded-lg">
+          <div className="w-14 h-12">
+            <img src={assets.icons.vector} alt="Logo" className="w-full h-full" />
+          </div>
+          <span className="text-white text-lg font-bold text-center -tracking-tighter">Restaurant</span>
         </div>
-        <span className="text-white font-extrabold text-2xl ml-3 tracking-tight drop-shadow-lg">
-          WowWraps<span className="text-orange-400">.</span>
-        </span>
       </div>
 
       <div className="z-10 w-full max-w-md px-4">
