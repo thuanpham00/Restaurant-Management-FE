@@ -64,9 +64,7 @@ export default function MergeIntoTable({
   const subTableDiningIds = useMemo(() => {
     if (selectedSessionIds.length === 0) return []
     return selectedSessionIds
-      .map((sessionId) =>
-        listTableSessionActiveData.find((table) => table.session_id === sessionId)?.dining_table_id
-      )
+      .map((sessionId) => listTableSessionActiveData.find((table) => table.session_id === sessionId)?.dining_table_id)
       .filter((id): id is string => Boolean(id) && id !== mainDiningTableId)
   }, [selectedSessionIds, listTableSessionActiveData, mainDiningTableId])
 
@@ -148,7 +146,15 @@ export default function MergeIntoTable({
       onCancel={handleCloseModal}
       footer={null}
       destroyOnClose
-      style={{ top: 40 }}
+      // style={{ top: 40 }}
+      centered
+      styles={{
+        body: {
+          height: "calc(100vh - 150px)",
+          overflowY: "auto",
+          overflowX: "hidden"
+        }
+      }}
     >
       <>
         <div className="mb-3 flex flex-wrap items-center justify-between text-sm text-gray-600">
@@ -164,13 +170,7 @@ export default function MergeIntoTable({
         <p className="mb-4 text-xs text-gray-500">
           Chọn tối thiểu 2 bàn. Bàn được chọn đầu tiên sẽ trở thành bàn chính, nhấp lại vào một bàn để bỏ chọn.
         </p>
-        <Row
-          gutter={[16, 16]}
-          style={{
-            height: 500,
-            overflowY: "auto"
-          }}
-        >
+        <Row gutter={[16, 16]}>
           {listTableSessionActiveData.length > 0 ? (
             listTableSessionActiveData.map((table, index) => (
               <Col key={table.dining_table_id} xs={24} sm={12} md={8} lg={6} xl={6}>

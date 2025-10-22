@@ -424,7 +424,6 @@ export default function EmployeeShiftTab() {
 
   const columns = isLimitedView ? shiftTableColumns.filter((c) => c.key !== "assignedCount") : shiftTableColumns
 
-
   if (!canViewShifts) {
     return null
   }
@@ -743,7 +742,7 @@ export default function EmployeeShiftTab() {
                             }
                           }}
                           className={`
-                            p-3 rounded-lg cursor-pointer transition-all border-2
+                            block w-full p-3 rounded-lg cursor-pointer transition-all border-2
                             ${
                               isSelected
                                 ? "border-blue-500 bg-blue-50 shadow-md"
@@ -754,7 +753,7 @@ export default function EmployeeShiftTab() {
                           <div className="flex items-start gap-3">
                             <Checkbox checked={isSelected} className="mt-1" />
                             <div className="flex-1">
-                              <div className="font-semibold text-gray-800">{shift.name}</div>
+                              <div className="font-semibold text-left text-gray-800">{shift.name} </div>
                               <div className="text-sm text-gray-600 mt-1 space-y-1">
                                 <div className="flex items-center gap-2">
                                   <Calendar size={12} />
@@ -834,7 +833,7 @@ export default function EmployeeShiftTab() {
                             }
                           }}
                           className={`
-                            p-3 rounded-lg cursor-pointer transition-all border-2 flex items-center gap-3
+                            p-3 w-full rounded-lg cursor-pointer transition-all border-2 flex items-center gap-3
                             ${
                               isSelected
                                 ? "border-purple-500 bg-purple-50 shadow-md"
@@ -844,7 +843,7 @@ export default function EmployeeShiftTab() {
                         >
                           <Checkbox checked={isSelected} />
                           <div className="flex-1">
-                            <div className="font-semibold text-gray-800">{employee.full_name}</div>
+                            <div className="font-semibold text-gray-800 text-left">{employee.full_name}</div>
                             {employee.position && <div className="text-sm text-gray-500">{employee.position}</div>}
                           </div>
                           {employee.employee_code && <Tag>{employee.employee_code}</Tag>}
