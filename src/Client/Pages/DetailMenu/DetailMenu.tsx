@@ -170,7 +170,7 @@ const ProductDetail: React.FC = () => {
                 </div>
                 <div className="flex items-baseline gap-2">
                   <span className="text-5xl font-bold bg-gradient-to-r from-orange-400 to-orange-300 bg-clip-text text-transparent">
-                    {dish.price?.toLocaleString()}
+                    {Number(dish.price)?.toLocaleString()}
                   </span>
                   <span className="text-2xl text-gray-400 font-medium">VND</span>
                 </div>

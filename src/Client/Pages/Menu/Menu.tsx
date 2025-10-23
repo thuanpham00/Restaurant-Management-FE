@@ -36,7 +36,7 @@ const MenuItem: React.FC<{ item: MenuItemInMenu }> = ({ item }) => {
       <div className="absolute inset-0 bg-gradient-to-br from-orange-500/0 via-orange-500/5 to-orange-500/0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
       {/* Image */}
       <div className="relative h-56 overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-gray-900/40 to-transparent z-10" />
+        <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-gray-900/40 to-transparent z-9" />
         <img
           src={assets.rectangles.salad}
           alt={item.dish_name || "Dish"}
@@ -411,7 +411,7 @@ const Menu: React.FC = () => {
                       <Sparkles className="h-6 w-6" />
                       <span className="text-sm font-semibold uppercase tracking-wider">Thực đơn của chúng tôi</span>
                     </div>
-                    <h2 className="font-serif text-4xl font-bold text-white md:text-5xl">{menu.name}</h2>
+                    <h2 className="font-extrabold text-4xl text-white md:text-5xl">{menu.name}</h2>
                     <p className="mt-4 text-balance text-lg leading-relaxed text-gray-400">
                       Được chế biến với đam mê, phục vụ với sự xuất sắc
                     </p>

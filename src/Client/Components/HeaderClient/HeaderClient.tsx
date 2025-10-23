@@ -28,6 +28,7 @@ const Header = () => {
   }
   const navigate = useNavigate()
   const [menuOpen, setMenuOpen] = useState(false)
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [user, setUserLocal] = useState<UserType | null>(storeUser || null)
   const menuRef = useRef<HTMLDivElement | null>(null)
   const { pathname } = useLocation()
@@ -52,7 +53,6 @@ const Header = () => {
         }
 
         const res = await userAPI.getById(userId)
-        console.log("API response:", res.data)
         if (res.data.status === "success") {
           setUserLocal(res.data.data)
           setUser?.(res.data.data)
@@ -106,10 +106,7 @@ const Header = () => {
         LocalStorageEventTarget.dispatchEvent(new Event("ClearLS"))
         reset()
         setUserLocal(null)
-        // Chuyển hướng ngay lập tức, không để người dùng bấm lại
         navigate(path.Login, { replace: true })
-        // Hoặc dùng window.location.href nếu muốn reload toàn bộ app:
-        // window.location.href = path.Login
       },
       onError: (error) => {
         toast.error("Đăng xuất thất bại", { autoClose: 2000 })
@@ -118,31 +115,35 @@ const Header = () => {
     })
   }
 
-  console.log("Rendering with user:", user)
-
   const isHome = pathname === "/" || pathname === "/home"
 
   return (
-    <header
-      className={`relative bg-gradient-to-br from-orange-500/10 via-gray-900/90 to-gray-900 shadow-xl ${
-        isHome ? "overflow-hidden h-[340px] sm:h-[440px] md:h-[540px] lg:h-[600px]" : "overflow-visible h-auto"
-      } z-[200]`}
-    >
-      <nav
-        className={`relative z-[300] px-4 sm:px-8 lg:px-16 xl:px-24 ${
-          isHome ? "py-6 sm:py-7 md:py-9" : "py-4 sm:py-5"
-        } flex items-center justify-between`}
-      >
+    <>
+      <nav className="sticky top-0 left-0 z-[200] bg-gray-900 shadow-xl px-4 sm:px-8 lg:px-16 xl:px-24 flex items-center justify-between py-4">
         {/* Logo */}
-        <div className="mx-4 flex items-center justify-center gap-1 py-2 px-2 rounded-lg">
-          <div className="w-14 h-12">
-            <img src={assets.icons.vector} alt="Logo" className="w-full h-full" />
-          </div>
-          <span className="text-white text-lg font-bold text-center -tracking-tighter">Restaurant</span>
-        </div>
+<NavLink to="/home" className="mx-4 flex items-center justify-center gap-1 py-2 px-2 rounded-lg">
+  <div className="w-14 h-12">
+    <img src={assets.icons.vector} alt="Logo" className="w-full h-full" />
+  </div>
+  <span className="text-white text-lg font-bold text-center -tracking-tighter pl-4 font-serif">Restaurant</span>
+</NavLink>
 
-        {/* Navigation */}
-        <div className="flex items-center gap-6 text-white text-base font-medium">
+        {/* Hamburger button - chỉ hiện trên mobile */}
+        <button
+          className="block md:hidden text-white text-3xl"
+          onClick={() => setMobileMenuOpen(true)}
+          aria-label="Mở menu"
+        >
+          {/* Hamburger icon SVG */}
+          <svg width="32" height="32" fill="none" viewBox="0 0 24 24">
+            <rect y="4" width="24" height="2" rx="1" fill="currentColor" />
+            <rect y="11" width="24" height="2" rx="1" fill="currentColor" />
+            <rect y="18" width="24" height="2" rx="1" fill="currentColor" />
+          </svg>
+        </button>
+
+        {/* Navigation - chỉ hiện trên md trở lên */}
+        <div className="hidden md:flex items-center gap-6 text-white text-base font-medium">
           <NavLink
             to="/home"
             className={({ isActive }) =>
@@ -185,8 +186,8 @@ const Header = () => {
           </NavLink>
         </div>
 
-        {/* User menu */}
-        <div className="flex items-center gap-4">
+        {/* User menu - chỉ hiện trên md trở lên */}
+        <div className="hidden md:flex items-center gap-4">
           {isAuthenticated ? (
             <div className="relative" ref={menuRef}>
               <button
@@ -278,61 +279,139 @@ const Header = () => {
         </div>
       </nav>
 
+      {/* Mobile menu overlay */}
+      {mobileMenuOpen && (
+        <div className="fixed inset-0 z-[300] bg-black/60 flex">
+          <div className="bg-gray-900 w-1/2 max-w-xs h-full p-6 flex flex-col">
+            <button
+              className="mb-8 text-white text-2xl self-end"
+              onClick={() => setMobileMenuOpen(false)}
+              aria-label="Đóng menu"
+            >
+              &times;
+            </button>
+            <nav className="flex flex-col gap-6 text-white text-lg font-medium">
+              <NavLink to="/home" onClick={() => setMobileMenuOpen(false)}>
+                Trang chủ
+              </NavLink>
+              <NavLink to="/menu" onClick={() => setMobileMenuOpen(false)}>
+                Thực đơn
+              </NavLink>
+              <NavLink to="/table" onClick={() => setMobileMenuOpen(false)}>
+                Đặt bàn
+              </NavLink>
+              <NavLink to="/Reservation-history" onClick={() => setMobileMenuOpen(false)}>
+                Lịch sử đặt bàn
+              </NavLink>
+              <div className="mt-8 border-t border-gray-700 pt-6 flex flex-col gap-4">
+                {isAuthenticated ? (
+                  <>
+                    <button
+                      className="text-white text-left"
+                      onClick={() => {
+                        setMobileMenuOpen(false)
+                        navigate("/settings")
+                      }}
+                    >
+                      Thông tin cá nhân
+                    </button>
+                    <button
+                      className="text-white text-left"
+                      disabled={logoutMutation.isPending}
+                      onClick={() => {
+                        setMobileMenuOpen(false)
+                        handleLogout()
+                      }}
+                    >
+                      Đăng xuất
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <NavLink to="/login" onClick={() => setMobileMenuOpen(false)}>
+                      Đăng nhập
+                    </NavLink>
+                    <NavLink to="/register" onClick={() => setMobileMenuOpen(false)}>
+                      Đăng ký
+                    </NavLink>
+                  </>
+                )}
+              </div>
+            </nav>
+          </div>
+          {/* Click ngoài để đóng menu */}
+          <div
+            className="flex-1"
+            role="button"
+            tabIndex={0}
+            aria-label="Đóng menu"
+            onClick={() => setMobileMenuOpen(false)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                setMobileMenuOpen(false)
+              }
+            }}
+          />
+        </div>
+      )}
+
       {/* Hero Section for Home */}
       {isHome && (
-        <div className="relative z-[5] px-4 sm:px-8 lg:px-16 xl:px-24 mt-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-10 items-center">
-            <div className="text-center md:text-left">
-              <p className="text-orange-400 text-base font-semibold mb-4 animate-pulse">
-                Chào mừng bạn mới đến với WowWraps!
-              </p>
-              <h1 className="text-white text-4xl sm:text-5xl md:text-6xl font-extrabold leading-tight mb-5 drop-shadow-lg">
-                Không chỉ là món ăn, mà là trải nghiệm cảm xúc!
-              </h1>
-              <p className="text-white/80 text-lg mb-8 max-w-lg mx-auto md:mx-0">
-                Nấu ăn là nghệ thuật, là niềm vui và là sự kết nối. Hãy khám phá thực đơn đa dạng và không gian ấm cúng
-                của chúng tôi!
-              </p>
-              <NavLink
-                to="/menu"
-                className="inline-block px-8 py-4 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-bold text-lg rounded-xl shadow-xl hover:shadow-orange-500/40 transition-all duration-300"
-              >
-                Khám phá thực đơn
-              </NavLink>
-            </div>
-            <div className="relative flex justify-center md:justify-end">
-              <div className="relative mr-0 sm:mr-10 md:mr-16">
-                <img
-                  src={assets.images.image89}
-                  alt="Main dish"
-                  className="w-full max-w-[260px] sm:max-w-[320px] md:max-w-[380px] lg:max-w-[420px] h-auto object-cover rounded-3xl shadow-2xl border-2 border-orange-400 mr-2"
-                />
-                <div className="absolute bottom-4 -left-6 bg-gradient-to-r from-orange-500 to-orange-400 px-6 py-3 rounded-xl shadow-lg">
-                  <span className="text-white font-bold text-lg">Giá: 300.000VND</span>
-                </div>
+        <header className="relative overflow-hidden h-[340px] sm:h-[440px] md:h-[540px] lg:h-[600px] z-[100] bg-gradient-to-br from-orange-500/10 via-gray-900/90 to-gray-900">
+          <div className="relative z-[5] px-4 sm:px-8 lg:px-16 xl:px-24 mt-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-10 items-center">
+              <div className="text-center md:text-left">
+                <p className="text-orange-400 text-base font-semibold mb-4 animate-pulse">
+                  Chào mừng bạn mới đến với Restaurant!
+                </p>
+                <h1 className="text-white text-4xl sm:text-5xl md:text-6xl font-extrabold leading-tight mb-5 drop-shadow-lg">
+                  Không chỉ là món ăn, mà là trải nghiệm cảm xúc!
+                </h1>
+                <p className="text-white/80 text-lg mb-8 max-w-lg mx-auto md:mx-0">
+                  Nấu ăn là nghệ thuật, là niềm vui và là sự kết nối. Hãy khám phá thực đơn đa dạng và không gian ấm
+                  cúng của chúng tôi!
+                </p>
+                <NavLink
+                  to="/menu"
+                  className="inline-block px-8 py-4 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-bold text-lg rounded-xl shadow-xl hover:shadow-orange-500/40 transition-all duration-300"
+                >
+                  Khám phá thực đơn
+                </NavLink>
               </div>
-              <div className="absolute right-0 top-0 flex flex-col gap-4">
-                <img
-                  src={assets.images.image90}
-                  alt="Food item"
-                  className="w-16 h-16 object-cover rounded-xl shadow-lg"
-                />
-                <img
-                  src={assets.images.image77}
-                  alt="Food item"
-                  className="w-16 h-16 object-cover rounded-xl shadow-lg"
-                />
-                <img
-                  src={assets.images.image91}
-                  alt="Food item"
-                  className="w-16 h-16 object-cover rounded-xl shadow-lg"
-                />
+              <div className="relative flex justify-center md:justify-end">
+                <div className="relative mr-0 sm:mr-10 md:mr-16">
+                  <img
+                    src={assets.images.image89}
+                    alt="Main dish"
+                    className="w-full max-w-[260px] sm:max-w-[320px] md:max-w-[380px] lg:max-w-[420px] h-auto object-cover rounded-3xl shadow-2xl border-2 border-orange-400 mr-2"
+                  />
+                  <div className="absolute bottom-4 -left-6 bg-gradient-to-r from-orange-500 to-orange-400 px-6 py-3 rounded-xl shadow-lg">
+                    <span className="text-white font-bold text-lg">Giá: 300.000VND</span>
+                  </div>
+                </div>
+                <div className="absolute right-0 top-0 flex flex-col gap-4">
+                  <img
+                    src={assets.images.image90}
+                    alt="Food item"
+                    className="w-16 h-16 object-cover rounded-xl shadow-lg"
+                  />
+                  <img
+                    src={assets.images.image77}
+                    alt="Food item"
+                    className="w-16 h-16 object-cover rounded-xl shadow-lg"
+                  />
+                  <img
+                    src={assets.images.image91}
+                    alt="Food item"
+                    className="w-16 h-16 object-cover rounded-xl shadow-lg"
+                  />
+                </div>
               </div>
             </div>
           </div>
-        </div>
+        </header>
       )}
-    </header>
+    </>
   )
 }
 

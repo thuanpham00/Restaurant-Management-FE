@@ -7,7 +7,12 @@ const Footer = () => (
     <div className="grid md:grid-cols-[1.2fr_1fr_1fr] gap-12 justify-items-center md:justify-items-start text-center md:text-left items-start">
       {/* Cột 1 - Logo & giới thiệu */}
       <div className="flex flex-col items-center md:items-start self-start">
-        <img src={assets.icons.group55} alt="Logo" className="w-44 h-12 mb-5 drop-shadow-lg" />
+        <div className="mx-4 flex items-center justify-center gap-1 py-2 px-2 rounded-lg mb-5 -ml-3">
+          <div className="w-14 h-12">
+            <img src={assets.icons.vector} alt="Logo" className="w-full h-full" />
+          </div>
+          <span className="text-white text-lg font-bold text-center -tracking-tighter">Restaurant</span>
+        </div>
         <p className="text-white/100 leading-relaxed max-w-[320px] mb-4">
           Thưởng thức hương vị của Nhà hàng chúng tôi — khám phá thực đơn hấp dẫn và đặt món ăn yêu thích của bạn một
           cách dễ dàng.
@@ -74,7 +79,7 @@ const Footer = () => (
         </ul>
         <div className="h-px bg-white/20 my-6"></div>
         <p className="text-white/60 text-sm">
-          ©2025 <span className="font-semibold text-orange-400">WowWraps</span>. Bản quyền thuộc về chúng tôi.
+          ©2025 <span className="font-semibold text-orange-400">Restaurant</span>. Bản quyền thuộc về chúng tôi.
         </p>
       </div>
     </div>

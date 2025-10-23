@@ -73,6 +73,6 @@ export type GoogleAuthResponse = {
 
 export type Chef = {
   id: string
-  name: string
+  full_name: string
   avatar: string | null
 }
