@@ -386,7 +386,7 @@ const Home = () => {
 
                   {/* Image */}
                   <div className="relative h-64 md:h-72 overflow-hidden">
-                    <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-gray-900/40 to-transparent z-10" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-gray-900/40 to-transparent z-9" />
                     <img
                       src={assets.rectangles.salad}
                       alt={dish.name}
@@ -827,7 +827,7 @@ const Home = () => {
                 <div className="relative mb-6">
                   <img
                     src={assets.rectangles.chef2}
-                    alt={chef.name}
+                    alt={chef.full_name}
                     className="w-40 h-40 object-cover rounded-full border-4 border-orange-400 shadow-lg group-hover:scale-105 transition-transform duration-300"
                   />
                   {/* Badge */}
@@ -838,8 +838,8 @@ const Home = () => {
                   <div className="absolute inset-0 rounded-full bg-orange-400/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-xl" />
                 </div>
                 {/* Name */}
-                <h3 className="text-white text-2xl md:text-3xl font-bold mb-2 group-hover:text-orange-400 transition-colors duration-300">
-                  {chef.name}
+                <h3 className="text-white text-md md:text-3xl font-bold mb-2 group-hover:text-orange-400 transition-colors duration-300">
+                  {chef.full_name}
                 </h3>
                 {/* Title */}
                 <p className="text-orange-400 text-lg font-semibold mb-2">Đầu bếp</p>
