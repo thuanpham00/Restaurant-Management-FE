@@ -121,12 +121,12 @@ const Header = () => {
     <>
       <nav className="sticky top-0 left-0 z-[200] bg-gray-900 shadow-xl px-4 sm:px-8 lg:px-16 xl:px-24 flex items-center justify-between py-4">
         {/* Logo */}
-<NavLink to="/home" className="mx-4 flex items-center justify-center gap-1 py-2 px-2 rounded-lg">
-  <div className="w-14 h-12">
-    <img src={assets.icons.vector} alt="Logo" className="w-full h-full" />
-  </div>
-  <span className="text-white text-lg font-bold text-center -tracking-tighter pl-4 font-serif">Restaurant</span>
-</NavLink>
+        <NavLink to="/home" className="mx-4 flex items-center justify-center gap-1 py-2 px-2 rounded-lg">
+          <div className="w-14 h-12">
+            <img src={assets.icons.vector} alt="Logo" className="w-full h-full" />
+          </div>
+          <span className="text-white text-lg font-bold text-center -tracking-tighter pl-4 font-serif">Restaurant</span>
+        </NavLink>
 
         {/* Hamburger button - chỉ hiện trên mobile */}
         <button

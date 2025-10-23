@@ -342,7 +342,7 @@ const ForgotPassword = () => {
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-orange-400"
                     aria-label="Ẩn/hiện mật khẩu mới"
                   >
-                    {showPassword.new ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                    {showPassword.new ? <Eye className="h-5 w-5" /> : <EyeOff className="h-5 w-5" />}
                   </button>
                 </div>
                 {passwordErrors.password && (
@@ -368,7 +368,7 @@ const ForgotPassword = () => {
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-orange-400"
                     aria-label="Ẩn/hiện xác nhận mật khẩu"
                   >
-                    {showPassword.confirm ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                    {showPassword.confirm ? <Eye className="h-5 w-5" /> : <EyeOff className="h-5 w-5" />}
                   </button>
                 </div>
                 {passwordErrors.password_confirmation && (

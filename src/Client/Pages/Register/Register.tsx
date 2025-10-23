@@ -141,7 +141,7 @@ const Register = () => {
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-orange-400"
                   aria-label="Ẩn/hiện mật khẩu"
                 >
-                  {showPassword.password ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                  {showPassword.password ? <Eye className="h-5 w-5" /> : <EyeOff className="h-5 w-5" />}
                 </button>
               </div>
               {errors.password && <p className="text-red-500 text-sm mt-1">{errors.password.message}</p>}
@@ -164,7 +164,7 @@ const Register = () => {
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-orange-400"
                   aria-label="Ẩn/hiện xác nhận mật khẩu"
                 >
-                  {showPassword.confirm ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                  {showPassword.confirm ? <Eye className="h-5 w-5" /> : <EyeOff className="h-5 w-5" />}
                 </button>
               </div>
               {errors.password_confirmation && (
