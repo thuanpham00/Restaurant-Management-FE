@@ -175,9 +175,9 @@ export default function MenuDetail() {
       key: "dish_name",
       render: (_: any, record: any) => (
         <div className="flex items-center gap-2">
-          {record.image ? (
+          {record.dish_image ? (
             <Image
-              src={record.image}
+              src={record.dish_image}
               alt={record.dish_name}
               className="rounded-md object-cover"
               width={64}
@@ -271,8 +271,9 @@ export default function MenuDetail() {
 
   const availableDishes = availableDishesData?.data?.data || []
 
-  const handleDishChange = (dishId: string) => {
-    const selectedDish = availableDishes.find((dish) => dish.id === dishId)
+  const handleDishChange = (dishId: any) => {
+    const selectedDish = availableDishes.find((dish) => dish.id === dishId.key)
+    console.log(selectedDish)
     if (selectedDish) {
       formAddMenuItem.setFieldsValue({
         price_base: selectedDish.price
