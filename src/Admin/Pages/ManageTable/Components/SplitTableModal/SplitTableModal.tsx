@@ -60,6 +60,7 @@ export default function SplitTableModal({
   employeeId,
   sourceTableNumber
 }: SplitTableModalProps) {
+  console.log(sourceSessionId)
   const queryClient = useQueryClient()
   const [form] = Form.useForm()
   const { can } = useAuthorization()
@@ -91,12 +92,12 @@ export default function SplitTableModal({
         controller.signal
       )
     },
-  enabled: visible && targetType === "new" && canViewTables,
+    enabled: visible && targetType === "new" && canViewTables,
     retry: 0
   })
 
   const listEmptyTables = useMemo(() => {
-    const tables = ((dataEmptyTables?.data.data) ?? []) as TableSession[]
+    const tables = (dataEmptyTables?.data.data ?? []) as TableSession[]
     return tables
       .filter((table) => table.dining_table_id !== sourceDiningTableId && !table.session_id)
       .sort((a, b) => Number(a.table_number) - Number(b.table_number))
@@ -116,12 +117,12 @@ export default function SplitTableModal({
         controller.signal
       )
     },
-  enabled: visible && targetType === "existing" && canViewTables,
+    enabled: visible && targetType === "existing" && canViewTables,
     retry: 0
   })
 
   const activeTables = useMemo(() => {
-    return ((dataTableSessionActive?.data.data) ?? []) as TableSession[]
+    return (dataTableSessionActive?.data.data ?? []) as TableSession[]
   }, [dataTableSessionActive])
 
   type ActiveSessionGroup = {
@@ -234,12 +235,12 @@ export default function SplitTableModal({
   // Tính toán remaining amount
   const remainingAmount = useMemo(() => {
     if (!detailInvoice) return null
-    
+
     const finalAmount = Number(detailInvoice.final_amount || 0)
     const totalPaid = (detailInvoice.payments || [])
       .filter((p: any) => p.status === "Completed" || p.status === 1)
       .reduce((sum: number, p: any) => sum + Number(p.amount || 0), 0)
-    
+
     return finalAmount - totalPaid
   }, [detailInvoice])
 
@@ -257,11 +258,10 @@ export default function SplitTableModal({
     }
 
     const totalItemsInOrder = dataTableSessionOrder?.items?.length || 0
-    const allItemsSelected = selectedItems.length === totalItemsInOrder &&
+    const allItemsSelected =
+      selectedItems.length === totalItemsInOrder &&
       selectedItems.every((selected) => {
-        const original = dataTableSessionOrder?.items?.find(
-          (item) => item.order_item_id === selected.order_item_id
-        )
+        const original = dataTableSessionOrder?.items?.find((item) => item.order_item_id === selected.order_item_id)
         return original && selected.quantity_to_transfer === original.quantity
       })
 
@@ -342,9 +342,7 @@ export default function SplitTableModal({
       key: "item_price",
       align: "right",
       width: "15%",
-      render: (price: string) => (
-        <Text type="danger">{Number(price).toLocaleString()}đ</Text>
-      )
+      render: (price: string) => <Text type="danger">{Number(price).toLocaleString()}đ</Text>
     },
     {
       title: "Tổng tiền",
@@ -382,12 +380,15 @@ export default function SplitTableModal({
       toast.success("Tách bàn thành công!", {
         autoClose: 1500
       })
-      
+
       // Refetch data
       queryClient.invalidateQueries({ queryKey: ["detailTableSession", sourceDiningTableId] })
       queryClient.invalidateQueries({ queryKey: ["detailTableSessionOrder", sourceSessionId] })
       queryClient.invalidateQueries({ queryKey: ["listTableSession"] })
       queryClient.invalidateQueries({ queryKey: ["detailDetailInvoice", sourceSessionId] })
+
+      queryClient.invalidateQueries({ queryKey: ["invoiceSummary", sourceSessionId] })
+      queryClient.invalidateQueries({ queryKey: ["listInvoicesForTableSession", sourceSessionId] })
 
       // Hiển thị thông tin bàn đích
       const targetSession = response?.data?.data?.target_session
@@ -432,7 +433,6 @@ export default function SplitTableModal({
       } else {
         body.target_dining_table_id = values.target_dining_table_id
       }
-
       splitTableMutation.mutate(body)
     } catch (error) {
       console.error("Validation error:", error)
@@ -448,7 +448,7 @@ export default function SplitTableModal({
 
   return (
     <Modal
-    className="split-table-modal"
+      className="split-table-modal"
       title={
         <Space>
           <span className="text-xl font-bold">Tách bàn #{sourceTableNumber}</span>
@@ -459,8 +459,8 @@ export default function SplitTableModal({
       width={1000}
       centered
       style={{
-        maxHeight: 'calc(100vh - 100px)', 
-        overflowY: 'auto',
+        maxHeight: "calc(100vh - 100px)",
+        overflowY: "auto"
       }}
       footer={[
         <Button key="cancel" onClick={handleClose}>
@@ -530,11 +530,7 @@ export default function SplitTableModal({
         )}
 
         {/* Chọn món để tách */}
-        <Card
-          title="1. Chọn món cần tách"
-          size="small"
-          style={{ marginBottom: 16 }}
-        >
+        <Card title="1. Chọn món cần tách" size="small" style={{ marginBottom: 16 }}>
           <Table
             columns={columns}
             dataSource={dataTableSessionOrder?.items || []}
@@ -560,11 +556,7 @@ export default function SplitTableModal({
         </Card>
 
         {/* Chọn bàn đích */}
-        <Card
-          title="2. Chọn bàn đích"
-          size="small"
-          style={{ marginBottom: 16 }}
-        >
+        <Card title="2. Chọn bàn đích" size="small" style={{ marginBottom: 16 }}>
           <Form.Item label="Loại bàn đích">
             <Select value={targetType} onChange={setTargetType}>
               <Select.Option value="new">Tạo bàn mới</Select.Option>
@@ -674,11 +666,14 @@ export default function SplitTableModal({
                   <br />
                   <Text>
                     Còn lại:{" "}
-                    {dataTableSessionOrder?.items?.reduce((sum, item) => {
-                      const selected = selectedItems.find((s) => s.order_item_id === item.order_item_id)
-                      const remaining = item.quantity - (selected?.quantity_to_transfer || 0)
-                      return sum + remaining * Number(item.item_price)
-                    }, 0).toLocaleString()}đ
+                    {dataTableSessionOrder?.items
+                      ?.reduce((sum, item) => {
+                        const selected = selectedItems.find((s) => s.order_item_id === item.order_item_id)
+                        const remaining = item.quantity - (selected?.quantity_to_transfer || 0)
+                        return sum + remaining * Number(item.item_price)
+                      }, 0)
+                      .toLocaleString()}
+                    đ
                   </Text>
                 </Card>
               </Col>

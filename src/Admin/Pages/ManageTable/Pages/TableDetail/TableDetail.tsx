@@ -183,6 +183,8 @@ export const STATUS_CANCELLED = 4 // Order đã hủy
 
 // orderItem.status mapping: 0-4
 export function computeMergedOrderStatusForSession(orders: TableSessionOrder[]): number {
+  if (orders.length === 0) return STATUS_OPEN
+
   const allStatuses = orders.flatMap((order) =>
     order.items.map((item) => {
       switch (item.item_status) {
@@ -388,7 +390,11 @@ export default function TableDetail() {
     }
   )
 
-  const invoiceList = canViewInvoices ? dataListInvoices?.data?.data?.data || [] : []
+  const invoiceList = useMemo(() => {
+    if (!canViewInvoices) return []
+    return dataListInvoices?.data?.data?.data || []
+  }, [canViewInvoices, dataListInvoices])
+
   const detailInvoice = invoiceList[0] || null // For backward compatibility
   const isInitialInvoiceLoading = canViewInvoices && isLoadingInvoices && invoiceList.length === 0
 
