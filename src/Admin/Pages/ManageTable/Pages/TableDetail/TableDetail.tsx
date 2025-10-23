@@ -584,7 +584,6 @@ export default function TableDetail() {
         <div className="text-center">
           <Checkbox
             checked={listOrderAdd.some((item) => item.dish_id === record.dish_id)}
-            onChange={(e) => handleChangeCheckOrder(record, e.target.checked)}
             disabled={!canManageTables}
           />
         </div>

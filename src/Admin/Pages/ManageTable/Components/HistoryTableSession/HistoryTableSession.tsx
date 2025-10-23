@@ -55,9 +55,7 @@ export default function HistoryTableSession({
 
   const calendarEvents = listReservationFromTable?.map((r: any) => {
     const isOffline = r.type === "offline"
-    const title = isOffline
-      ? `${r.customer_name || "Khách"} - ${r.type}`
-      : `${r.customer_name || "Khách"} - ${r.number_of_people} người - ${r.type}`
+    const title = isOffline ? `${r.customer_name || "Khách"} - ${r.type}` : `${r.customer_name || "Khách"} - ${r.type}`
 
     return {
       title,

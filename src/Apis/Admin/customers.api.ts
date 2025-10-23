@@ -1,14 +1,11 @@
 import Http from "src/Helpers/http"
-import { SuccessResponse, PaginatedResponse} from "src/Types/utils.type"
-import {Customer, CustomerFormInput} from "src/Types/customers.type"
+import { SuccessResponse, PaginatedResponse } from "src/Types/utils.type"
+import { Customer, CustomerFormInput } from "src/Types/customers.type"
 import { queryParamConfigCustomer } from "src/Types/customers.type"
 
 export const customersAPI = {
   getList: (params: queryParamConfigCustomer, signal: AbortSignal) => {
-    return Http.get<SuccessResponse<PaginatedResponse<Customer>>>(
-      `/api/customers`, 
-      { params, signal }
-    )
+    return Http.get<SuccessResponse<PaginatedResponse<Customer>>>(`/api/customers`, { params, signal })
   },
 
   getDetail: (id: string) => {
@@ -16,7 +13,7 @@ export const customersAPI = {
   },
 
   update: (id: string, data: CustomerFormInput) => {
-    return Http.put<SuccessResponse<Customer>>(`/api/customers/${id}`, data)
+    return Http.post<SuccessResponse<Customer>>(`/api/customers/${id}`, data)
   },
 
   delete: (id: string) => {

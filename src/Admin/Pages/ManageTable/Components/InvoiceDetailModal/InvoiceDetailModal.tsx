@@ -22,7 +22,7 @@ import {
   resolvePromotionDiscountLabel,
   toNumber
 } from "../../utils/invoicePdf"
-import { AppAbility, useAuthorization } from 'src/Authorization'
+import { AppAbility, useAuthorization } from "src/Authorization"
 
 interface InvoiceDetailModalProps {
   open: boolean
@@ -63,7 +63,7 @@ export const InvoiceDetailModal = ({
 
   useEffect(() => {
     if (open && !canViewInvoices) {
-      toast.warn('Bạn không có quyền xem chi tiết hóa đơn.', { autoClose: 1500 })
+      toast.warn("Bạn không có quyền xem chi tiết hóa đơn.", { autoClose: 1500 })
       onClose()
     }
   }, [open, canViewInvoices, onClose])
@@ -179,7 +179,7 @@ export const InvoiceDetailModal = ({
   // Handle thanh toán
   const handlePayment = () => {
     if (!canManageInvoices) {
-      toast.warn('Bạn không có quyền thanh toán hóa đơn.', { autoClose: 1500 })
+      toast.warn("Bạn không có quyền thanh toán hóa đơn.", { autoClose: 1500 })
       return
     }
     if (paymentMethod === null || !invoiceDetail) return
@@ -278,7 +278,7 @@ export const InvoiceDetailModal = ({
           <span>Chi tiết hóa đơn #{invoiceId}</span>
         </Space>
       }
-  open={open && canViewInvoices}
+      open={open && canViewInvoices}
       onCancel={onClose}
       footer={null}
       width={700}
@@ -664,19 +664,17 @@ export const InvoiceDetailModal = ({
                 disabled={paymentMethod === null || !canManageInvoices}
                 loading={paymentMutation.isPending}
                 style={{
-                  backgroundColor:
-                    paymentMethod !== null && canManageInvoices ? "#52c41a" : undefined,
-                  borderColor:
-                    paymentMethod !== null && canManageInvoices ? "#52c41a" : undefined,
+                  backgroundColor: paymentMethod !== null && canManageInvoices ? "#52c41a" : undefined,
+                  borderColor: paymentMethod !== null && canManageInvoices ? "#52c41a" : undefined,
                   height: "44px",
                   fontSize: "15px"
                 }}
               >
                 {!canManageInvoices
-                  ? 'Bạn không có quyền thanh toán'
+                  ? "Bạn không có quyền thanh toán"
                   : paymentMethod === null
-                  ? "Chọn phương thức thanh toán"
-                  : `Thanh toán ${formatCurrency(financialInfo.remaining)}`}
+                    ? "Chọn phương thức thanh toán"
+                    : `Thanh toán ${formatCurrency(financialInfo.remaining)}`}
               </Button>
             )}
 
