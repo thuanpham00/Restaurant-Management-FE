@@ -518,7 +518,7 @@ export default function Setting() {
                           className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-orange-500 transition-all duration-200"
                           aria-label="Ẩn/hiện mật khẩu hiện tại"
                         >
-                          {showPwd.current ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                          {showPwd.current ? <Eye className="h-5 w-5" /> : <EyeOff className="h-5 w-5" />}
                         </button>
                       </div>
                     </div>
@@ -540,7 +540,7 @@ export default function Setting() {
                           className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-orange-500 transition-all duration-200"
                           aria-label="Ẩn/hiện mật khẩu mới"
                         >
-                          {showPwd.next ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                          {showPwd.next ? <Eye className="h-5 w-5" /> : <EyeOff className="h-5 w-5" />}
                         </button>
                       </div>
                     </div>
@@ -562,7 +562,7 @@ export default function Setting() {
                           className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-orange-500 transition-all duration-200"
                           aria-label="Ẩn/hiện xác nhận mật khẩu"
                         >
-                          {showPwd.confirm ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                          {showPwd.confirm ? <Eye className="h-5 w-5" /> : <EyeOff className="h-5 w-5" />}
                         </button>
                       </div>
                     </div>
