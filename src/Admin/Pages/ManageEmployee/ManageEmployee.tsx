@@ -464,7 +464,7 @@ export default function ManageEmployee() {
             icon={<Eye size={16} />}
             onClick={(e) => {
               e.stopPropagation()
-              navigate(path.AdminStaffDetail.replace(":id", record.id))
+              handleRowClick(record)
             }}
           ></Button>
           {canManageEmployees && (
@@ -814,7 +814,7 @@ export default function ManageEmployee() {
                 <>
                   <Button onClick={handleCloseModal}>Đóng</Button>
                   {canManageEmployees && (
-                    <Button type="primary" icon={<Edit size={16} />} onClick={() => handleEdit()}></Button>
+                    <Button type="primary" icon={<Edit size={16} />} onClick={() => handleEdit()}>Cập nhật</Button>
                   )}
                 </>
               ) : (

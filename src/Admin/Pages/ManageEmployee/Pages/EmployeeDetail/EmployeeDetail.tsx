@@ -11,6 +11,7 @@ import { employeesAPI } from "src/Apis/Admin"
 import InputFileImage from "src/Components/InputFileImage"
 import { assets } from "src/Assets/assets"
 import { Employee } from "src/Types/employee.type"
+import { useAppStore } from "src/StateGlobal/zustand"
 import { path } from "src/Constants/path"
 
 const CONTRACT_TYPES: Record<number, { label: string; color: string }> = {
@@ -28,13 +29,15 @@ export default function EmployeeDetail() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
+  const employeeIdFromStore = useAppStore((state) => state.employeeId)
+  const effectiveEmployeeId = id ?? employeeIdFromStore ?? null
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
 
   const { data, isFetching, isError, error } = useQuery({
-    queryKey: ["employeeDetailPage", id],
-    queryFn: ({ signal }) => employeesAPI.getDetail(id as string, signal),
-    enabled: !!id,
+    queryKey: ["employeeDetailPage", effectiveEmployeeId],
+    queryFn: ({ signal }) => employeesAPI.getDetail(effectiveEmployeeId as string, signal),
+    enabled: Boolean(effectiveEmployeeId),
     staleTime: 3 * 60 * 1000,
     placeholderData: keepPreviousData
   })
@@ -57,15 +60,15 @@ export default function EmployeeDetail() {
 
   const uploadAvatarMutation = useMutation({
     mutationFn: async (file: File) => {
-      if (!id) {
+      if (!effectiveEmployeeId) {
         throw new Error("Thiếu mã nhân viên để cập nhật ảnh")
       }
-      return employeesAPI.update(id, { avatar: file })
+      return employeesAPI.update(effectiveEmployeeId, { avatar: file })
     },
     onSuccess: () => {
       toast.success("Cập nhật ảnh đại diện thành công", { autoClose: 1500 })
       setSelectedFile(null)
-      queryClient.invalidateQueries({ queryKey: ["employeeDetailPage", id] })
+      queryClient.invalidateQueries({ queryKey: ["employeeDetailPage", effectiveEmployeeId] })
       queryClient.invalidateQueries({ queryKey: ["listEmployees"] })
     },
     onError: (mutationError: unknown) => {
@@ -92,15 +95,17 @@ export default function EmployeeDetail() {
     return Number.isNaN(salaryNumber) ? employee.base_salary : `${salaryNumber.toLocaleString("vi-VN")} đ`
   }, [employee])
 
-  if (!id) {
+  const fallbackPath = id ? path.AdminStaff : path.AdminDashboard
+
+  if (!effectiveEmployeeId) {
     return (
       <Result
         status="404"
         title="Không tìm thấy nhân viên"
-        subTitle="Thiếu mã nhân viên trong đường dẫn."
+        subTitle="Không thể xác định tài khoản nhân viên cần hiển thị."
         extra={
-          <Button type="primary" onClick={() => navigate(path.AdminStaff)}>
-            Quay lại danh sách
+          <Button type="primary" onClick={() => navigate(fallbackPath)}>
+            Quay lại
           </Button>
         }
       />
@@ -117,7 +122,10 @@ export default function EmployeeDetail() {
           "Vui lòng thử lại sau."
         }
         extra={
-          <Button type="primary" onClick={() => queryClient.invalidateQueries({ queryKey: ["employeeDetailPage", id] })}>
+          <Button
+            type="primary"
+            onClick={() => queryClient.invalidateQueries({ queryKey: ["employeeDetailPage", effectiveEmployeeId] })}
+          >
             Thử lại
           </Button>
         }
@@ -140,8 +148,8 @@ export default function EmployeeDetail() {
             title="Không tìm thấy nhân viên"
             subTitle="Nhân viên có thể đã bị xóa hoặc không tồn tại."
             extra={
-              <Button type="primary" onClick={() => navigate(path.AdminStaff)}>
-                Quay lại danh sách
+              <Button type="primary" onClick={() => navigate(fallbackPath)}>
+                Quay lại
               </Button>
             }
           />

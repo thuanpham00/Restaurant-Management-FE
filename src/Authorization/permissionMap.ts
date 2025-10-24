@@ -14,6 +14,7 @@ export const ROLE_PERMISSIONS: Record<AppRole, AppAbility[]> = {
     AppAbility.RESERVATIONS_MANAGE,
     AppAbility.CUSTOMERS_VIEW,
     AppAbility.CUSTOMERS_MANAGE,
+  AppAbility.PROFILE_VIEW,
     AppAbility.EMPLOYEES_VIEW,
     AppAbility.EMPLOYEES_MANAGE,
     AppAbility.SHIFTS_VIEW,
@@ -49,6 +50,7 @@ export const ROLE_PERMISSIONS: Record<AppRole, AppAbility[]> = {
     AppAbility.TABLES_VIEW,
     AppAbility.RESERVATIONS_VIEW,
     AppAbility.CUSTOMERS_VIEW,
+    AppAbility.PROFILE_VIEW,
     AppAbility.SHIFTS_VIEW,
 
     AppAbility.MENU_CATEGORY_VIEW,
@@ -68,6 +70,7 @@ export const ROLE_PERMISSIONS: Record<AppRole, AppAbility[]> = {
     AppAbility.RESERVATIONS_MANAGE,
 
     AppAbility.CUSTOMERS_VIEW,
+    AppAbility.PROFILE_VIEW,
     AppAbility.SHIFTS_VIEW,
 
     AppAbility.MENU_CATEGORY_VIEW,
@@ -82,6 +85,7 @@ export const ROLE_PERMISSIONS: Record<AppRole, AppAbility[]> = {
   [AppRole.KITCHEN_STAFF]: unique([
     AppAbility.TABLES_VIEW,
 
+    AppAbility.PROFILE_VIEW,
     AppAbility.SHIFTS_VIEW,
 
     AppAbility.MENU_CATEGORY_VIEW,
@@ -101,6 +105,7 @@ export const ROLE_PERMISSIONS: Record<AppRole, AppAbility[]> = {
     AppAbility.TABLES_VIEW,
     AppAbility.TABLES_MANAGE,
 
+    AppAbility.PROFILE_VIEW,
     AppAbility.SHIFTS_VIEW,
 
     AppAbility.MENU_CATEGORY_VIEW,

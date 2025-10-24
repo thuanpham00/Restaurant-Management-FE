@@ -6,6 +6,7 @@ export enum AppAbility {
   RESERVATIONS_MANAGE = "reservations:manage",
   CUSTOMERS_VIEW = "customers:view",
   CUSTOMERS_MANAGE = "customers:manage",
+  PROFILE_VIEW = "profile:view",
   EMPLOYEES_VIEW = "employees:view",
   EMPLOYEES_MANAGE = "employees:manage",
   SHIFTS_VIEW = "shifts:view",

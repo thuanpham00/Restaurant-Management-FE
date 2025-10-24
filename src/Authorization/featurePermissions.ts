@@ -5,6 +5,7 @@ export type FeatureKey =
   | "tables"
   | "reservations"
   | "customers"
+  | "profile"
   | "staff"
   | "shifts"
   | "payroll"
@@ -26,6 +27,7 @@ export const FEATURE_VIEW_ABILITY: Record<FeatureKey, AppAbility> = {
   tables: AppAbility.TABLES_VIEW,
   reservations: AppAbility.RESERVATIONS_VIEW,
   customers: AppAbility.CUSTOMERS_VIEW,
+  profile: AppAbility.PROFILE_VIEW,
   staff: AppAbility.EMPLOYEES_VIEW,
   shifts: AppAbility.SHIFTS_VIEW,
   payroll: AppAbility.PAYROLL_VIEW,
