@@ -124,7 +124,7 @@ const ProductDetail: React.FC = () => {
               <div className="relative aspect-square rounded-2xl overflow-hidden shadow-2xl border-2 border-gray-700/50 group-hover:border-orange-500/50 transition-all duration-500 group-hover:shadow-orange-500/20">
                 <div className="absolute inset-0 bg-gradient-to-t from-gray-900/60 via-transparent to-transparent z-10" />
                 <img
-                  src={assets.rectangles.pizza}
+                  src={dish.image || assets.rectangles.pizza}
                   alt={dish.name}
                   className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                 />
@@ -237,7 +237,7 @@ const ProductDetail: React.FC = () => {
                   <div className="h-56 overflow-hidden relative">
                     <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-gray-900/40 to-transparent z-10" />
                     <img
-                      src={assets.rectangles.pizza}
+                      src={item.image || assets.rectangles.pizza}
                       alt={item.name}
                       className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                     />

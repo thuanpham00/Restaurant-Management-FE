@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react"
+import React, { useState, useEffect, useRef } from "react"
 import { useNavigate } from "react-router-dom"
 import Header from "src/Client/Components/HeaderClient"
 import Footer from "src/Client/Components/FooterClient"
@@ -38,7 +38,7 @@ const MenuItem: React.FC<{ item: MenuItemInMenu }> = ({ item }) => {
       <div className="relative h-56 overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-gray-900/40 to-transparent z-9" />
         <img
-          src={assets.rectangles.salad}
+          src={item.dish_image || assets.rectangles.salad}
           alt={item.dish_name || "Dish"}
           className={`w-full h-full object-cover group-hover:scale-110 transition-transform duration-700`}
         />
@@ -103,7 +103,7 @@ const MenuHero: React.FC = () => {
         <h1 className="text-5xl font-bold leading-tight text-white md:text-6xl lg:text-7xl bg-gradient-to-r from-orange-400 to-orange-300 bg-clip-text text-transparent">
           Khám phá thực đơn mới 2025.
         </h1>
-        <p className="mt-6 max-w-2xl text-balance text-lg leading-relaxed text-gray-300 md:text-xl lg:text-2xl">
+        <p className="mt-6 max-w-2xl text-balance text-lg leading-relaxed text-gray-300  md:text-xl lg:text-2xl">
           Mỗi bữa ăn là một hành trình trải nghiệm.
         </p>
         <button
@@ -116,6 +116,104 @@ const MenuHero: React.FC = () => {
       </div>
       <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-gray-900 to-transparent" />
     </section>
+  )
+}
+
+// === INFINITE CAROUSEL (slide 1 món, loop, hiển thị đủ món cuối) ===
+const InfiniteCarousel: React.FC<{
+  items: MenuItemInMenu[]
+  currentIndex: number
+  onIndexChange: (index: number) => void
+  gapClass: string
+  itemWidthClass: string
+}> = ({ items, currentIndex, onIndexChange, gapClass, itemWidthClass }) => {
+  const totalItems = items.length
+  const isLooping = totalItems > 3
+  const slideRef = useRef<HTMLDivElement>(null)
+
+  // Duplicate items để loop mượt
+  const extendedItems = isLooping ? [...items.slice(-3), ...items, ...items.slice(0, 3)] : items
+
+  const realIndex = isLooping ? currentIndex + 3 : currentIndex
+
+  useEffect(() => {
+    if (!isLooping) return
+
+    const maxIndex = totalItems - 3
+    if (currentIndex > maxIndex) {
+      // Đang ở cuối → bấm next → nhảy về đầu
+      slideRef.current?.style.setProperty("transition", "none")
+      onIndexChange(0)
+      requestAnimationFrame(() => {
+        slideRef.current?.style.setProperty("transition", "transform 700ms ease-in-out")
+      })
+    } else if (currentIndex < 0) {
+      // Đang ở đầu → bấm prev → nhảy về cuối
+      slideRef.current?.style.setProperty("transition", "none")
+      onIndexChange(maxIndex)
+      requestAnimationFrame(() => {
+        slideRef.current?.style.setProperty("transition", "transform 700ms ease-in-out")
+      })
+    }
+  }, [currentIndex, totalItems, isLooping, onIndexChange])
+
+  const handleNext = () => {
+    onIndexChange(currentIndex + 1)
+  }
+
+  const handlePrev = () => {
+    onIndexChange(currentIndex - 1)
+  }
+
+  return (
+    <div className="relative">
+      {isLooping && (
+        <>
+          <button
+            onClick={handlePrev}
+            className="absolute -left-4 top-1/2 z-10 hidden h-12 w-12 -translate-y-1/2 rounded-full border border-orange-500 bg-zinc-900 text-orange-500 shadow-lg transition-all hover:scale-110 hover:bg-orange-500 hover:text-white md:flex items-center justify-center"
+          >
+            <ChevronDown className="w-6 h-6 rotate-90" />
+          </button>
+          <button
+            onClick={handleNext}
+            className="absolute -right-4 top-1/2 z-10 hidden h-12 w-12 -translate-y-1/2 rounded-full border border-orange-500 bg-zinc-900 text-orange-500 shadow-lg transition-all hover:scale-110 hover:bg-orange-500 hover:text-white md:flex items-center justify-center"
+          >
+            <ChevronDown className="w-6 h-6 -rotate-90" />
+          </button>
+        </>
+      )}
+
+      <div className="overflow-hidden">
+        <div
+          ref={slideRef}
+          className={`flex ${gapClass} transition-transform duration-700 ease-in-out`}
+          style={{
+            transform: `translateX(-${realIndex * (100 / 3)}%)`
+          }}
+        >
+          {extendedItems.map((item, idx) => (
+            <div key={`${item.id}-${idx}`} className={`${itemWidthClass} flex-shrink-0`}>
+              <MenuItem item={item} />
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {isLooping && (
+        <div className="mt-8 flex justify-center gap-2">
+          {Array.from({ length: totalItems - 2 }, (_, i) => (
+            <button
+              key={i}
+              onClick={() => onIndexChange(i)}
+              className={`h-2 rounded-full transition-all ${
+                i === currentIndex ? "w-8 bg-orange-500" : "w-2 bg-gray-400/30"
+              }`}
+            />
+          ))}
+        </div>
+      )}
+    </div>
   )
 }
 
@@ -144,7 +242,6 @@ const Menu: React.FC = () => {
         ])
         if (categoriesRes.data.status === "success") setCategories(categoriesRes.data.data)
         else setError(categoriesRes.data.message)
-
         if (menusRes.data.status === "success") setMenusWithItems(menusRes.data.data)
         else setError(menusRes.data.message)
       } catch {
@@ -181,13 +278,18 @@ const Menu: React.FC = () => {
     fetchFilteredDishes()
   }, [debouncedSearch, selectedCategory, priceSort])
 
-  const itemsPerPage = 3
-  const totalPages = Math.ceil(filteredDishes.length / itemsPerPage)
-
-  const handleNext = () => setCurrentIndex((prev) => (prev + 1) % totalPages)
-  const handlePrev = () => setCurrentIndex((prev) => (prev - 1 + totalPages) % totalPages)
-
   const displayMenus = selectedMenuId ? menusWithItems.filter((menu) => menu.id === selectedMenuId) : menusWithItems
+
+  const dishToMenuItem = (dish: Dish): MenuItemInMenu => ({
+    id: dish.id,
+    dish_id: dish.id,
+    dish_name: dish.name,
+    price: dish.price,
+    price_base: dish.price,
+    notes: dish.desc || "",
+    dish_image: dish.image ?? null,
+    dish_active: dish.is_active
+  })
 
   return (
     <div className="bg-gray-900 text-white min-h-screen">
@@ -211,7 +313,7 @@ const Menu: React.FC = () => {
               </div>
               <div className="flex flex-wrap gap-4">
                 <div className="relative flex-1 min-w-[150px] group">
-                  <Tag className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none z-10" />
+                  <Tag className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 Carb-pointer-events-none z-10" />
                   <select
                     value={selectedCategory || ""}
                     onChange={(e) => {
@@ -300,12 +402,15 @@ const Menu: React.FC = () => {
             )}
           </div>
         </section>
+
         <MenuHero />
+
         {error && (
           <div className="bg-gradient-to-br from-red-500/10 to-red-600/5 border-2 border-red-500/30 rounded-2xl p-6 max-w-2xl mx-auto text-center backdrop-blur-sm mb-8">
             <p className="text-red-400 text-lg">{error}</p>
           </div>
         )}
+
         {isLoading ? (
           <div className="flex flex-col items-center justify-center py-20">
             <Loader2 className="w-12 h-12 text-orange-400 animate-spin mb-4" />
@@ -326,82 +431,19 @@ const Menu: React.FC = () => {
                   Được chế biến với đam mê, phục vụ với sự xuất sắc
                 </p>
               </div>
-              <div className="relative">
-                {totalPages > 1 && (
-                  <>
-                    <button
-                      onClick={handlePrev}
-                      className="absolute -left-4 top-1/2 z-10 hidden h-12 w-12 -translate-y-1/2 rounded-full border border-orange-500 bg-zinc-900 text-orange-500 shadow-lg transition-all hover:scale-110 hover:bg-orange-500 hover:text-white md:flex items-center justify-center"
-                    >
-                      <ChevronDown className="w-6 h-6 rotate-90" />
-                    </button>
-                    <button
-                      onClick={handleNext}
-                      className="absolute -right-4 top-1/2 z-10 hidden h-12 w-12 -translate-y-1/2 rounded-full border border-orange-500 bg-zinc-900 text-orange-500 shadow-lg transition-all hover:scale-110 hover:bg-orange-500 hover:text-white md:flex items-center justify-center"
-                    >
-                      <ChevronDown className="w-6 h-6 -rotate-90" />
-                    </button>
-                  </>
-                )}
-                <div className="overflow-hidden">
-                  <div
-                    className="flex gap-5 transition-transform duration-700 ease-in-out"
-                    style={{
-                      transform: `translateX(-${currentIndex * 100}%)`
-                    }}
-                  >
-                    {filteredDishes.map((dish) => (
-                      <div key={dish.id} className="w-full md:w-1/3 flex-shrink-0">
-                        <MenuItem
-                          item={{
-                            id: dish.id,
-                            dish_id: dish.id,
-                            dish_name: dish.name,
-                            price: dish.price,
-                            price_base: dish.price,
-                            notes: dish.desc || "",
-                            dish_image: dish.image ?? null,
-                            dish_active: dish.is_active
-                          }}
-                        />
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                {totalPages > 1 && (
-                  <div className="mt-8 flex justify-center gap-2">
-                    {Array.from({ length: totalPages }, (_, i) => (
-                      <button
-                        key={i}
-                        onClick={() => setCurrentIndex(i)}
-                        className={`h-2 rounded-full transition-all ${i === currentIndex ? "w-8 bg-orange-500" : "w-2 bg-gray-400/30"}`}
-                        aria-label={`Go to page ${i + 1}`}
-                      />
-                    ))}
-                  </div>
-                )}
-              </div>
+
+              <InfiniteCarousel
+                items={filteredDishes.map(dishToMenuItem)}
+                currentIndex={currentIndex}
+                onIndexChange={setCurrentIndex}
+                gapClass="gap-5"
+                itemWidthClass="w-full md:w-1/3"
+              />
             </div>
           </section>
         ) : (
           displayMenus.map((menu) => {
-            const itemsPerPage = 3
-            const menuCurrentIndex = menuIndices[menu.id] || 0
-            const totalPages = Math.ceil(menu.items.length / itemsPerPage)
-
-            const handleMenuNext = () => {
-              setMenuIndices((prev) => ({
-                ...prev,
-                [menu.id]: (menuCurrentIndex + 1) % totalPages
-              }))
-            }
-
-            const handleMenuPrev = () => {
-              setMenuIndices((prev) => ({
-                ...prev,
-                [menu.id]: (menuCurrentIndex - 1 + totalPages) % totalPages
-              }))
-            }
+            const menuCurrentIndex = menuIndices[menu.id] ?? 0
 
             return (
               <section key={menu.id} className="relative px-4 py-16 md:py-16">
@@ -416,57 +458,14 @@ const Menu: React.FC = () => {
                       Được chế biến với đam mê, phục vụ với sự xuất sắc
                     </p>
                   </div>
-                  <div className="relative">
-                    {totalPages > 1 && (
-                      <>
-                        <button
-                          onClick={handleMenuPrev}
-                          className="absolute -left-4 top-1/2 z-10 hidden h-12 w-12 -translate-y-1/2 rounded-full border border-orange-500 bg-zinc-900 text-orange-500 shadow-lg transition-all hover:scale-110 hover:bg-orange-500 hover:text-white md:flex items-center justify-center"
-                        >
-                          <ChevronDown className="w-6 h-6 rotate-90" />
-                        </button>
-                        <button
-                          onClick={handleMenuNext}
-                          className="absolute -right-4 top-1/2 z-10 hidden h-12 w-12 -translate-y-1/2 rounded-full border border-orange-500 bg-zinc-900 text-orange-500 shadow-lg transition-all hover:scale-110 hover:bg-orange-500 hover:text-white md:flex items-center justify-center"
-                        >
-                          <ChevronDown className="w-6 h-6 -rotate-90" />
-                        </button>
-                      </>
-                    )}
-                    <div className="overflow-hidden">
-                      <div
-                        className="flex gap-6 transition-transform duration-700 ease-in-out"
-                        style={{
-                          transform: `translateX(-${menuCurrentIndex * (100 / itemsPerPage)}%)`
-                        }}
-                      >
-                        {menu.items.map((item) => (
-                          <div key={item.id} className="w-[30%] flex-shrink-0">
-                            <MenuItem item={item} />
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                    {totalPages > 1 && (
-                      <div className="mt-8 flex justify-center gap-2">
-                        {Array.from({ length: totalPages }, (_, i) => (
-                          <button
-                            key={i}
-                            onClick={() =>
-                              setMenuIndices((prev) => ({
-                                ...prev,
-                                [menu.id]: i
-                              }))
-                            }
-                            className={`h-2 rounded-full transition-all ${
-                              i === menuCurrentIndex ? "w-8 bg-orange-500" : "w-2 bg-gray-400/30"
-                            }`}
-                            aria-label={`Go to page ${i + 1}`}
-                          />
-                        ))}
-                      </div>
-                    )}
-                  </div>
+
+                  <InfiniteCarousel
+                    items={menu.items}
+                    currentIndex={menuCurrentIndex}
+                    onIndexChange={(i) => setMenuIndices((prev) => ({ ...prev, [menu.id]: i }))}
+                    gapClass="gap-6"
+                    itemWidthClass="w-[30%]"
+                  />
                 </div>
               </section>
             )

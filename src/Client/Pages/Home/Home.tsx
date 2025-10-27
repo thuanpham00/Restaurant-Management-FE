@@ -388,7 +388,7 @@ const Home = () => {
                   <div className="relative h-64 md:h-72 overflow-hidden">
                     <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-gray-900/40 to-transparent z-9" />
                     <img
-                      src={assets.rectangles.salad}
+                      src={dish.image || assets.rectangles.salad}
                       alt={dish.name}
                       className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                     />
@@ -599,7 +599,7 @@ const Home = () => {
                     <div className="relative flex-shrink-0">
                       <div className="w-24 h-24 rounded-2xl overflow-hidden border-2 border-gray-700/50 group-hover:border-orange-500/50 transition-all duration-300">
                         <img
-                          src={assets.ellipses.ellipse30}
+                          src={item.image || assets.ellipses.ellipse30}
                           alt={item.name}
                           className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                         />
