@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react"
+import React, { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 import Header from "src/Client/Components/HeaderClient"
 import Footer from "src/Client/Components/FooterClient"
@@ -90,7 +90,7 @@ const MenuItem: React.FC<{ item: MenuItemInMenu; isPopular?: boolean }> = ({ ite
           disabled={isInactive}
           onClick={() => !isInactive && navigate(`/dish/${item.dish_id}`)}
         >
-          {isInactive ? "Tạm ngừng" : "Đặt ngay"}
+          {isInactive ? "Tạm ngừng" : "Xem chi tiết"}
           <Sparkles className="w-4 h-4" />
         </button>
       </div>
@@ -126,102 +126,6 @@ const MenuHero: React.FC = () => {
   )
 }
 
-const InfiniteCarousel: React.FC<{
-  items: MenuItemInMenu[]
-  currentIndex: number
-  onIndexChange: (index: number) => void
-  gapClass: string
-  itemWidthClass: string
-  renderItem: (item: MenuItemInMenu) => React.ReactNode
-}> = ({ items, currentIndex, onIndexChange, gapClass, itemWidthClass, renderItem }) => {
-  const totalItems = items.length
-  const isLooping = totalItems > 3
-  const slideRef = useRef<HTMLDivElement>(null)
-
-  // Duplicate items để loop mượt
-  const extendedItems = isLooping ? [...items.slice(-3), ...items, ...items.slice(0, 3)] : items
-
-  const realIndex = isLooping ? currentIndex + 3 : currentIndex
-
-  useEffect(() => {
-    if (!isLooping) return
-
-    const maxIndex = totalItems - 3
-    if (currentIndex > maxIndex) {
-      slideRef.current?.style.setProperty("transition", "none")
-      onIndexChange(0)
-      requestAnimationFrame(() => {
-        slideRef.current?.style.setProperty("transition", "transform 700ms ease-in-out")
-      })
-    } else if (currentIndex < 0) {
-      slideRef.current?.style.setProperty("transition", "none")
-      onIndexChange(maxIndex)
-      requestAnimationFrame(() => {
-        slideRef.current?.style.setProperty("transition", "transform 700ms ease-in-out")
-      })
-    }
-  }, [currentIndex, totalItems, isLooping, onIndexChange])
-
-  const handleNext = () => {
-    onIndexChange(currentIndex + 1)
-  }
-
-  const handlePrev = () => {
-    onIndexChange(currentIndex - 1)
-  }
-
-  return (
-    <div className="relative">
-      {isLooping && (
-        <>
-          <button
-            onClick={handlePrev}
-            className="absolute -left-4 top-1/2 z-10 hidden h-12 w-12 -translate-y-1/2 rounded-full border border-orange-500 bg-zinc-900 text-orange-500 shadow-lg transition-all hover:scale-110 hover:bg-orange-500 hover:text-white md:flex items-center justify-center"
-          >
-            <ChevronDown className="w-6 h-6 rotate-90" />
-          </button>
-          <button
-            onClick={handleNext}
-            className="absolute -right-4 top-1/2 z-10 hidden h-12 w-12 -translate-y-1/2 rounded-full border border-orange-500 bg-zinc-900 text-orange-500 shadow-lg transition-all hover:scale-110 hover:bg-orange-500 hover:text-white md:flex items-center justify-center"
-          >
-            <ChevronDown className="w-6 h-6 -rotate-90" />
-          </button>
-        </>
-      )}
-
-      <div className="overflow-hidden">
-        <div
-          ref={slideRef}
-          className={`flex ${gapClass} transition-transform duration-700 ease-in-out`}
-          style={{
-            transform: `translateX(-${realIndex * (100 / 3)}%)`
-          }}
-        >
-          {extendedItems.map((item, idx) => (
-            <div key={`${item.id}-${idx}`} className={`${itemWidthClass} flex-shrink-0`}>
-              {renderItem(item)}
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {isLooping && (
-        <div className="mt-8 flex justify-center gap-2">
-          {Array.from({ length: totalItems - 2 }, (_, i) => (
-            <button
-              key={i}
-              onClick={() => onIndexChange(i)}
-              className={`h-2 rounded-full transition-all ${
-                i === currentIndex ? "w-8 bg-orange-500" : "w-2 bg-gray-400/30"
-              }`}
-            />
-          ))}
-        </div>
-      )}
-    </div>
-  )
-}
-
 const Menu: React.FC = () => {
   const [search, setSearch] = useState("")
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
@@ -232,8 +136,6 @@ const Menu: React.FC = () => {
   const [categories, setCategories] = useState<Category[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [currentIndex, setCurrentIndex] = useState(0)
-  const [menuIndices, setMenuIndices] = useState<Record<string, number>>({})
   const [popularIds, setPopularIds] = useState<string[]>([])
 
   const debouncedSearch = useDebounce(search, 400)
@@ -390,28 +292,21 @@ const Menu: React.FC = () => {
                 >
                   Tất cả thực đơn
                 </button>
-                {menusWithItems.map((menu) => (
-                  <button
-                    key={menu.id}
-                    onClick={() => {
-                      if (menu.is_active) {
-                        setSelectedMenuId(menu.id)
-                      }
-                    }}
-                    disabled={!menu.is_active}
-                    className={`whitespace-nowrap rounded-lg border px-6 py-2 text-sm font-medium transition-all ${
-                      selectedMenuId === menu.id
-                        ? "border-orange-500 bg-orange-500/20 text-orange-500"
-                        : menu.is_active
-                          ? "border-gray-700 bg-gray-800 text-white hover:border-orange-500 hover:bg-gray-700 hover:text-orange-500 cursor-pointer"
-                          : "border-gray-800 bg-gray-900 text-gray-600 opacity-40 cursor-not-allowed"
-                    }`}
-                    title={!menu.is_active ? "Menu này tạm ngừng hoạt động" : undefined}
-                  >
-                    {menu.name}
-                    {!menu.is_active && <span className="ml-2 text-xs text-gray-500">(Ngưng)</span>}
-                  </button>
-                ))}
+                {menusWithItems
+                  .filter((menu) => menu.is_active)
+                  .map((menu) => (
+                    <button
+                      key={menu.id}
+                      onClick={() => setSelectedMenuId(menu.id)}
+                      className={`whitespace-nowrap rounded-lg border px-6 py-2 text-sm font-medium transition-all ${
+                        selectedMenuId === menu.id
+                          ? "border-orange-500 bg-orange-500/20 text-orange-500"
+                          : "border-gray-700 bg-gray-800 text-white hover:border-orange-500 hover:bg-gray-700 hover:text-orange-500 cursor-pointer"
+                      }`}
+                    >
+                      {menu.name}
+                    </button>
+                  ))}
               </div>
             )}
           </div>
@@ -445,22 +340,20 @@ const Menu: React.FC = () => {
                   Được chế biến với đam mê, phục vụ với sự xuất sắc
                 </p>
               </div>
-
-              <InfiniteCarousel
-                items={filteredDishes.map(dishToMenuItem)}
-                currentIndex={currentIndex}
-                onIndexChange={setCurrentIndex}
-                gapClass="gap-5"
-                itemWidthClass="w-full md:w-1/3"
-                renderItem={(item) => <MenuItem item={item} isPopular={popularIds.includes(item.dish_id)} />}
-              />
+              {/* Hiển thị dạng grid 4 cột */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
+                {filteredDishes.map((dish) => (
+                  <MenuItem key={dish.id} item={dishToMenuItem(dish)} isPopular={popularIds.includes(dish.id)} />
+                ))}
+              </div>
             </div>
           </section>
+        ) : displayMenus.filter((menu) => menu.is_active).length === 0 ? (
+          <div className="text-center text-gray-400 py-12">Hiện tại không có thực đơn nào đang hoạt động.</div>
         ) : (
-          displayMenus.map((menu) => {
-            const menuCurrentIndex = menuIndices[menu.id] ?? 0
-
-            return (
+          displayMenus
+            .filter((menu) => menu.is_active)
+            .map((menu) => (
               <section key={menu.id} className="relative px-4 py-16 md:py-16">
                 <div className="mx-auto max-w-7xl">
                   <div className="mb-12 text-center">
@@ -473,19 +366,15 @@ const Menu: React.FC = () => {
                       Được chế biến với đam mê, phục vụ với sự xuất sắc
                     </p>
                   </div>
-
-                  <InfiniteCarousel
-                    items={menu.items}
-                    currentIndex={menuCurrentIndex}
-                    onIndexChange={(i) => setMenuIndices((prev) => ({ ...prev, [menu.id]: i }))}
-                    gapClass="gap-6"
-                    itemWidthClass="w-[30%]"
-                    renderItem={(item) => <MenuItem item={item} isPopular={popularIds.includes(item.dish_id)} />}
-                  />
+                  {/* Hiển thị dạng grid 4 cột */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
+                    {menu.items.map((item) => (
+                      <MenuItem key={item.id} item={item} isPopular={popularIds.includes(item.dish_id)} />
+                    ))}
+                  </div>
                 </div>
               </section>
-            )
-          })
+            ))
         )}
       </div>
       <Footer />

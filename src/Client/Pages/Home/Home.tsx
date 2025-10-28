@@ -486,26 +486,12 @@ const Home = () => {
           </div>
           <div className="bg-orange-400 p-10 rounded-lg">
             <h3 className="text-gray-900 text-2xl font-medium mb-6 text-center">Giờ mở cửa</h3>
-            <div className="space-y-4 text-gray-900">
-              <div className="flex justify-between">
-                <span>Thứ Hai</span>
-                <span>8:00 - 22:00</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Thứ Tư</span>
-                <span>8:00 - 22:00</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Thứ Năm</span>
-                <span>8:00 - 22:00</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Thứ Sáu</span>
-                <span>8:00 - 22:00</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Thứ Bảy/Chủ Nhật</span>
-                <span>8:00 - 22:00</span>
+            <div className="space-y-4 text-gray-900 text-center">
+              <div className="flex flex-col items-center">
+                <span className="font-semibold text-lg">Thứ Hai - Chủ Nhật</span>
+                <span className="mt-1 px-4 py-2 rounded-full bg-orange-100 text-orange-700 font-bold text-xl shadow inline-block">
+                  8:00 - 22:00
+                </span>
               </div>
             </div>
           </div>

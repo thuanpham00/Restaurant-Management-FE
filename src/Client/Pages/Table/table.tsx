@@ -237,7 +237,7 @@ const TableReservation: React.FC = () => {
                       value={date}
                       onChange={(e) => setDate(e.target.value)}
                       onClick={(e) => e.currentTarget.showPicker?.()}
-                      className="w-full bg-gray-900/60 backdrop-blur-sm border-2 border-gray-700/50 rounded-xl px-12 py-4 text-white cursor-pointer focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-500/20 transition-all duration-300 hover:border-gray-600 appearance-none"
+                      className="w-full bg-gray-900/60 backdrop-blur-sm border-2 border-gray-700/50 rounded-xl px-12 py-4 text-white cursor-pointer focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-500/20 transition-all duration-300 hover:border-gray-600 appearance-none hide-picker"
                       required
                     />
                   </div>
@@ -262,7 +262,7 @@ const TableReservation: React.FC = () => {
                       value={time}
                       onChange={(e) => setTime(e.target.value)}
                       onClick={(e) => e.currentTarget.showPicker?.()}
-                      className="w-full bg-gray-900/60 backdrop-blur-sm border-2 border-gray-700/50 rounded-xl px-12 py-4 text-white cursor-pointer focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-500/20 transition-all duration-300 hover:border-gray-600 appearance-none"
+                      className="w-full bg-gray-900/60 backdrop-blur-sm border-2 border-gray-700/50 rounded-xl px-12 py-4 text-white cursor-pointer focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-500/20 transition-all duration-300 hover:border-gray-600 appearance-none hide-picker"
                       required
                     />
                   </div>

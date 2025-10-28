@@ -235,7 +235,7 @@ const ProductDetail: React.FC = () => {
                 >
                   {/* Image */}
                   <div className="h-56 overflow-hidden relative">
-                    <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-gray-900/40 to-transparent z-10" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-gray-900/40 to-transparent z-9" />
                     <img
                       src={item.image || assets.rectangles.pizza}
                       alt={item.name}
@@ -260,7 +260,9 @@ const ProductDetail: React.FC = () => {
 
                     <div className="flex justify-between items-center pt-3 border-t border-gray-700/50">
                       <div className="flex items-baseline gap-1">
-                        <span className="text-2xl font-bold text-orange-400">{item.price?.toLocaleString()}</span>
+                        <span className="text-2xl font-bold text-orange-400">
+                          {Number(item.price)?.toLocaleString()}
+                        </span>
                         <span className="text-sm text-gray-500">VND</span>
                       </div>
                       <div className="flex items-center gap-2 px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-full transition-all duration-300 group-hover:shadow-lg group-hover:shadow-orange-500/50">
