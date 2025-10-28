@@ -298,7 +298,7 @@ const Home = () => {
                           {"Ưu đãi đặc biệt"}
                         </h3>
                         <p className="text-lg text-gray-200 mb-3 text-center max-w-xl">
-                          {promotion.description || "Không có mô tả"}
+                          {promotion.description || "Đợi cập nhật"}
                         </p>
                         <div className="flex flex-col md:flex-row gap-4 items-center justify-center mb-2">
                           <span className="text-sm text-gray-400">

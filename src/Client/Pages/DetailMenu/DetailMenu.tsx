@@ -255,7 +255,7 @@ const ProductDetail: React.FC = () => {
                       {item.name}
                     </h3>
                     <p className="text-gray-400 text-sm mb-4 line-clamp-2 leading-relaxed">
-                      {item.desc || "Không có mô tả"}
+                      {item.desc || "Đợi cập nhật"}
                     </p>
 
                     <div className="flex justify-between items-center pt-3 border-t border-gray-700/50">
