@@ -210,9 +210,9 @@ const Menu: React.FC = () => {
   return (
     <div className="bg-gray-900 text-white min-h-screen">
       <Header />
-      <div className="container mx-auto px-4 py-12">
-        <section className="relative bg-gray-900/50 py-12">
-          <div className="mx-auto max-w-7xl px-4">
+      <div className="container mx-auto px-4 py-12 pt-0">
+        <section className="relative bg-gray-900/50 py-6">
+          <div className="mx-auto max-w-7xl">
             <div className="mb-8 flex flex-col gap-6 md:flex-row md:items-center md:justify-start md:gap-6">
               <div className="relative flex-1 max-w-lg">
                 <input
@@ -367,7 +367,7 @@ const Menu: React.FC = () => {
                     </p>
                   </div>
                   {/* Hiển thị dạng grid 4 cột */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                     {menu.items.map((item) => (
                       <MenuItem key={item.id} item={item} isPopular={popularIds.includes(item.dish_id)} />
                     ))}
