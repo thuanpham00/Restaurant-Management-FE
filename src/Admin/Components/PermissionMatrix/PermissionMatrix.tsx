@@ -49,10 +49,12 @@ export default function PermissionMatrix({ className }: PermissionMatrixProps) {
 
   const batchSyncMutation = useMutation({
     mutationFn: async (changes: Record<string, string[]>) => {
-      const promises = Object.entries(changes).map(([roleId, permissionIds]) =>
-        rolesAPI.syncPermissions(roleId, permissionIds)
-      )
-      return Promise.all(promises)
+      // Transform changes map into the API payload: { role_permissions: [{ role_id, permission_ids }, ...] }
+      const role_permissions = Object.entries(changes).map(([roleId, permissionIds]) => ({
+        role_id: roleId,
+        permission_ids: permissionIds
+      }))
+      return rolesAPI.syncPermissionsBulk({ role_permissions })
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["roles-matrix"] })

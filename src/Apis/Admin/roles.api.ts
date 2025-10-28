@@ -12,7 +12,7 @@ export const rolesAPI = {
     return Http.get<SuccessResponse<Role>>(`/api/roles/${id}`, { signal })
   },
 
-  create: (data: { name: string; description?: string; is_active?: boolean; permission_ids?: string[] }) => {
+  create: (data: { name: string; description?: string; is_active?: boolean; permissions?: string[] }) => {
     return Http.post<SuccessResponse<Role>>(`/api/roles`, data)
   },
 
@@ -50,6 +50,14 @@ export const rolesAPI = {
       `/api/roles/${id}/permissions/sync`,
       { permission_ids }
     )
+  },
+
+  /**
+   * Bulk sync permissions for many roles in a single request.
+   * Payload shape: { role_permissions: [{ role_id: string, permission_ids: string[] }, ...] }
+   */
+  syncPermissionsBulk: (data: { role_permissions: { role_id: string; permission_ids: string[] }[] }) => {
+    return Http.put<SuccessResponse<{ roles?: any }>>(`/api/roles/permissions/sync`, data)
   },
 
   getUsers: (id: string, signal?: AbortSignal) => {

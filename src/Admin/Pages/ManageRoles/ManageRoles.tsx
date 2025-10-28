@@ -20,7 +20,7 @@ import {
 } from "antd"
 import { isUndefined, omitBy } from "lodash"
 import { Edit, Trash2, Plus, Filter, RotateCcw, Eye, Grid } from "lucide-react"
-import { Fragment, useEffect, useState } from "react"
+import { Fragment, useEffect, useMemo, useState } from "react"
 import { Helmet } from "react-helmet-async"
 import { toast } from "react-toastify"
 import { createSearchParams, useNavigate } from "react-router-dom"
@@ -115,7 +115,7 @@ export default function ManageRoles() {
 
   // ========== MUTATIONS ==========
   const createMutation = useMutation({
-    mutationFn: (body: { name: string; description?: string; is_active?: boolean; permission_ids?: string[] }) => {
+    mutationFn: (body: { name: string; description?: string; is_active?: boolean; permissions?: string[] }) => {
       return rolesAPI.create(body)
     },
     onSuccess: () => {
@@ -139,9 +139,6 @@ export default function ManageRoles() {
       queryClient.invalidateQueries({ queryKey: ["listRoles"] })
       queryClient.invalidateQueries({ queryKey: ["role-detail"] })
       queryClient.invalidateQueries({ queryKey: ["roles-matrix"] })
-      setIsEditModalOpen(false)
-      editForm.resetFields()
-      setSelectedRole(null)
     },
     onError: (error: any) => {
       toast.error(error?.response?.data?.message || "Cập nhật vai trò thất bại!")
@@ -222,32 +219,87 @@ export default function ManageRoles() {
       name: values.name,
       description: values.description,
       is_active: values.is_active ?? true,
-      permission_ids: values.permission_ids || []
+      permissions: values.permissions || []
     }
     createMutation.mutate(body)
   }
 
-  const handleUpdate = (values: any) => {
-    if (!selectedRole) return
+  const normalizedRolePermissions = useMemo(() => {
+    return (roleDetail?.permissions ?? []).map((permission: Permission) => String(permission.id))
+  }, [roleDetail?.permissions])
+
+  useEffect(() => {
+    if (isEditModalOpen && roleDetail) {
+      editForm.setFieldsValue({
+        name: roleDetail.name,
+        description: roleDetail.description,
+        is_active: roleDetail.is_active,
+        permissions: (roleDetail.permissions ?? []).map((permission: Permission) => permission.id)
+      })
+    }
+  }, [editForm, isEditModalOpen, roleDetail])
+
+  const handleUpdate = async (values: any) => {
+    if (!selectedRole || !roleDetail) return
     if (!canManageRoles) {
       toast.warn("Bạn không có quyền quản lý vai trò.")
       return
     }
 
-    const body = cleanObject({
-      name: values.name,
-      description: values.description,
-      is_active: values.is_active
-    })
+    const roleId = selectedRole.id
+    const trimmedName = values.name?.trim() ?? ""
+    const currentName = roleDetail.name?.trim() ?? ""
+    const nextDescription = values.description ? values.description.trim() : ""
+    const currentDescription = roleDetail.description ? roleDetail.description.trim() : ""
+    const nextIsActive = Boolean(values.is_active)
+    const currentIsActive = Boolean(roleDetail.is_active)
 
-    updateMutation.mutate({ id: selectedRole.id, data: body })
+    const updatePayload: { name?: string; description?: string; is_active?: boolean } = {}
+    if (trimmedName !== currentName) {
+      updatePayload.name = trimmedName
+    }
+    if (nextDescription !== currentDescription) {
+      updatePayload.description = nextDescription
+    }
+    if (nextIsActive !== currentIsActive) {
+      updatePayload.is_active = nextIsActive
+    }
 
-    // Update permissions separately if changed
-    if (values.permission_ids) {
-      syncPermissionsMutation.mutate({
-        roleId: selectedRole.id,
-        permissionIds: values.permission_ids
-      })
+    const nextPermissions = Array.isArray(values.permissions)
+      ? values.permissions.map((permissionId: string) => String(permissionId))
+      : []
+
+    const permissionsChanged = (() => {
+      if (nextPermissions.length !== normalizedRolePermissions.length) return true
+      const sortedNext = [...nextPermissions].sort()
+      const sortedCurrent = [...normalizedRolePermissions].sort()
+      return sortedNext.some((value, index) => value !== sortedCurrent[index])
+    })()
+
+    const shouldUpdateRole = Object.keys(updatePayload).length > 0
+
+    if (!shouldUpdateRole && !permissionsChanged) {
+      toast.info("Không có thay đổi nào để cập nhật.")
+      return
+    }
+
+    try {
+      if (shouldUpdateRole) {
+        await updateMutation.mutateAsync({ id: roleId, data: updatePayload })
+      }
+
+      if (permissionsChanged) {
+        await syncPermissionsMutation.mutateAsync({
+          roleId,
+          permissionIds: nextPermissions
+        })
+      }
+
+      setIsEditModalOpen(false)
+      editForm.resetFields()
+      setSelectedRole(null)
+    } catch (error) {
+      // handled by mutations
     }
   }
 
@@ -343,14 +395,11 @@ export default function ManageRoles() {
       align: "center",
       render: (_: any, record: Role) => (
         <Space size="small">
-          <Button type="link" icon={<Eye size={16} />} onClick={() => handleView(record)}>
-          </Button>
+          <Button type="link" icon={<Eye size={16} />} onClick={() => handleView(record)}></Button>
           {canManageRoles && (
             <>
-              <Button type="link" icon={<Edit size={16} />} onClick={() => handleEdit(record)}>
-                  </Button>
-              <Button type="link" danger icon={<Trash2 size={16} />} onClick={() => handleDelete(record)}>
-                  </Button>
+              <Button type="link" icon={<Edit size={16} />} onClick={() => handleEdit(record)}></Button>
+              <Button type="link" danger icon={<Trash2 size={16} />} onClick={() => handleDelete(record)}></Button>
             </>
           )}
         </Space>
@@ -474,7 +523,7 @@ export default function ManageRoles() {
               <TextArea rows={3} placeholder="Mô tả vai trò..." />
             </Form.Item>
 
-            <Form.Item name="permission_ids" label="Quyền hạn">
+            <Form.Item name="permissions" label="Quyền hạn">
               <Select
                 mode="multiple"
                 placeholder="Chọn quyền cho vai trò"
@@ -501,12 +550,7 @@ export default function ManageRoles() {
                 >
                   Hủy
                 </Button>
-                <Button
-                  type="primary"
-                  htmlType="submit"
-                  loading={createMutation.isPending}
-                  disabled={!canManageRoles}
-                >
+                <Button type="primary" htmlType="submit" loading={createMutation.isPending} disabled={!canManageRoles}>
                   Tạo vai trò
                 </Button>
               </Space>
@@ -525,6 +569,14 @@ export default function ManageRoles() {
           }}
           footer={null}
           width={700}
+          centered
+          styles={{
+            body: {
+              maxHeight: "calc(100vh - 150px)",
+              overflowY: "auto",
+              overflowX: "hidden"
+            }
+          }}
         >
           {roleDetailLoading ? (
             <div className="flex justify-center py-8">
@@ -539,7 +591,7 @@ export default function ManageRoles() {
                 name: roleDetail?.name,
                 description: roleDetail?.description,
                 is_active: roleDetail?.is_active,
-                permission_ids: roleDetail?.permissions?.map((p) => p.id) || []
+                permissions: roleDetail?.permissions?.map((p) => p.id) || []
               }}
             >
               <Form.Item
@@ -554,7 +606,7 @@ export default function ManageRoles() {
                 <TextArea rows={3} placeholder="Mô tả vai trò..." />
               </Form.Item>
 
-              <Form.Item name="permission_ids" label="Quyền hạn">
+              <Form.Item name="permissions" label="Quyền hạn">
                 <Select
                   mode="multiple"
                   placeholder="Chọn quyền cho vai trò"
