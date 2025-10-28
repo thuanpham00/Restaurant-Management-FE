@@ -202,6 +202,7 @@ const Menu: React.FC = () => {
     dish_name: dish.name,
     price: dish.price,
     price_base: dish.price,
+    desc: dish.desc ?? null,
     notes: dish.desc || "",
     dish_image: dish.image ?? null,
     dish_active: dish.is_active
