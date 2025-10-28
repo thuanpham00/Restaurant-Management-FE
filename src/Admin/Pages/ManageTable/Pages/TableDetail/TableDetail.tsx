@@ -573,12 +573,22 @@ export default function TableDetail() {
   const {
     data: listDishMenuInActiveData,
     isLoading: isLoadingDishes,
-    isFetching: isFetchingDishes
+    isFetching: isFetchingDishes,
+    error: errorDishes,
+    isError: isErrorDishes
   } = useQuery({
     queryKey: ["ListDishInMenuActive", dataTableSessionDetail?.session_id],
     queryFn: () => menusAPI.getMenuItemFromMenuActive(),
     enabled: isModalOpen && canManageTables
   })
+
+  useEffect(() => {
+    if (isErrorDishes && isModalOpen) {
+      const errMsg =
+        (errorDishes as any)?.response?.data?.message ?? (errorDishes as Error)?.message ?? String(errorDishes)
+      toast.error(errMsg, { autoClose: 1500 })
+    }
+  }, [isErrorDishes, errorDishes, isModalOpen])
 
   const listDishMenuInActive = listDishMenuInActiveData?.data?.data?.items
 
