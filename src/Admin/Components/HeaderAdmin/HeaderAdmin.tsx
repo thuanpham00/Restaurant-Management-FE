@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import { useEffect } from "react"
 import { Menu } from "lucide-react"
 import avatarDefault from "src/Assets/img/avatarDefault.png"
 import { Tag } from "antd"
@@ -10,13 +11,37 @@ interface Props {
 }
 
 export default function HeaderAdmin({ handleSidebar, isShowSidebar }: Props) {
-  const { avatar, nameUser, role } = useAppStore()
+  const avatar = useAppStore((state) => state.avatar)
+  const nameUser = useAppStore((state) => state.nameUser)
+  const role = useAppStore((state) => state.role)
+  const employeeId = useAppStore((state) => state.employeeId)
+  const refreshEmployeeProfile = useAppStore((state) => state.refreshEmployeeProfile)
+
+  useEffect(() => {
+    if (!employeeId) {
+      return
+    }
+    
+    let isMounted = true
+    refreshEmployeeProfile(employeeId).catch(() => {
+      if (isMounted) {
+        // Silent error handling
+      }
+    })
+    
+    return () => {
+      isMounted = false
+    }
+  }, [employeeId])
 
   const handleSideBarFunc = () => {
     handleSidebar(!isShowSidebar)
   }
 
   const renderRoleTag = () => {
+    if (!role) {
+      return <Tag>Chưa phân quyền</Tag>
+    }
     switch (role) {
       case "Super Administrator":
         return <Tag color="orange">Super Administrator</Tag>
@@ -42,7 +67,7 @@ export default function HeaderAdmin({ handleSidebar, isShowSidebar }: Props) {
         />
         <div className="ml-1">
           <span className="text-xs">{renderRoleTag()}</span>
-          <span className="mt-[2px] block text-[13px] truncate w-32 text-white">{nameUser}</span>
+          <span className="mt-[2px] block text-[13px] truncate w-32 text-white">{nameUser || "Người dùng"}</span>
         </div>
       </div>
     </header>

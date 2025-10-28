@@ -34,6 +34,7 @@ import { Employee, EmployeeCreateInput, EmployeeFormInput, queryParamConfigEmplo
 import InputFileImage from "src/Components/InputFileImage"
 import { assets } from "src/Assets/assets"
 import { AppAbility, PermissionGate, useAuthorization } from "src/Authorization"
+import { useAppStore } from "src/StateGlobal/zustand"
 
 const { Option } = Select
 
@@ -56,6 +57,8 @@ export default function ManageEmployee() {
   const { can } = useAuthorization()
   const canViewEmployees = can(AppAbility.EMPLOYEES_VIEW)
   const canManageEmployees = can(AppAbility.EMPLOYEES_MANAGE)
+  const loggedEmployeeId = useAppStore((state) => state.employeeId)
+  const refreshEmployeeProfile = useAppStore((state) => state.refreshEmployeeProfile)
 
   // ========== STATE ==========
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false)
@@ -176,6 +179,11 @@ export default function ManageEmployee() {
       setIsEditMode(false)
       setHasChanges(false)
       setEditAvatarFile(null)
+      if (selectedEmployee?.id && selectedEmployee.id === loggedEmployeeId) {
+        setTimeout(() => {
+          refreshEmployeeProfile(selectedEmployee.id).catch(() => undefined)
+        }, 100)
+      }
     },
     onError: (error: any) => {
       toast.error(error?.response?.data?.message || "Cập nhật thất bại", { autoClose: 1500 })
@@ -189,6 +197,8 @@ export default function ManageEmployee() {
       queryClient.invalidateQueries({ queryKey: ["listEmployees"] })
     },
     onError: (error: any) => {
+      // Avoid duplicate toasts when global HTTP interceptor already showed the message
+      if ((error as any)?.__toastHandled) return
       toast.error(error?.response?.data?.message || "Xóa nhân viên thất bại", { autoClose: 1500 })
     }
   })
@@ -788,11 +798,15 @@ export default function ManageEmployee() {
 
           <Form.Item name="role_id" label="Vai trò" rules={[{ required: true, message: "Vui lòng chọn vai trò!" }]}>
             <Select placeholder="Chọn vai trò" showSearch optionFilterProp="label">
-              {roleOptions.map((role: { label: string; value: string }) => (
-                <Option key={role.value} value={role.value}>
-                  {role.label}
-                </Option>
-              ))}
+              {roleOptions
+                .filter((role: { label: string; value: string }) => 
+                  role.label !== "Customer" && role.label !== "Super Administrator"
+                )
+                .map((role: { label: string; value: string }) => (
+                  <Option key={role.value} value={role.value}>
+                    {role.label}
+                  </Option>
+                ))}
             </Select>
           </Form.Item>
 

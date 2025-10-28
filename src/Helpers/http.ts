@@ -79,6 +79,7 @@ class http {
             error.response?.data.message === "Không có quyền truy cập!"
           ) {
             toast.error(error.response?.data.message || "Không có quyền truy cập!", { autoClose: 1500 })
+            ;(error as any).__toastHandled = true
           }
         }
 
@@ -107,6 +108,7 @@ class http {
           if (isAxiosExpiredTokenError<MessageResponse>(error, "Invalid or expired refresh token")) {
             if (this.accessToken) {
               toast.error("Phiên làm việc hết hạn", { autoClose: 1500 })
+              ;(error as any).__toastHandled = true
             }
             this.accessToken = ""
             clearLS()

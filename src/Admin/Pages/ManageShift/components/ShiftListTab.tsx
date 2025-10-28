@@ -2,7 +2,7 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { Button, Form, Input, Modal, Table, DatePicker, TimePicker, Spin, Radio, Badge, Tag, Checkbox } from "antd"
 import { isUndefined, omitBy } from "lodash"
-import { Clock, Edit, Filter, Plus, RotateCcw, Trash2, Sun, Moon, Settings, Zap } from "lucide-react"
+import { Clock, Edit, Filter, Plus, RotateCcw, Trash2, Sun, Moon, Settings, Zap, Calendar } from "lucide-react"
 import { Fragment, useCallback, useState } from "react"
 import { toast } from "react-toastify"
 import dayjs from "dayjs"
@@ -90,6 +90,14 @@ export default function ShiftListTab() {
   const [isQuickCreateModalOpen, setIsQuickCreateModalOpen] = useState(false)
   const [quickCreateForm] = Form.useForm()
   const [quickCreateLoading, setQuickCreateLoading] = useState(false)
+
+  // Date Range Filter State
+  const [selectedDateRange, setSelectedDateRange] = useState<[dayjs.Dayjs, dayjs.Dayjs] | null>(() => {
+    if (queryConfig.shift_date_from && queryConfig.shift_date_to) {
+      return [dayjs(queryConfig.shift_date_from), dayjs(queryConfig.shift_date_to)]
+    }
+    return [dayjs().startOf("isoWeek"), dayjs().endOf("isoWeek")]
+  })
 
   // ========== COMPUTED VALUES ==========
   // Default to current week
@@ -390,31 +398,43 @@ export default function ShiftListTab() {
   }
 
   // ========== FILTER HANDLERS ==========
-  const handleQuickFilter = (type: "current-week" | "next-week" | "current-month") => {
+  const handleQuickFilter = (days: number) => {
+    const from = dayjs()
+    const to = dayjs().add(days, "day")
     const params = new URLSearchParams(window.location.search)
 
-    let from: string, to: string
-    if (type === "current-week") {
-      from = dayjs().startOf("isoWeek").format("YYYY-MM-DD")
-      to = dayjs().endOf("isoWeek").format("YYYY-MM-DD")
-    } else if (type === "next-week") {
-      from = dayjs().add(1, "week").startOf("isoWeek").format("YYYY-MM-DD")
-      to = dayjs().add(1, "week").endOf("isoWeek").format("YYYY-MM-DD")
-    } else {
-      from = dayjs().startOf("month").format("YYYY-MM-DD")
-      to = dayjs().endOf("month").format("YYYY-MM-DD")
-    }
+    params.set("shift_date_from", from.format("YYYY-MM-DD"))
+    params.set("shift_date_to", to.format("YYYY-MM-DD"))
 
-    params.set("shift_date_from", from)
-    params.set("shift_date_to", to)
-
-    filterForm.setFieldsValue({
-      shift_date_from: dayjs(from),
-      shift_date_to: dayjs(to)
-    })
+    setSelectedDateRange([from, to])
 
     window.history.pushState({}, "", `${window.location.pathname}?${params.toString()}`)
     window.dispatchEvent(new PopStateEvent("popstate"))
+  }
+
+  const handleDateRangeChange = (dates: any) => {
+    if (dates && dates[0] && dates[1]) {
+      const daysDiff = dates[1].diff(dates[0], "day") + 1
+      if (daysDiff > 7) {
+        // Use toastId to prevent duplicate toasts
+        toast.warning("Chỉ được chọn tối đa 7 ngày!", { 
+          autoClose: 2000,
+          toastId: "date-range-limit-warning"
+        })
+        return
+      }
+
+      setSelectedDateRange(dates as [dayjs.Dayjs, dayjs.Dayjs])
+
+      const params = new URLSearchParams(window.location.search)
+      params.set("shift_date_from", dates[0].format("YYYY-MM-DD"))
+      params.set("shift_date_to", dates[1].format("YYYY-MM-DD"))
+
+      window.history.pushState({}, "", `${window.location.pathname}?${params.toString()}`)
+      window.dispatchEvent(new PopStateEvent("popstate"))
+    } else {
+      setSelectedDateRange(null)
+    }
   }
 
   const handleFilter = () => {
@@ -427,17 +447,7 @@ export default function ShiftListTab() {
       params.delete("name")
     }
 
-    if (values.shift_date_from) {
-      params.set("shift_date_from", dayjs(values.shift_date_from).format("YYYY-MM-DD"))
-    } else {
-      params.delete("shift_date_from")
-    }
-
-    if (values.shift_date_to) {
-      params.set("shift_date_to", dayjs(values.shift_date_to).format("YYYY-MM-DD"))
-    } else {
-      params.delete("shift_date_to")
-    }
+    // Date range is already handled by handleDateRangeChange
 
     // Navigate to update URL
     window.history.pushState({}, "", `${window.location.pathname}?${params.toString()}`)
@@ -447,9 +457,13 @@ export default function ShiftListTab() {
   const handleResetFilter = () => {
     filterForm.resetFields()
     // Reset to current week
+    const from = dayjs().startOf("isoWeek")
+    const to = dayjs().endOf("isoWeek")
+    setSelectedDateRange([from, to])
+
     const params = new URLSearchParams()
-    params.set("shift_date_from", currentWeekStart)
-    params.set("shift_date_to", currentWeekEnd)
+    params.set("shift_date_from", from.format("YYYY-MM-DD"))
+    params.set("shift_date_to", to.format("YYYY-MM-DD"))
     window.history.pushState({}, "", `${window.location.pathname}?${params.toString()}`)
     window.dispatchEvent(new PopStateEvent("popstate"))
   }
@@ -561,7 +575,7 @@ export default function ShiftListTab() {
         <div>
           <h3 className="text-lg font-semibold">Lịch làm việc Nhà hàng</h3>
           <p className="text-gray-500 text-sm">
-            Quản lý ca sáng (7h-15h) và ca tối (15h-23h) - Mặc định hiển thị tuần hiện tại
+            Quản lý ca sáng (7h-15h) và ca tối (15h-23h) - Chỉ chọn tối đa 7 ngày liên tiếp
           </p>
         </div>
         <div className="flex gap-2">
@@ -589,14 +603,14 @@ export default function ShiftListTab() {
 
       {/* Quick Filter Buttons */}
       <div className="mb-3 flex gap-2">
-        <Button type="default" icon={<Sun size={16} />} onClick={() => handleQuickFilter("current-week")}>
+        <Button type="default" icon={<Calendar size={16} />} onClick={() => handleQuickFilter(7)}>
+          7 ngày tới
+        </Button>
+        <Button type="default" icon={<Calendar size={16} />} onClick={() => handleQuickFilter(30)}>
+          30 ngày tới
+        </Button>
+        <Button type="default" icon={<RotateCcw size={16} />} onClick={handleResetFilter}>
           Tuần này
-        </Button>
-        <Button type="default" icon={<Moon size={16} />} onClick={() => handleQuickFilter("next-week")}>
-          Tuần sau
-        </Button>
-        <Button type="default" icon={<Clock size={16} />} onClick={() => handleQuickFilter("current-month")}>
-          Tháng này
         </Button>
       </div>
 
@@ -607,12 +621,15 @@ export default function ShiftListTab() {
             <Input placeholder="Tên ca..." className="w-48" />
           </Form.Item>
 
-          <Form.Item name="shift_date_from" className="mb-0">
-            <DatePicker placeholder="Từ ngày" format="DD/MM/YYYY" className="w-48" />
-          </Form.Item>
-
-          <Form.Item name="shift_date_to" className="mb-0">
-            <DatePicker placeholder="Đến ngày" format="DD/MM/YYYY" className="w-48" />
+          <Form.Item className="mb-0">
+            <RangePicker
+              value={selectedDateRange}
+              onChange={handleDateRangeChange}
+              format="DD/MM/YYYY"
+              placeholder={["Từ ngày", "Đến ngày"]}
+              className="w-72"
+              size="large"
+            />
           </Form.Item>
 
           <Form.Item className="mb-0">
@@ -623,7 +640,7 @@ export default function ShiftListTab() {
 
           <Form.Item className="mb-0">
             <Button icon={<RotateCcw size={16} />} onClick={handleResetFilter}>
-              Tuần này
+              Reset
             </Button>
           </Form.Item>
         </Form>
@@ -632,7 +649,9 @@ export default function ShiftListTab() {
         <div className="mt-3 text-sm text-gray-600">
           📅 Đang hiển thị:{" "}
           <span className="font-semibold">
-            {queryConfig.shift_date_from || currentWeekStart} đến {queryConfig.shift_date_to || currentWeekEnd}
+            {selectedDateRange
+              ? `${selectedDateRange[0].format("DD/MM/YYYY")} đến ${selectedDateRange[1].format("DD/MM/YYYY")}`
+              : "Tất cả"}
           </span>{" "}
           ({filteredShifts.length} ca)
         </div>
@@ -833,18 +852,6 @@ export default function ShiftListTab() {
               format="DD/MM/YYYY"
               size="large"
               placeholder={["Từ ngày", "Đến ngày"]}
-              disabledDate={(current) => {
-                // Can't select days before today
-                return current && current < dayjs().startOf("day")
-              }}
-              onChange={(dates) => {
-                if (dates && dates[0] && dates[1]) {
-                  const daysDiff = dates[1].diff(dates[0], "day") + 1
-                  if (daysDiff > 7) {
-                    toast.warning("Chỉ được chọn tối đa 7 ngày!", { autoClose: 2000 })
-                  }
-                }
-              }}
             />
           </Form.Item>
 

@@ -30,6 +30,8 @@ export default function EmployeeDetail() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const employeeIdFromStore = useAppStore((state) => state.employeeId)
+  const applyEmployeeProfile = useAppStore((state) => state.applyEmployeeProfile)
+  const refreshEmployeeProfile = useAppStore((state) => state.refreshEmployeeProfile)
   const effectiveEmployeeId = id ?? employeeIdFromStore ?? null
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
@@ -43,6 +45,16 @@ export default function EmployeeDetail() {
   })
 
   const employee = useMemo(() => data?.data?.data as Employee | undefined, [data])
+  const isSelfProfile = useMemo(
+    () => Boolean(effectiveEmployeeId && employeeIdFromStore && effectiveEmployeeId === employeeIdFromStore),
+    [effectiveEmployeeId, employeeIdFromStore]
+  )
+
+  useEffect(() => {
+    if (employee && isSelfProfile) {
+      applyEmployeeProfile(employee)
+    }
+  }, [employee, isSelfProfile])
 
   useEffect(() => {
     if (!selectedFile) {
@@ -70,6 +82,11 @@ export default function EmployeeDetail() {
       setSelectedFile(null)
       queryClient.invalidateQueries({ queryKey: ["employeeDetailPage", effectiveEmployeeId] })
       queryClient.invalidateQueries({ queryKey: ["listEmployees"] })
+      if (isSelfProfile && effectiveEmployeeId) {
+        setTimeout(() => {
+          refreshEmployeeProfile(effectiveEmployeeId).catch(() => undefined)
+        }, 100)
+      }
     },
     onError: (mutationError: unknown) => {
       const message = (mutationError as { response?: { data?: { message?: string } } })?.response?.data?.message

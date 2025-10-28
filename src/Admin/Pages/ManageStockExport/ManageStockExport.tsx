@@ -313,9 +313,9 @@ export default function ManageStockExport() {
   }
 
   // Get status tag
-  const getStatusTag = (status: number, label: string) => {
+  const getStatusTag = (status: number) => {
     const statusOption = STATUS_OPTIONS.find((opt) => opt.value === status)
-    return <Tag color={statusOption?.color || "default"}>{label || statusOption?.label}</Tag>
+    return <Tag color={statusOption?.color || "default"}>{statusOption?.label || "Không xác định"}</Tag>
   }
 
   // ========== COLUMNS ==========
@@ -367,7 +367,7 @@ export default function ManageStockExport() {
       key: "status",
       width: 130,
       align: "center",
-      render: (status: number, record: StockExport) => getStatusTag(status, record.status_label)
+      render: (status: number) => getStatusTag(status)
     },
     {
       title: <div className="text-left">Ngày tạo</div>,
@@ -782,7 +782,7 @@ export default function ManageStockExport() {
                   <span className="text-sm">{dayjs(stockExportDetail.export_date).format("DD/MM/YYYY")}</span>
                 </Descriptions.Item>
                 <Descriptions.Item label={<span className="text-sm">Trạng thái</span>}>
-                  {getStatusTag(stockExportDetail.status, stockExportDetail.status_label)}
+                  {getStatusTag(stockExportDetail.status)}
                 </Descriptions.Item>
                 <Descriptions.Item label={<span className="text-sm">Lý do xuất</span>} span={2}>
                   <span className="text-sm">
