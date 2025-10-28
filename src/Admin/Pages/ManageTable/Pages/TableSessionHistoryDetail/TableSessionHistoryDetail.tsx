@@ -41,6 +41,7 @@ import { useRealtimeQuery } from "src/Hook/useRealtimeQuery"
 import InvoiceListSummary from "../../Components/InvoiceListSummary"
 import { Invoice } from "src/Types/invoicePayment.type"
 import InvoiceDetailModal from "../../Components/InvoiceDetailModal"
+import { useAppStore } from "src/StateGlobal/zustand"
 
 const { Search } = Input
 const { Title } = Typography
@@ -55,16 +56,28 @@ export default function TableSessionHistoryDetail() {
   const { state } = useLocation()
   const idDiningTable = state?.idDiningTable
   const idTableSession = state?.idTableSession
-  const prepayment = state?.prepayment
-  const orderId = state?.orderId
+  const { listTablePrepayment } = useAppStore()
+  console.log(listTablePrepayment)
+  const matchedPrepayment =
+    idDiningTable && idTableSession
+      ? listTablePrepayment.find(
+          (item) => item.idDiningTable === idDiningTable && item.idTableSession === idTableSession
+        )
+      : undefined
+  const orderIdFromState = matchedPrepayment?.orderId ?? null
+
+  const orderId = state?.orderId ?? orderIdFromState
 
   const [prePaymentValue, setPrePaymentValue] = useState("")
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [showInvoice, setShowInvoice] = useState(false)
 
   useEffect(() => {
-    setPrePaymentValue(prepayment)
-  }, [prepayment])
+    const matched = (listTablePrepayment || []).some(
+      (it) => it.idTableSession === idTableSession && it.idDiningTable === idDiningTable
+    )
+    setPrePaymentValue(matched ? "true" : "")
+  }, [idTableSession, idDiningTable, listTablePrepayment, orderId])
 
   const { data, isFetching, isError } = useQuery({
     queryKey: ["detailTableSession", idDiningTable, idTableSession],

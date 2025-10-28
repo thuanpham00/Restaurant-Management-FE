@@ -280,7 +280,8 @@ export default function ManageDish() {
             <Link
               to={`${path.AdminDish}/${record.id}`}
               state={{
-                dataDish: record
+                dataDish: record,
+                queryConfig: queryConfig
               }}
               className="text-blue-500"
             >

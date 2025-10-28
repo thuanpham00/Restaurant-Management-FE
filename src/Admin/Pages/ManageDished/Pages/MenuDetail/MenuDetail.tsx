@@ -533,11 +533,12 @@ export default function MenuDetail() {
                   { required: true, message: "Vui lòng nhập giá bán!" },
                   ({ getFieldValue }) => ({
                     validator(_, value) {
-                      const base = getFieldValue("price_base")
-                      if (value === undefined || value === null) {
+                      const base = Number(getFieldValue("price_base"))
+                      const current = Number(value)
+                      if (value === undefined || value === null || Number.isNaN(current)) {
                         return Promise.resolve()
                       }
-                      if (base !== undefined && value < base) {
+                      if (!Number.isNaN(base) && current < base) {
                         return Promise.reject(new Error("Giá bán phải lớn hơn hoặc bằng giá gốc!"))
                       }
                       return Promise.resolve()

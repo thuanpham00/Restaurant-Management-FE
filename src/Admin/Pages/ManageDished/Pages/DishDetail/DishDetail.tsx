@@ -14,10 +14,13 @@ import { AppAbility, useAuthorization } from "src/Authorization"
 import InputFileImage from "src/Components/InputFileImage"
 import { Dish } from "src/Types/dish.type"
 import { IngredientDish } from "src/Types/ingredientDish.type"
+import { queryParamConfigDish } from "src/Types/queryParams.type"
 
 export default function DishDetail() {
   const { state } = useLocation()
+  console.log(state)
   const detailDish = state?.dataDish as Dish
+  const queryConfig = state?.queryConfig as queryParamConfigDish
   const { can } = useAuthorization()
   const canManageDish = can(AppAbility.DISH_MANAGE)
 
@@ -344,6 +347,38 @@ export default function DishDetail() {
     })
   }
 
+  // xử lý xóa món ăn
+  const deleteDishMutation = useMutation({
+    mutationFn: (id: string) => {
+      return dishesAPI.delete(id)
+    },
+    onSuccess: () => {
+      toast.success("Xóa món ăn thành công!", {
+        autoClose: 1500
+      })
+      navigate(-1)
+      queryClient.invalidateQueries({ queryKey: ["listDish", queryConfig] })
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || "Xóa món ăn thất bại!", {
+        autoClose: 1500
+      })
+    }
+  })
+
+  const handleDelete = (id: string) => {
+    Modal.confirm({
+      title: "Xác nhận xóa",
+      content: `Bạn có chắc muốn xóa món ăn này?`,
+      okText: "Xóa",
+      cancelText: "Hủy",
+      okType: "danger",
+      onOk: () => {
+        deleteDishMutation.mutate(id)
+      }
+    })
+  }
+
   return (
     <div>
       <Helmet>
@@ -402,7 +437,7 @@ export default function DishDetail() {
                     className="h-72 w-72 rounded-lg mx-auto"
                     alt="avatar default"
                   />
-                  {canManageDish && <InputFileImage onChange={handleChangeImage} />}
+                  {canManageDish && <InputFileImage checkUpdate={!checkUpdate} onChange={handleChangeImage} />}
                 </div>
               </Form.Item>
             </div>
@@ -421,7 +456,7 @@ export default function DishDetail() {
                 </div>
               ) : (
                 <div className="flex justify-end gap-2">
-                  <Button danger type="primary">
+                  <Button danger type="primary" onClick={() => handleDelete(detailDish.id as string)}>
                     Xóa
                   </Button>
                   <Button onClick={() => setCheckUpdate(true)} type="primary">

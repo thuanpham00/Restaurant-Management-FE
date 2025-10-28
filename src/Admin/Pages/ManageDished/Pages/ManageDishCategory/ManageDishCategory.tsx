@@ -229,7 +229,15 @@ export default function ManageDishCategory() {
             <Button type="link" onClick={() => handleEdit(record)} disabled={!canManageCategory}>
               <Edit size={16} />
             </Button>
-            <Button danger type="link" onClick={() => handleDelete(record.id)} disabled={!canManageCategory}>
+            <Button
+              danger
+              type="link"
+              onClick={(e) => {
+                handleDelete(record.id)
+                e.stopPropagation()
+              }}
+              disabled={!canManageCategory}
+            >
               <Trash2 size={16} />
             </Button>
           </div>

@@ -7,7 +7,7 @@ import { isUndefined, omit, omitBy } from "lodash"
 import { Filter, RotateCcw } from "lucide-react"
 import { useState } from "react"
 import { Helmet } from "react-helmet-async"
-import { createSearchParams, useNavigate } from "react-router-dom"
+import { createSearchParams, Link, useNavigate } from "react-router-dom"
 import { toast } from "react-toastify"
 import { Fragment } from "react/jsx-runtime"
 import NavigateBack from "src/Admin/Components/NavigateBack"
@@ -30,7 +30,8 @@ export default function ManageReservation() {
     {
       customer_name: queryParams.customer_name,
       customer_phone: queryParams.customer_phone,
-      reserved_at: queryParams.reserved_at
+      reserved_at_from: queryParams.reserved_at_from,
+      reserved_at_to: queryParams.reserved_at_to
     },
     isUndefined
   )
@@ -195,6 +196,33 @@ export default function ManageReservation() {
         const findTableSession = listCheckAssignedTable?.find((item) => item.reservation_id === record.id)?.session_id
         return <span className="text-gray-700 font-semibold text-center block">{findTableSession || "-"}</span>
       }
+    },
+    (activeTab === "confirmed" || activeTab === "completed") && {
+      title: <div className="text-center">Hành động</div>,
+      dataIndex: "action",
+      key: "action",
+      render: (_: string, record: Reservation) => {
+        const findTableSessionId = listCheckAssignedTable?.find((item) => item.reservation_id === record.id)?.session_id
+        const findDiningTableId = listCheckAssignedTable?.find(
+          (item) => item.reservation_id === record.id
+        )?.dining_table_id
+        return (
+          <Link
+            style={{
+              color: "blue",
+              textAlign: "center",
+              display: "block"
+            }}
+            to={`/admin/tables/${findDiningTableId}/session/${findTableSessionId}`}
+            state={{
+              idDiningTable: findDiningTableId,
+              idTableSession: findTableSessionId
+            }}
+          >
+            Chi tiết
+          </Link>
+        )
+      }
     }
   ].filter(Boolean) as ColumnsType<Reservation>
 
@@ -240,14 +268,17 @@ export default function ManageReservation() {
   const [filterForm] = Form.useForm()
 
   const handleApplyForm = (values: any) => {
-    const reservedAt = values.reserved_at ? dayjs(values.reserved_at).format("YYYY-MM-DD HH:mm:ss") : undefined
+    const [from, to] = Array.isArray(values.reserved_at_range) ? values.reserved_at_range : []
+    const reservedAtFrom = from ? dayjs(from).format("YYYY-MM-DD HH:mm:ss") : undefined
+    const reservedAtTo = to ? dayjs(to).format("YYYY-MM-DD HH:mm:ss") : undefined
 
     const params: queryParamConfigReservation = cleanObject({
       ...queryConfig,
       page: 1,
       customer_name: values.customer_name,
       customer_phone: values.customer_phone,
-      reserved_at: reservedAt
+      reserved_at_from: reservedAtFrom,
+      reserved_at_to: reservedAtTo
     })
     navigate({
       pathname: `${path.AdminReservations}`,
@@ -256,7 +287,7 @@ export default function ManageReservation() {
   }
 
   const resetFilterForm = () => {
-    const filteredSearch = omit(queryConfig, ["customer_name", "customer_phone", "reserved_at"])
+    const filteredSearch = omit(queryConfig, ["customer_name", "customer_phone", "reserved_at_from", "reserved_at_to"])
     navigate({ pathname: `${path.AdminReservations}`, search: createSearchParams(filteredSearch).toString() })
     filterForm.resetFields()
   }
@@ -334,12 +365,13 @@ export default function ManageReservation() {
               <Input placeholder="Số điện thoại..." className="w-42" />
             </Form.Item>
 
-            <Form.Item name="reserved_at">
-              <DatePicker
+            <Form.Item name="reserved_at_range">
+              <DatePicker.RangePicker
                 showTime={{ format: "HH:mm" }}
                 format="YYYY-MM-DD HH:mm"
-                placeholder="Chọn ngày & giờ"
-                className="w-56"
+                allowClear
+                placeholder={["Từ ngày & giờ", "Đến ngày & giờ"]}
+                className="w-[360px]"
               />
             </Form.Item>
 

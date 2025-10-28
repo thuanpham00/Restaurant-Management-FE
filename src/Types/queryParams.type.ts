@@ -33,7 +33,8 @@ export type queryParamConfigReservation = queryParamConfig & {
   customer_name?: string
   customer_phone?: string
   date_time?: string
-  reserved_at?: string
+  reserved_at_from?: string
+  reserved_at_to?: string
 }
 
 export type queryParamConfigPromotion = queryParamConfig & {

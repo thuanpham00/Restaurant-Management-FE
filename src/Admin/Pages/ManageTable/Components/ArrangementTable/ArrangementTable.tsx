@@ -73,7 +73,7 @@ export default function ArrangementTable({
 }) {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
-  const { employeeId } = useAppStore()
+  const { employeeId, setListTablePrepayment, listTablePrepayment } = useAppStore()
   const [selectedReservation, setSelectedReservation] = useState<SelectReservation | null>(null)
   const [filters, setFilters] = useState({ number: "", minCapacity: null as number | null })
   const [filteredTables, setFilteredTables] = useState<DiningTable[]>([])
@@ -196,14 +196,21 @@ export default function ArrangementTable({
         reservation_id: arrangement?.id as string,
         pre_order: "yes"
       })
-      const sessionId = res?.data?.data?.table_session?.id
+      const sessionId = res?.data?.data?.table_session?.id as string
       const orderId = res?.data?.data?.order_id
       if (sessionId) {
+        setListTablePrepayment(
+          listTablePrepayment.some(
+            (item) =>
+              item.idTableSession === sessionId && item.idDiningTable === selectedTableId && item.orderId === orderId
+          )
+            ? listTablePrepayment
+            : [...listTablePrepayment, { idTableSession: sessionId, idDiningTable: selectedTableId as string, orderId }]
+        )
         navigate(`/admin/tables/${selectedTableId}/session/${sessionId}`, {
           state: {
             idDiningTable: selectedTableId,
             idTableSession: sessionId,
-            prepayment: "true",
             orderId
           }
         })

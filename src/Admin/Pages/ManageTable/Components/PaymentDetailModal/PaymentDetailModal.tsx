@@ -47,7 +47,7 @@ const PaymentDetailModal = ({
   idDiningTable
 }: PaymentDetailModalProps) => {
   const queryClient = useQueryClient()
-  const { employeeId } = useAppStore()
+  const { employeeId, listTablePrepayment, setListTablePrepayment } = useAppStore()
   const [paymentMethod, setPaymentMethod] = useState<number>(0) // 0 = Cash, 1 = Bank Transfer
   const { can } = useAuthorization()
   const canViewInvoices = can(AppAbility.INVOICES_VIEW)
@@ -88,6 +88,7 @@ const PaymentDetailModal = ({
       return invoicePaymentAPI.update(body.id, body.payload)
     }
   })
+
   const handleInvoicePayment = () => {
     if (!canManageInvoices) {
       toast.warn("Bạn không có quyền thanh toán hóa đơn.", { autoClose: 1500 })
@@ -189,6 +190,8 @@ const PaymentDetailModal = ({
         isDraft: false,
         ...(paymentBefore ? { paymentBefore } : {})
       }
+
+      setListTablePrepayment(listTablePrepayment.filter((item) => !(item.idTableSession === table_session_id)))
 
       useCreateInvoicePayment.mutate(payload, {
         onSuccess: () => {

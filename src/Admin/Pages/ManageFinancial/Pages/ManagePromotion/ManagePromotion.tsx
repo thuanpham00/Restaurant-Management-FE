@@ -20,7 +20,7 @@ import {
 } from "antd"
 import { ColumnsType } from "antd/es/table"
 import { isUndefined, omit, omitBy } from "lodash"
-import { Beef, Edit, Filter, RotateCcw, Trash2 } from "lucide-react"
+import { Edit, Filter, Percent, RotateCcw, Trash2 } from "lucide-react"
 import { useEffect, useState } from "react"
 import { Helmet } from "react-helmet-async"
 import { createSearchParams, useNavigate, useSearchParams } from "react-router-dom"
@@ -307,8 +307,8 @@ export default function ManagePromotion() {
       queryClient.invalidateQueries({ queryKey: ["listPromotion"] })
       setIsModalOpen(false)
     },
-    onError: () => {
-      toast.error("Tạo khuyến mãi thất bại", {
+    onError: (error: any) => {
+      toast.error(error.response.data.errors.code[0], {
         autoClose: 1500
       })
     }
@@ -391,7 +391,7 @@ export default function ManagePromotion() {
         </Form>
 
         <PermissionGate ability={AppAbility.PROMOTIONS_MANAGE}>
-          <Button type="primary" icon={<Beef />} onClick={() => handleEdit(true)} className="whitespace-nowrap">
+          <Button type="primary" icon={<Percent />} onClick={() => handleEdit(true)} className="whitespace-nowrap">
             Thêm khuyến mãi
           </Button>
         </PermissionGate>

@@ -3,7 +3,13 @@ import { config } from "src/Constants/config"
 import { toast } from "react-toastify"
 import Button from "../Button"
 
-export default function InputFileImage({ onChange }: { onChange?: (file?: File) => void }) {
+export default function InputFileImage({
+  onChange,
+  checkUpdate
+}: {
+  onChange?: (file?: File) => void
+  checkUpdate?: boolean
+}) {
   const refInput = useRef<HTMLInputElement>(null)
   const handleInputFile = () => {
     refInput.current?.click()
@@ -40,12 +46,23 @@ export default function InputFileImage({ onChange }: { onChange?: (file?: File) 
           display: "none"
         }}
       />
-      <Button
-        type="button"
-        onClick={handleInputFile}
-        nameButton="Chọn file"
-        classNameButton="px-3 py-1 bg-blue-500 mt-4 text-white font-medium text-[13px] rounded-3xl hover:bg-blue-500/80 duration-200"
-      />
+      {typeof checkUpdate !== "undefined" ? (
+        <Button
+          type="button"
+          disabled={Boolean(checkUpdate)}
+          onClick={handleInputFile}
+          nameButton="Chọn file"
+          classNameButton="px-3 py-1 bg-blue-500 mt-4 text-white font-medium text-[13px] rounded-3xl hover:bg-blue-500/80 duration-200"
+        />
+      ) : (
+        <Button
+          type="button"
+          onClick={handleInputFile}
+          nameButton="Chọn file"
+          classNameButton="px-3 py-1 bg-blue-500 mt-4 text-white font-medium text-[13px] rounded-3xl hover:bg-blue-500/80 duration-200"
+        />
+      )}
+
       <span className="block mt-2 text-[13px] text-black dark:text-white">
         Maximum file size is 1 MB Format: .JPEG, .PNG
       </span>
