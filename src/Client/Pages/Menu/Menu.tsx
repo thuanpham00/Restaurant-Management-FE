@@ -23,7 +23,7 @@ function useDebounce<T>(value: T, delay = 400) {
   return debounced
 }
 
-const MenuItem: React.FC<{ item: MenuItemInMenu }> = ({ item }) => {
+const MenuItem: React.FC<{ item: MenuItemInMenu; isPopular?: boolean }> = ({ item, isPopular }) => {
   const navigate = useNavigate()
   const isInactive = !item.dish_active
   return (
@@ -44,10 +44,17 @@ const MenuItem: React.FC<{ item: MenuItemInMenu }> = ({ item }) => {
         />
         {/* Badge */}
         <div className="absolute top-4 right-4 z-20">
-          <div className="flex items-center gap-2 px-3 py-1.5 bg-orange-500/90 backdrop-blur-sm rounded-full border border-orange-400/50 shadow-lg">
-            <Star className="w-4 h-4 text-white fill-white" />
-            <span className="text-white font-semibold text-xs">{isInactive ? "Hết hàng" : "Hot"}</span>
-          </div>
+          {isPopular && (
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-orange-500/90 backdrop-blur-sm rounded-full border border-orange-400/50 shadow-lg">
+              <Star className="w-4 h-4 text-white fill-white" />
+              <span className="text-white font-semibold text-xs">Hot</span>
+            </div>
+          )}
+          {isInactive && (
+            <span className="bg-red-600/90 text-white text-xs px-3 py-1 rounded-full font-medium shadow-md">
+              Tạm ngừng
+            </span>
+          )}
         </div>
         {isInactive && (
           <div className="absolute inset-0 bg-black/50 flex items-center justify-center z-20">
@@ -119,14 +126,14 @@ const MenuHero: React.FC = () => {
   )
 }
 
-// === INFINITE CAROUSEL (slide 1 món, loop, hiển thị đủ món cuối) ===
 const InfiniteCarousel: React.FC<{
   items: MenuItemInMenu[]
   currentIndex: number
   onIndexChange: (index: number) => void
   gapClass: string
   itemWidthClass: string
-}> = ({ items, currentIndex, onIndexChange, gapClass, itemWidthClass }) => {
+  renderItem: (item: MenuItemInMenu) => React.ReactNode
+}> = ({ items, currentIndex, onIndexChange, gapClass, itemWidthClass, renderItem }) => {
   const totalItems = items.length
   const isLooping = totalItems > 3
   const slideRef = useRef<HTMLDivElement>(null)
@@ -141,14 +148,12 @@ const InfiniteCarousel: React.FC<{
 
     const maxIndex = totalItems - 3
     if (currentIndex > maxIndex) {
-      // Đang ở cuối → bấm next → nhảy về đầu
       slideRef.current?.style.setProperty("transition", "none")
       onIndexChange(0)
       requestAnimationFrame(() => {
         slideRef.current?.style.setProperty("transition", "transform 700ms ease-in-out")
       })
     } else if (currentIndex < 0) {
-      // Đang ở đầu → bấm prev → nhảy về cuối
       slideRef.current?.style.setProperty("transition", "none")
       onIndexChange(maxIndex)
       requestAnimationFrame(() => {
@@ -194,7 +199,7 @@ const InfiniteCarousel: React.FC<{
         >
           {extendedItems.map((item, idx) => (
             <div key={`${item.id}-${idx}`} className={`${itemWidthClass} flex-shrink-0`}>
-              <MenuItem item={item} />
+              {renderItem(item)}
             </div>
           ))}
         </div>
@@ -229,6 +234,7 @@ const Menu: React.FC = () => {
   const [error, setError] = useState<string | null>(null)
   const [currentIndex, setCurrentIndex] = useState(0)
   const [menuIndices, setMenuIndices] = useState<Record<string, number>>({})
+  const [popularIds, setPopularIds] = useState<string[]>([])
 
   const debouncedSearch = useDebounce(search, 400)
 
@@ -251,6 +257,14 @@ const Menu: React.FC = () => {
       }
     }
     fetchData()
+  }, [])
+
+  useEffect(() => {
+    clientAPI.getPopularDishes().then((res) => {
+      if (res.data.status === "success") {
+        setPopularIds(res.data.data.map((dish) => dish.id))
+      }
+    })
   }, [])
 
   useEffect(() => {
@@ -438,6 +452,7 @@ const Menu: React.FC = () => {
                 onIndexChange={setCurrentIndex}
                 gapClass="gap-5"
                 itemWidthClass="w-full md:w-1/3"
+                renderItem={(item) => <MenuItem item={item} isPopular={popularIds.includes(item.dish_id)} />}
               />
             </div>
           </section>
@@ -465,6 +480,7 @@ const Menu: React.FC = () => {
                     onIndexChange={(i) => setMenuIndices((prev) => ({ ...prev, [menu.id]: i }))}
                     gapClass="gap-6"
                     itemWidthClass="w-[30%]"
+                    renderItem={(item) => <MenuItem item={item} isPopular={popularIds.includes(item.dish_id)} />}
                   />
                 </div>
               </section>

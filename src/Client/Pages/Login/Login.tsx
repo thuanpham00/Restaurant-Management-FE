@@ -153,13 +153,13 @@ const Login = () => {
 
       {/* Logo */}
       <div className="absolute top-8 left-8 z-10">
-  <div className="mx-4 flex items-center justify-center gap-1 py-2 px-2 rounded-lg">
-    <div className="w-14 h-12">
-      <img src={assets.icons.vector} alt="Logo" className="w-full h-full" />
-    </div>
-    <span className="text-white text-lg font-bold text-center -tracking-tighter">Restaurant</span>
-  </div>
-</div>
+        <div className="mx-4 flex items-center justify-center gap-1 py-2 px-2 rounded-lg">
+          <div className="w-14 h-12">
+            <img src={assets.icons.vector} alt="Logo" className="w-full h-full" />
+          </div>
+          <span className="text-white text-lg font-bold text-center -tracking-tighter">Restaurant</span>
+        </div>
+      </div>
 
       {/* Login Card */}
       <div className="z-10 w-full max-w-md px-4">

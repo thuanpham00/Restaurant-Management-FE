@@ -282,9 +282,11 @@ const Home = () => {
                     <div
                       className="relative rounded-2xl overflow-hidden shadow-2xl border-2 border-orange-400/30 bg-cover bg-center min-h-[320px] flex flex-col justify-center items-center"
                       style={{
-                        backgroundImage:
-                          "url('https://images.unsplash.com/photo-1504674900247-0877df9cc836?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80')",
-                        backgroundBlendMode: "overlay"
+                        backgroundImage: `url(${assets.images.background})`,
+                        backgroundBlendMode: "overlay",
+                        backgroundSize: "cover",
+                        backgroundPosition: "center",
+                        backgroundRepeat: "no-repeat"
                       }}
                     >
                       <div className="absolute inset-0 bg-gray-900/80 backdrop-blur-md" />
