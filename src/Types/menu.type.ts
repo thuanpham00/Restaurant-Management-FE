@@ -52,6 +52,7 @@ export interface MenuItemInMenu {
   dish_name: string | null
   price_base: number
   price: number
+  desc: string | null
   notes: string | null
   dish_image: string | null
   dish_active: boolean

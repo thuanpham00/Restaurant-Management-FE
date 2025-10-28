@@ -81,7 +81,7 @@ const MenuItem: React.FC<{ item: MenuItemInMenu; isPopular?: boolean }> = ({ ite
           {item.dish_name || "Unnamed dish"}
         </h3>
         <p className="mb-4 text-sm leading-relaxed text-gray-400 line-clamp-3 flex-1">
-          {item.notes || "Không có mô tả"}
+          {item.desc || "Không có mô tả"}
         </p>
         <button
           className={`w-full flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-orange-500/10 to-orange-600/5 hover:from-orange-500 hover:to-orange-600 border-2 border-orange-500/30 hover:border-orange-500 rounded-xl text-orange-400 hover:text-white font-semibold transition-all duration-300 group/btn mt-auto ${
