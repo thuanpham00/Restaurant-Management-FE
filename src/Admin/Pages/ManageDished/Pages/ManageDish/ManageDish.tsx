@@ -516,7 +516,7 @@ export default function ManageDish() {
                 <Input placeholder="Nhập tên món" disabled={!canManageDish} />
               </Form.Item>
               {/* Mô tả */}
-              <Form.Item name="desc" label="Mô tả">
+              <Form.Item name="desc" label="Mô tả" rules={[{ required: true, message: "Nhập mô tả món ăn" }]}>
                 <Input.TextArea rows={3} placeholder="Mô tả món ăn..." disabled={!canManageDish} />
               </Form.Item>
               <div className="flex items-center justify-between">

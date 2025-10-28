@@ -199,7 +199,7 @@ export default function TableSessionHistoryDetail() {
           <Button
             type="primary"
             danger
-            disabled={!canManageTables || invoiceList !== undefined}
+            disabled={!canManageTables || invoiceList.length !== 0}
             onClick={() => {
               if (!canManageTables) {
                 toast.warn("Bạn không có quyền quản lý order.", { autoClose: 1500 })
@@ -267,6 +267,13 @@ export default function TableSessionHistoryDetail() {
     }
   }
 
+  const isRowSelected = (dishId: string) => listOrderAdd.some((i) => i.dish_id === dishId)
+  const toggleRowSelect = (record: any) => {
+    if (!canManageTables) return
+    const nextChecked = !isRowSelected(record.dish_id)
+    handleChangeCheckOrder(record, nextChecked)
+  }
+
   const columnsListDishMenuInActive: ColumnsType<any> = [
     {
       title: <div className="text-center">Chọn</div>,
@@ -275,7 +282,6 @@ export default function TableSessionHistoryDetail() {
         <div className="text-center">
           <Checkbox
             checked={listOrderAdd.some((item) => item.dish_id === record.dish_id)}
-            onChange={(e) => handleChangeCheckOrder(record, e.target.checked)}
             disabled={!canManageTables}
           />
         </div>
@@ -754,6 +760,10 @@ export default function TableSessionHistoryDetail() {
                   scroll={{
                     y: 400
                   }}
+                  onRow={(record) => ({
+                    onClick: () => toggleRowSelect(record),
+                    style: { cursor: canManageTables ? "pointer" : "not-allowed" }
+                  })}
                   rowClassName={(_, index) =>
                     index % 2 === 0
                       ? "bg-[#f2f2f2] hover:bg-blue-50 transition-colors"
