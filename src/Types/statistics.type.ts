@@ -3,4 +3,6 @@ export type Statistics = {
   total_orders: number
   total_reservations: number
   active_table_sessions: number
+  today_orders: number
+  active_promotions: number
 }

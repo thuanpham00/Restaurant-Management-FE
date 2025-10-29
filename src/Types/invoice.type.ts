@@ -9,7 +9,7 @@ export interface Invoice {
   status: string
   status_label: string
   created_at: string | null
-  items: InvoiceItem[] | null
+  items?: InvoiceItem[] | null
 }
 
 export interface InvoiceItem {

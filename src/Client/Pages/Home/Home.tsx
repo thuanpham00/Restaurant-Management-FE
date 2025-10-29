@@ -32,7 +32,9 @@ const Home = () => {
     total_customers: 0,
     total_orders: 0,
     total_reservations: 0,
-    active_table_sessions: 0
+    active_table_sessions: 0,
+    today_orders: 0,
+    active_promotions: 0
   })
   const [popularDishes, setPopularDishes] = useState<Dish[]>([])
   const [categories, setCategories] = useState<CategoryDishByMenu[]>([])
@@ -220,9 +222,9 @@ const Home = () => {
                   </div>
                   {/* Number */}
                   <div className="text-5xl md:text-6xl lg:text-7xl font-bold mb-3 bg-gradient-to-r from-orange-400 to-orange-300 bg-clip-text text-transparent">
-                    {stats.total_orders.toLocaleString()}
+                    {stats.today_orders.toLocaleString()}
                   </div>
-                  <div className="text-lg md:text-xl text-gray-300 font-medium">Tổng đơn hàng</div>
+                  <div className="text-lg md:text-xl text-gray-300 font-medium">Tổng đơn hàng trong ngày</div>
                   {/* Decorative line */}
                   <div className="mt-4 h-1 w-20 mx-auto bg-gradient-to-r from-transparent via-orange-400 to-transparent rounded-full" />
                 </div>
@@ -238,9 +240,9 @@ const Home = () => {
                   </div>
                   {/* Number */}
                   <div className="text-5xl md:text-6xl lg:text-7xl font-bold mb-3 bg-gradient-to-r from-green-400 to-green-300 bg-clip-text text-transparent">
-                    {stats.active_table_sessions.toLocaleString()}
+                    {stats.active_promotions.toLocaleString()}
                   </div>
-                  <div className="text-lg md:text-xl text-gray-300 font-medium">Bàn đang hoạt động</div>
+                  <div className="text-lg md:text-xl text-gray-300 font-medium">Tổng khuyến mãi đang áp dụng</div>
                   {/* Decorative line */}
                   <div className="mt-4 h-1 w-20 mx-auto bg-gradient-to-r from-transparent via-green-400 to-transparent rounded-full" />
                 </div>
