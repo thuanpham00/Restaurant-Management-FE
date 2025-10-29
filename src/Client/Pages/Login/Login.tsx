@@ -20,13 +20,28 @@ const Login = () => {
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
   const [showPassword, setShowPassword] = useState(false)
+  const [remember, setRemember] = useState(false)
 
   const {
     formState: { errors },
     setError,
     register,
-    handleSubmit
+    handleSubmit,
+    setValue
   } = useForm<FormData>({ resolver: yupResolver(formSchema) })
+
+  useEffect(() => {
+    const rememberedEmail = localStorage.getItem("rememberedEmail")
+    const rememberedPassword = localStorage.getItem("rememberedPassword")
+    if (rememberedEmail) {
+      setValue("email", rememberedEmail)
+      setRemember(true)
+    }
+    if (rememberedPassword) {
+      setValue("password", rememberedPassword)
+      setRemember(true)
+    }
+  }, [setValue])
 
   // Kiểm tra URL params khi component mount
   useEffect(() => {
@@ -127,6 +142,13 @@ const Login = () => {
   })
 
   const handleSubmitForm = handleSubmit((data) => {
+    if (remember) {
+      localStorage.setItem("rememberedEmail", data.email)
+      localStorage.setItem("rememberedPassword", data.password)
+    } else {
+      localStorage.removeItem("rememberedEmail")
+      localStorage.removeItem("rememberedPassword")
+    }
     loginMutation.mutate(data)
   })
 
@@ -201,6 +223,18 @@ const Login = () => {
                 </button>
               </div>
               {errors.password && <p className="text-red-500 text-sm mt-1">{errors.password.message}</p>}
+            </div>
+            <div className="mb-4 flex items-center">
+              <input
+                type="checkbox"
+                id="remember"
+                checked={remember}
+                onChange={() => setRemember(!remember)}
+                className="accent-orange-500 mr-2"
+              />
+              <label htmlFor="remember" className="text-gray-300 text-sm font-medium cursor-pointer">
+                Ghi nhớ đăng nhập
+              </label>
             </div>
             <div className="mb-6 text-right">
               <NavLink to="/forgot-password" className="text-orange-400 hover:text-orange-500 text-sm font-semibold">
