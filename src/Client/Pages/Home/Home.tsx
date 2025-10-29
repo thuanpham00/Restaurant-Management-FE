@@ -780,7 +780,7 @@ const Home = () => {
                   {/* Glow effect */}
                   <div className="absolute inset-0 rounded-full bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-xl" />
                 </div>
-                <h3 className="text-2xl md:text-3xl font-semibold text-gray-900 group-hover:text-white transition-colors duration-300">
+                <h3 className="text-2xl md:text-3xl font-semibold text-white group-hover:text-white transition-colors duration-300">
                   {feature.title}
                 </h3>
               </div>
