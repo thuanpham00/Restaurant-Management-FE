@@ -616,30 +616,32 @@ export default function TableDetail() {
       title: "Tên món ăn",
       dataIndex: "dish_name",
       key: "dish_name",
-      render: (_: any, record: any) => (
-        <div className="flex items-center gap-2">
-          {record.image ? (
-            <Image
-              src={record.image}
-              alt={record.dish_name}
-              className="rounded-md object-cover"
-              width={64}
-              height={64}
-            />
-          ) : (
-            <Image
-              src={assets.rectangles.Burger}
-              alt={record.dish_name}
-              className="rounded-md object-cover"
-              width={64}
-              height={64}
-            />
-          )}
-          <div>
-            <p className="font-medium">{record.dish_name}</p>
+      render: (_: any, record: any) => {
+        return (
+          <div className="flex items-center gap-2">
+            {record.dish_image ? (
+              <Image
+                src={record.dish_image}
+                alt={record.dish_name}
+                className="rounded-md object-cover"
+                width={64}
+                height={64}
+              />
+            ) : (
+              <Image
+                src={assets.rectangles.Burger}
+                alt={record.dish_name}
+                className="rounded-md object-cover"
+                width={64}
+                height={64}
+              />
+            )}
+            <div>
+              <p className="font-medium">{record.dish_name}</p>
+            </div>
           </div>
-        </div>
-      )
+        )
+      }
     },
     {
       title: "Giá (VNĐ)",

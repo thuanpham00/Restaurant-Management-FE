@@ -18,6 +18,7 @@ const Table = lazy(() => import("../Pages/Table"))
 const Setting = lazy(() => import("../Pages/Settings"))
 const ReservationHistory = lazy(() => import("../Pages/ReservationHistory"))
 const AuthCallback = lazy(() => import("../Pages/Login/AuthCallback"))
+const NotFound = lazy(() => import("../Pages/NotFound"))
 
 const ProjectRouter = () => {
   const { isAuthenticated } = useAppStore()
@@ -158,6 +159,14 @@ export default function useRouterClient() {
           ]
         }
       ]
+    },
+    {
+      path: "*",
+      element: (
+        <Suspense>
+          <NotFound />
+        </Suspense>
+      )
     }
   ])
   return routerElement

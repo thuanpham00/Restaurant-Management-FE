@@ -537,7 +537,14 @@ export default function ManageTable() {
             <InputNumber style={{ width: "100%" }} />
           </Form.Item>
 
-          <Form.Item label="Sức chứa" name="capacity" rules={[{ required: true, message: "Vui lòng nhập sức chứa!" }]}>
+          <Form.Item
+            label="Sức chứa"
+            name="capacity"
+            rules={[
+              { required: true, message: "Vui lòng nhập sức chứa!" },
+              { type: "number", min: 1, max: 20, message: "Sức chứa tối đa 20 người" }
+            ]}
+          >
             <InputNumber style={{ width: "100%" }} />
           </Form.Item>
 

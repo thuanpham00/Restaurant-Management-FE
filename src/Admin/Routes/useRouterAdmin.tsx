@@ -10,6 +10,7 @@ import ManageInvoice from "../Pages/ManageFinancial/Pages/ManageInvoice"
 import InvoiceDetail from "../Pages/ManageFinancial/Pages/InvoiceDetail"
 import { FEATURE_VIEW_ABILITY, FeatureKey, PermissionBoundary, resolveRole } from "src/Authorization"
 import DishDetail from "../Pages/ManageDished/Pages/DishDetail"
+import AdminNotFound from "../Pages/AdminNotFound"
 
 const AdminLogin = lazy(() => import("../Pages/AdminLogin"))
 const ManageDashboard = lazy(() => import("../Pages/ManageDashboard"))
@@ -143,6 +144,14 @@ export default function useRouterAdmin() {
               ]
             }
           ]
+        },
+        {
+          path: path.AdminNotFound,
+          element: (
+            <Suspense>
+              <AdminNotFound />
+            </Suspense>
+          )
         }
       ]
     }

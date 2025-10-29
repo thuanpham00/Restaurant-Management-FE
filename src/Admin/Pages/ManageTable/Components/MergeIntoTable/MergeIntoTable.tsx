@@ -44,6 +44,7 @@ export default function MergeIntoTable({
     onSuccess: () => {
       message.success("Gộp bàn thành công 🎉")
       queryClient.invalidateQueries({ queryKey: ["listTableSession", queryConfig] })
+      queryClient.invalidateQueries({ queryKey: ["listTableSessionActive"] })
       clearSelection()
       setMergedTable(false)
     },

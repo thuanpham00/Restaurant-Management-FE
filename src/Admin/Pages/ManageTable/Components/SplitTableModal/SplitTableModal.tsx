@@ -60,7 +60,6 @@ export default function SplitTableModal({
   employeeId,
   sourceTableNumber
 }: SplitTableModalProps) {
-  console.log(sourceSessionId)
   const queryClient = useQueryClient()
   const [form] = Form.useForm()
   const { can } = useAuthorization()
