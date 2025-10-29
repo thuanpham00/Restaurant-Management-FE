@@ -39,7 +39,7 @@ export default function Setting() {
   const [pwdSaving, setPwdSaving] = useState(false)
   const [avatarUploading, setAvatarUploading] = useState(false)
   const [activeTab, setActiveTab] = useState<"account" | "password" | "invoices">("account")
-  const [gender, setGender] = useState<"male" | "female" | "other" | null>(null)
+  const [gender, setGender] = useState<"Nam" | "Nữ" | "Khác" | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [invoices, setInvoices] = useState<Invoice[]>([])
   const [loadingInvoices, setLoadingInvoices] = useState(false)
@@ -436,7 +436,7 @@ export default function Setting() {
                         Giới tính
                       </label>
                       <div className="flex gap-6 text-white">
-                        {(["male", "female", "other"] as const).map((g) => (
+                        {(["Nam", "Nữ", "Khác"] as const).map((g) => (
                           <label key={g} className="flex items-center gap-2 cursor-pointer">
                             <input
                               type="radio"
@@ -444,7 +444,7 @@ export default function Setting() {
                               onChange={() => setGender(g)}
                               className="accent-orange-500"
                             />
-                            <span>{g === "male" ? "Nam" : g === "female" ? "Nữ" : "Khác"}</span>
+                            <span>{g === "Nam" ? "Nam" : g === "Nữ" ? "Nữ" : "Khác"}</span>
                           </label>
                         ))}
                       </div>

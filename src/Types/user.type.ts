@@ -41,7 +41,7 @@ export type Employee = {
 export type CustomerProfile = {
   address: string | null
   full_name: string
-  gender?: "male" | "female" | "other" | null
+  gender?: "Nam" | "Nữ" | "Khác" | null
   phone?: string | null
   created_at: string
   user_id: string
@@ -70,7 +70,7 @@ export type User = {
   role: Role
   created_at: string
   updated_at: string
-  gender?: "male" | "female" | "other" | null
+  gender?: "Nam" | "Nữ" | "Khác" | null
   phone?: string | null
   address?: string | null
   customer_profile?: CustomerProfile

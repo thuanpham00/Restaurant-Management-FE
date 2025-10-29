@@ -7,7 +7,7 @@ export type UpdateUserPayload = {
   email?: string
   full_name?: string
   phone?: string
-  gender?: "male" | "female" | "other" | null
+  gender?: "Nam" | "Nữ" | "Khác" | null
   address?: string
 }
 
