@@ -9,4 +9,17 @@ export interface Invoice {
   status: string
   status_label: string
   created_at: string | null
+  items: InvoiceItem[] | null
+}
+
+export interface InvoiceItem {
+  order_item_id: string
+  dish_id: string
+  dish_name: string
+  dish_desc: string
+  dish_image: string | null
+  quantity: number
+  item_price: string
+  total_price: string
+  notes: string | null
 }

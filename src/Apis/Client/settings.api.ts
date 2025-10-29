@@ -28,5 +28,6 @@ export const userAPI = {
   changePassword: (payload: { current_password: string; new_password: string; new_password_confirmation: string }) => {
     return Http.post<SuccessResponse<null>>("/api/users/changePassword", payload)
   },
-  getMyInvoices: () => Http.get<SuccessResponse<Invoice[]>>("/api/invoices/my-invoices")
+  getMyInvoices: () => Http.get<SuccessResponse<Invoice[]>>("/api/invoices/my-invoices"),
+  getMyInvoicesWithItems: () => Http.get<SuccessResponse<Invoice[]>>("/api/invoices/my-invoices-with-items")
 }

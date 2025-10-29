@@ -43,6 +43,7 @@ export default function Setting() {
   const [error, setError] = useState<string | null>(null)
   const [invoices, setInvoices] = useState<Invoice[]>([])
   const [loadingInvoices, setLoadingInvoices] = useState(false)
+  const [openInvoiceId, setOpenInvoiceId] = useState<string | null>(null)
 
   const [pwd, setPwd] = useState({
     current_password: "",
@@ -138,7 +139,7 @@ export default function Setting() {
     setLoadingInvoices(true)
     setError(null)
     try {
-      const res = await userAPI.getMyInvoices()
+      const res = await userAPI.getMyInvoicesWithItems()
       if (res.data.status === "success") {
         setInvoices(res.data.data)
       }
@@ -623,7 +624,8 @@ export default function Setting() {
                                   invoice.status_label.toLowerCase()
                                 )}`}
                               >
-                                {STATUS_LABEL_VI[invoice.status_label.toLowerCase()] || invoice.status_label}
+                                {STATUS_LABEL_VI[invoice.status_label.toLowerCase().replaceAll("_", " ")] ||
+                                  invoice.status_label}
                               </span>
                             </div>
                             <div className="space-y-2 border-t border-[#2a2a2a] pt-4">
@@ -641,9 +643,71 @@ export default function Setting() {
                               </div>
                               <div className="flex justify-between text-base font-semibold border-t border-[#2a2a2a] pt-2 mt-2">
                                 <span className="text-white">Thành tiền:</span>
-                                <span className="text-orange-500">{invoice.final_amount} VND</span>
+                                <span className="text-orange-500 font-bold">
+                                  {Number(invoice.final_amount.replace(/,/g, "")).toLocaleString("vi-VN")} VND
+                                </span>
                               </div>
                             </div>
+                            {/* Nút xem chi tiết món ăn */}
+                            <button
+                              className="mt-4 text-orange-500 underline text-sm"
+                              onClick={() =>
+                                setOpenInvoiceId(openInvoiceId === invoice.invoice_id ? null : invoice.invoice_id)
+                              }
+                            >
+                              {openInvoiceId === invoice.invoice_id ? "Ẩn chi tiết món ăn" : "Xem chi tiết món ăn"}
+                            </button>
+                            {/* Hiển thị chi tiết món ăn */}
+                            {openInvoiceId === invoice.invoice_id && (
+                              <div className="mt-4 border-t border-gray-700 pt-4">
+                                <h4 className="text-white font-bold text-lg mb-4 flex items-center gap-2">
+                                  <span className="inline-block w-2 h-2 bg-orange-500 rounded-full"></span>
+                                  Danh sách món ăn
+                                </h4>
+                                <div className="divide-y divide-[#222]">
+                                  {invoice.items && invoice.items.length > 0 ? (
+                                    invoice.items.map((item, idx) => (
+                                      <div
+                                        key={item.order_item_id}
+                                        className="flex items-center py-4 px-2 bg-gradient-to-r from-[#181818] to-[#232323] rounded-xl hover:shadow-lg hover:border-orange-500/60 transition-all group"
+                                        style={{
+                                          marginBottom: idx === (invoice.items?.length ?? 0) - 1 ? 0 : "0.5rem"
+                                        }}
+                                      >
+                                        <div className="flex-shrink-0">
+                                          <img
+                                            src={item.dish_image || assets.rectangles.salad}
+                                            alt={item.dish_name}
+                                            className="w-14 h-14 rounded-lg object-cover border-2 border-orange-500/30 bg-gray-900 group-hover:scale-105 transition-transform"
+                                          />
+                                        </div>
+                                        <div className="flex-1 ml-4">
+                                          <div className="font-bold text-white text-base">{item.dish_name}</div>
+                                          <div className="text-gray-400 text-sm">{item.dish_desc}</div>
+                                          <div className="flex gap-2 mt-1">
+                                            <span className="text-orange-400 font-bold text-base">
+                                              x{item.quantity}
+                                            </span>
+                                            <span className="text-white text-sm font-semibold">
+                                              {Number(item.total_price.replace(/,/g, "")).toLocaleString("vi-VN")} VND
+                                            </span>
+                                          </div>
+                                          {item.notes && (
+                                            <div className="text-orange-400 text-xs mt-1 italic">
+                                              Ghi chú: {item.notes}
+                                            </div>
+                                          )}
+                                        </div>
+                                      </div>
+                                    ))
+                                  ) : (
+                                    <div className="text-gray-400 text-sm py-4">
+                                      Không có món ăn nào trong hóa đơn này.
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            )}
                           </div>
                         ))}
                       </div>
