@@ -152,6 +152,14 @@ export default function useRouterAdmin() {
               <AdminNotFound />
             </Suspense>
           )
+        },
+        {
+          path: "/admin/*",
+          element: (
+            <Suspense>
+              <AdminNotFound />
+            </Suspense>
+          )
         }
       ]
     }
