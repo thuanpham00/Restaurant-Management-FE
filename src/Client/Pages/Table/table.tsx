@@ -8,6 +8,8 @@ import { toast } from "react-toastify"
 import { assets } from "src/Assets/assets"
 import { useAppStore } from "src/StateGlobal/zustand"
 import { isAxiosError } from "axios"
+import { useEffect } from "react"
+import { userAPI } from "src/Apis/Client/settings.api"
 
 function pad2(n: number) {
   return n.toString().padStart(2, "0")
@@ -35,6 +37,39 @@ const TableReservation: React.FC = () => {
   const [notes, setNotes] = useState<string>("")
   const [loading, setLoading] = useState(false)
 
+  const [phone, setPhone] = useState<string>("")
+  const [userPhone, setUserPhone] = useState<string | null>(null)
+  const id = localStorage.getItem("userId") || ""
+
+  useEffect(() => {
+    const cached = localStorage.getItem("user")
+    if (cached) {
+      try {
+        const u = JSON.parse(cached)
+        const phoneValue = u?.customer_profile?.phone || ""
+        setUserPhone(phoneValue)
+        setPhone(phoneValue)
+      } catch {
+        // ignore
+      }
+    }
+
+    async function fetchUserPhone() {
+      if (isAuthenticated && id) {
+        try {
+          const res = await userAPI.getById(id)
+          const phoneValue = res.data.data.customer_profile?.phone || ""
+          setUserPhone(phoneValue)
+          setPhone(phoneValue)
+          localStorage.setItem("user", JSON.stringify(res.data.data))
+        } catch {
+          setUserPhone(null)
+        }
+      }
+    }
+    fetchUserPhone()
+  }, [isAuthenticated, id])
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
@@ -57,6 +92,11 @@ const TableReservation: React.FC = () => {
       return
     }
 
+    if (!userPhone && !phone) {
+      toast.error("Vui lòng nhập số điện thoại")
+      return
+    }
+
     if (!date || !time || !people || people < 1) {
       toast.error("Vui lòng nhập đầy đủ thông tin")
       return
@@ -66,6 +106,11 @@ const TableReservation: React.FC = () => {
     setLoading(true)
 
     try {
+      // Nếu chưa có số điện thoại → cập nhật trước khi đặt bàn
+      if (!userPhone && phone) {
+        await userAPI.update({ phone })
+      }
+
       await reservationAPI.create({
         number_of_people: people,
         reserved_at,
@@ -88,16 +133,13 @@ const TableReservation: React.FC = () => {
             position: "top-center"
           })
 
-          // Lưu URL để redirect lại
           sessionStorage.setItem("redirectAfterLogin", window.location.pathname)
-
           setTimeout(() => {
             navigate("/login")
           }, 1000)
           return
         }
 
-        // Xử lý lỗi 422 - Chưa có customer profile
         if (status === 422) {
           if (message?.includes("customer") || message?.includes("Customer")) {
             toast.error("Tài khoản chưa có hồ sơ khách hàng. Vui lòng cập nhật thông tin cá nhân trước", {
@@ -118,7 +160,6 @@ const TableReservation: React.FC = () => {
           return
         }
 
-        // Xử lý lỗi 429 - Rate limit (đặt bàn quá nhiều lần)
         if (status === 429) {
           const retryAfter = data?.retry_after_seconds
           const nextAllowedAt = data?.next_allowed_at
@@ -140,7 +181,6 @@ const TableReservation: React.FC = () => {
           return
         }
 
-        // Các lỗi khác
         toast.error(message || "Không thể đặt bàn. Vui lòng thử lại", {
           autoClose: 2000
         })
@@ -310,6 +350,39 @@ const TableReservation: React.FC = () => {
                     } rounded-xl px-12 py-4 text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 transition-all duration-300 hover:border-gray-600 appearance-none`}
                     required
                   />
+                </div>
+              </div>
+
+              {/* SỐ ĐIỆN THOẠI - THEO YÊU CẦU */}
+              <div className="group mb-6">
+                <label
+                  htmlFor="phone"
+                  className="block text-sm font-semibold text-gray-400 mb-2 flex items-center gap-2"
+                >
+                  <Users className="w-4 h-4" />
+                  Số điện thoại
+                </label>
+                <div className="relative">
+                  <Users className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none z-10" />
+                  {userPhone ? (
+                    <input
+                      id="phone"
+                      type="text"
+                      value={userPhone}
+                      disabled
+                      className="w-full bg-gray-900/60 border-2 border-gray-700/50 rounded-xl px-12 py-4 text-white cursor-not-allowed"
+                    />
+                  ) : (
+                    <input
+                      id="phone"
+                      type="text"
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                      placeholder="Nhập số điện thoại"
+                      className="w-full bg-gray-900/60 border-2 border-gray-700/50 rounded-xl px-12 py-4 text-white"
+                      required
+                    />
+                  )}
                 </div>
               </div>
 
