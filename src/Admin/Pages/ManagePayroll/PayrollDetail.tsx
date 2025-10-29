@@ -399,12 +399,12 @@ export default function PayrollDetail() {
             <h3 className="text-lg font-semibold mb-6 text-center">Tổng kết lương</h3>
             
             <div className="space-y-4">
-              <div className="flex justify-between items-center pb-3 border-b">
+              {/* <div className="flex justify-between items-center pb-3 border-b">
                 <span className="text-gray-600">Lương cơ bản:</span>
                 <span className="font-mono font-semibold text-blue-600">
                   {formatCurrency(payrollDetail.base_salary)}
                 </span>
-              </div>
+              </div> */}
 
               <div className="flex justify-between items-center pb-3 border-b">
                 <span className="text-gray-600">Thưởng:</span>
