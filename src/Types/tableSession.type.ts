@@ -67,9 +67,11 @@ export type HistoryTableSession = {
   table_capacity: number
   session_type: number
   session_status: number
+  created_at: string
   started_at: string
   ended_at: string
   customer_id: string
+  customer_name: string | null
   employee_id: string
   reservation: {
     reservation_id: string

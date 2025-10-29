@@ -39,8 +39,17 @@ export const tableSessionAPI = {
     return Http.post<SuccessResponse<any>>(`/api/table-sessions/reservation`, body)
   },
 
-  createTableSessionTypeOffline: (body: { employee_id: string; dining_table_id: string }) => {
-    return Http.post<SuccessResponse<any>>(`/api/table-sessions/offline`, body)
+  createTableSessionTypeOffline: (body: {
+    employee_id: string
+    dining_table_id: string
+    customer_id?: string | null
+  }) => {
+    const payload = { ...body }
+    if (!payload.customer_id) {
+      delete payload.customer_id
+    }
+
+    return Http.post<SuccessResponse<any>>(`/api/table-sessions/offline`, payload)
   },
 
   getDetailTableSessionByIdTable: (idDiningTable: string) => {

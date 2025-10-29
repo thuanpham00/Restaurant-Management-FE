@@ -35,6 +35,7 @@ export type queryParamConfigCustomer = {
   page?: string
   per_page?: string
   full_name?: string
+  email?: string
   phone?: string
   gender?: string
   membership_level?: string

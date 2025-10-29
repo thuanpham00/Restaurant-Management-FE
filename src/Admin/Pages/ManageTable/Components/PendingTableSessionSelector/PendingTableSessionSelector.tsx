@@ -157,7 +157,7 @@ function PendingTableSessionSelector({
                           <span>Loại phiên: </span>
                           {sessionTypeTag}
                         </div>
-                        <p className="mt-2">Khách: {session.reservation?.customer_name || "Khách vãng lai"}</p>
+                        <p className="mt-2">Khách: {session.reservation?.customer_name || session.customer_name || "Khách vãng lai"}</p>
                         {/* {session.session_type !== 0 && (
                         )} */}
                         <div>
@@ -166,7 +166,7 @@ function PendingTableSessionSelector({
                             Ngày đặt:{" "}
                             {session.reservation?.reserved_at
                               ? new Date(session.reservation.reserved_at).toLocaleString()
-                              : "Không xác định"}
+                              : session.created_at ? new Date(session.created_at).toLocaleString() : "Không xác định"}
                           </p>
                         </div>
                       </div>

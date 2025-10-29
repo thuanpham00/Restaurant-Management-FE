@@ -24,7 +24,7 @@ import { Fragment, useEffect, useMemo, useState } from "react"
 import { Helmet } from "react-helmet-async"
 import { useLocation } from "react-router-dom"
 import NavigateBack from "src/Admin/Components/NavigateBack"
-import { tableSessionAPI, orderItemsAPI, menusAPI } from "src/Apis/Admin"
+import { tableSessionAPI, orderItemsAPI, menusAPI, customersAPI } from "src/Apis/Admin"
 import { assets } from "src/Assets/assets"
 import "./TableDetail.css"
 import {
@@ -50,6 +50,8 @@ import { useRealtimeQuery } from "src/Hook/useRealtimeQuery"
 import type { Invoice } from "src/Types/invoicePayment.type"
 import PendingTableSessionSelector from "../../Components/PendingTableSessionSelector"
 import { AppAbility, AppRole, resolveRole, useAuthorization } from "src/Authorization"
+import type { Customer, queryParamConfigCustomer } from "src/Types/customers.type"
+import type { PaginatedResponse } from "src/Types/utils.type"
 
 const { Search } = Input
 const { Title } = Typography
@@ -569,6 +571,44 @@ export default function TableDetail() {
   const [selectedInvoiceForDetail, setSelectedInvoiceForDetail] = useState<Invoice | null>(null)
   const [showInvoiceDetailModal, setShowInvoiceDetailModal] = useState(false)
   const [showCreateInvoiceModal, setShowCreateInvoiceModal] = useState(false)
+  const [isSelectCustomerModalOpen, setIsSelectCustomerModalOpen] = useState(false)
+  const [selectedOfflineCustomerId, setSelectedOfflineCustomerId] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!isSelectCustomerModalOpen) {
+      setSelectedOfflineCustomerId(null)
+      return
+    }
+  }, [isSelectCustomerModalOpen])
+
+  const {
+    data: customerSearchData,
+    isFetching: isFetchingCustomerOptions
+  } = useQuery({
+    queryKey: ["customer-options-offline-session"],
+    queryFn: () => {
+      const controller = new AbortController()
+      setTimeout(() => controller.abort(), 10000)
+
+      const params: queryParamConfigCustomer = {
+        page: "1",
+        per_page: "200"
+      }
+
+      return customersAPI.getList(params, controller.signal)
+    },
+    enabled: isSelectCustomerModalOpen
+  })
+
+  const customerSelectOptions = useMemo(() => {
+    const paginated = customerSearchData?.data?.data as PaginatedResponse<Customer> | undefined
+    const customers = paginated?.data ?? []
+
+    return customers.map((customer) => ({
+      value: customer.id,
+      label: `${customer.full_name || "Không rõ tên"} - ${customer.user?.email || "Không có email"}`
+    }))
+  }, [customerSearchData])
 
   const {
     data: listDishMenuInActiveData,
@@ -864,16 +904,27 @@ export default function TableDetail() {
   ])
 
   const createTableSessionMutation = useMutation({
-    mutationFn: ({ employee_id, dining_table_id }: { employee_id: string; dining_table_id: string }) =>
+    mutationFn: ({
+      employee_id,
+      dining_table_id,
+      customer_id
+    }: {
+      employee_id: string
+      dining_table_id: string
+      customer_id?: string | null
+    }) =>
       tableSessionAPI.createTableSessionTypeOffline({
         dining_table_id,
-        employee_id
+        employee_id,
+        customer_id
       }),
 
     onSuccess: () => {
       toast.success("Tạo phiên bàn offline thành công", {
         autoClose: 1500
       })
+      setIsSelectCustomerModalOpen(false)
+      setSelectedOfflineCustomerId(null)
       queryClient.invalidateQueries({ queryKey: ["listPendingTableSession", idDiningTable] })
     },
     onError: (error: any) => {
@@ -883,16 +934,33 @@ export default function TableDetail() {
     }
   })
 
-  const handleCreateTableSession = async () => {
+  const handleOpenCreateOfflineSessionModal = () => {
     if (!canManageTables) {
       toast.warn("Bạn không có quyền tạo phiên bàn.", {
         autoClose: 1500
       })
       return
     }
+    setIsSelectCustomerModalOpen(true)
+  }
+
+  const handleConfirmCreateOfflineSession = () => {
+    if (!canManageTables) {
+      toast.warn("Bạn không có quyền tạo phiên bàn.", {
+        autoClose: 1500
+      })
+      return
+    }
+
+    if (!employeeId || !idDiningTable) {
+      toast.error("Thiếu thông tin nhân viên hoặc bàn để tạo phiên mới.")
+      return
+    }
+
     createTableSessionMutation.mutate({
-      employee_id: employeeId as string,
-      dining_table_id: idDiningTable as string
+      employee_id: String(employeeId),
+      dining_table_id: String(idDiningTable),
+      customer_id: selectedOfflineCustomerId
     })
   }
 
@@ -1049,7 +1117,7 @@ export default function TableDetail() {
                 e.currentTarget.style.borderColor = "#f56a00"
               }}
               disabled={!canManageTables}
-              onClick={handleCreateTableSession}
+              onClick={handleOpenCreateOfflineSessionModal}
             >
               Tạo phiên bàn mới (Offline)
             </Button>
@@ -1058,6 +1126,45 @@ export default function TableDetail() {
           <HistoryTableSession idDiningTable={idDiningTable} tableNumber={dataTable.table_number} />
         </div>
       </div>
+
+      <Modal
+        title="Chọn khách hàng cho phiên bàn Offline"
+        open={isSelectCustomerModalOpen}
+        onCancel={() => setIsSelectCustomerModalOpen(false)}
+        destroyOnClose
+        footer={
+          <div className="flex justify-end gap-2">
+            <Button onClick={() => setIsSelectCustomerModalOpen(false)}>Hủy</Button>
+            <Button
+              type="primary"
+              onClick={handleConfirmCreateOfflineSession}
+              loading={createTableSessionMutation.isPending}
+              disabled={createTableSessionMutation.isPending}
+            >
+              Xác nhận
+            </Button>
+          </div>
+        }
+      >
+        <p className="text-sm text-gray-600 mb-3">
+          Chọn khách hàng đã có tài khoản để gán vào phiên bàn. Nếu bỏ trống, hệ thống sẽ mặc định khách vãng lai.
+        </p>
+        <Select
+          showSearch
+          allowClear
+          placeholder="Nhập tên hoặc email khách hàng"
+          className="w-full"
+          optionFilterProp="label"
+          value={selectedOfflineCustomerId ?? undefined}
+          onChange={(value) => setSelectedOfflineCustomerId(value ?? null)}
+          filterOption={(input, option) =>
+            (option?.label as string)?.toLowerCase().includes(input.toLowerCase()) ?? false
+          }
+          notFoundContent={isFetchingCustomerOptions ? <Spin size="small" /> : "Không tìm thấy khách hàng phù hợp"}
+          loading={isFetchingCustomerOptions}
+          options={customerSelectOptions}
+        />
+      </Modal>
 
       <Row gutter={24} style={{ overflow: "hidden" }}>
         <Col
