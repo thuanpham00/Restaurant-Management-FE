@@ -2,7 +2,7 @@ export type Customer = {
   id: string
   full_name: string
   phone: string | null
-  gender: "male" | "female" | "other" | null
+  gender: "Nam" | "Nữ" | "Khác" | null
   address: string | null
   membership_level: number
   user_id: string
@@ -26,7 +26,7 @@ export type Customer = {
 export type CustomerFormInput = {
   full_name: string
   phone?: string
-  gender?: "male" | "female" | "other"
+  gender?: "Nam" | "Nữ" | "Khác"
   address?: string
   membership_level?: number
 }
