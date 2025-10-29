@@ -44,6 +44,7 @@ export default function Setting() {
   const [invoices, setInvoices] = useState<Invoice[]>([])
   const [loadingInvoices, setLoadingInvoices] = useState(false)
   const [openInvoiceId, setOpenInvoiceId] = useState<string | null>(null)
+  const [phoneError, setPhoneError] = useState<string>("")
 
   const [pwd, setPwd] = useState({
     current_password: "",
@@ -162,6 +163,12 @@ export default function Setting() {
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault()
+    setPhoneError("")
+    const phoneRegex = /^0\d{9,10}$/
+    if (!form.phone || !phoneRegex.test(form.phone)) {
+      setPhoneError("Số điện thoại không hợp lệ. Vui lòng nhập đúng định dạng!")
+      return
+    }
     if (!user?.id) {
       toast.error("Không tìm thấy thông tin người dùng")
       return
@@ -428,6 +435,7 @@ export default function Setting() {
                         onChange={(e) => setForm((s) => ({ ...s, phone: e.target.value }))}
                         className="w-full bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-orange-500/40 outline-none"
                       />
+                      {phoneError && <p className="text-red-500 text-sm mt-1">{phoneError}</p>}
                     </div>
                     <div className="space-y-3">
                       <label htmlFor="address" className="text-gray-300 font-semibold">

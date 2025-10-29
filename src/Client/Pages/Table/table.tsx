@@ -40,6 +40,7 @@ const TableReservation: React.FC = () => {
   const [phone, setPhone] = useState<string>("")
   const [userPhone, setUserPhone] = useState<string | null>(null)
   const id = localStorage.getItem("userId") || ""
+  const [phoneError, setPhoneError] = useState<string>("")
 
   useEffect(() => {
     const cached = localStorage.getItem("user")
@@ -73,6 +74,14 @@ const TableReservation: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
+    setPhoneError("")
+    if (!userPhone) {
+      const phoneRegex = /^0\d{9,10}$/
+      if (!phone || !phoneRegex.test(phone)) {
+        setPhoneError("Số điện thoại không hợp lệ. Vui lòng nhập đúng định dạng!")
+        return
+      }
+    }
     if (!isAuthenticated) {
       toast.warning("Bạn cần đăng nhập để đặt bàn", {
         autoClose: 2000,
@@ -370,18 +379,25 @@ const TableReservation: React.FC = () => {
                       type="text"
                       value={userPhone}
                       disabled
-                      className="w-full bg-gray-900/60 border-2 border-gray-700/50 rounded-xl px-12 py-4 text-white cursor-not-allowed"
+                      className="w-full bg-gray-900/60 border-2 border-gray-700/50 rounded-xl pl-12 pr-4 py-4 text-white cursor-not-allowed focus:outline-none"
                     />
                   ) : (
-                    <input
-                      id="phone"
-                      type="text"
-                      value={phone}
-                      onChange={(e) => setPhone(e.target.value)}
-                      placeholder="Nhập số điện thoại"
-                      className="w-full bg-gray-900/60 border-2 border-gray-700/50 rounded-xl px-12 py-4 text-white"
-                      required
-                    />
+                    <>
+                      <input
+                        id="phone"
+                        type="text"
+                        value={phone}
+                        onChange={(e) => setPhone(e.target.value)}
+                        placeholder="Nhập số điện thoại"
+                        className={`w-full bg-gray-900/60 border-2 rounded-xl pl-12 pr-4 py-4 text-white placeholder:text-gray-500
+            focus:outline-none transition-all duration-300
+            ${phoneError ? "border-red-500" : "border-gray-700/50"}`}
+                        required
+                      />
+                      {phoneError && (
+                        <p className="absolute left-0 -bottom-6 w-full text-red-500 text-sm mt-1">{phoneError}</p>
+                      )}
+                    </>
                   )}
                 </div>
               </div>
