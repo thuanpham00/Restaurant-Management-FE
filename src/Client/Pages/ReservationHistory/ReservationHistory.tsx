@@ -35,16 +35,16 @@ const STATUS_LABEL: Record<number, string> = {
 
 const STATUS_CLASS: Record<number, string> = {
   0: "bg-yellow-600/30 text-yellow-300 border border-yellow-700/50",
-  1: "bg-green-600/30 text-green-300 border border-green-700/50",
+  1: "bg-blue-600/30 text-blue-300 border border-blue-700/50",
   2: "bg-red-600/30 text-red-300 border border-red-700/50",
-  3: "bg-blue-600/30 text-blue-300 border border-blue-700/50"
+  3: "bg-green-600/30 text-green-300 border border-green-700/50"
 }
 
 const STATUS_GLOW: Record<number, string> = {
   0: "bg-yellow-500/20",
-  1: "bg-green-500/20",
+  1: "bg-blue-500/20",
   2: "bg-red-500/20",
-  3: "bg-blue-500/20"
+  3: "bg-green-500/20"
 }
 
 const STATUS_ICON: Record<number, React.ElementType> = {

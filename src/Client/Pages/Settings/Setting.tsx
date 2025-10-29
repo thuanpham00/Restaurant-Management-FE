@@ -24,7 +24,7 @@ export default function Setting() {
     0: "Bronze",
     1: "Silver",
     2: "Gold",
-    3: "Titanium"
+    3: "Platinum"
   }
   const MEMBERSHIP_COLOR: Record<number, string> = {
     0: "bg-gradient-to-r from-yellow-700 to-yellow-500 text-yellow-100",
@@ -271,14 +271,23 @@ export default function Setting() {
     }
   }
 
+  const STATUS_LABEL_VI: Record<string, string> = {
+    paid: "Đã thanh toán",
+    cancelled: "Đã hủy",
+    unpaid: "Chưa thanh toán",
+    "partially paid": "Thanh toán một phần"
+  }
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case "paid":
         return "bg-green-500/20 text-green-400 border-green-500/40"
-      case "pending":
-        return "bg-yellow-500/20 text-yellow-400 border-yellow-500/40"
       case "cancelled":
         return "bg-red-500/20 text-red-400 border-red-500/40"
+      case "unpaid":
+        return "bg-yellow-500/20 text-yellow-400 border-yellow-500/40"
+      case "partially paid":
+        return "bg-blue-500/20 text-blue-400 border-blue-500/40"
       default:
         return "bg-gray-500/20 text-gray-400 border-gray-500/40"
     }
@@ -611,10 +620,10 @@ export default function Setting() {
                               </div>
                               <span
                                 className={`px-3 py-1 rounded-full text-xs font-medium border ${getStatusColor(
-                                  invoice.status
+                                  invoice.status_label.toLowerCase()
                                 )}`}
                               >
-                                {invoice.status_label}
+                                {STATUS_LABEL_VI[invoice.status_label.toLowerCase()] || invoice.status_label}
                               </span>
                             </div>
                             <div className="space-y-2 border-t border-[#2a2a2a] pt-4">
